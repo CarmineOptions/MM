@@ -38,6 +38,7 @@ class WAccount:
         :return: Nonce for the transaction.
         '''
         on_chain_nonce = await self.account.get_nonce()
+        self._logger.info('On-chain nonce for account %s: %s', hex(self.address), on_chain_nonce)
         if self._latest_transaction_nonce is None:
             return on_chain_nonce
         elif self._latest_transaction_timestamp is None:

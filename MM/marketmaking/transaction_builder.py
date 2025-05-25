@@ -2,7 +2,7 @@
 from typing import Any, Dict
 import logging
 
-from MM.marketmaking.waccount import WAccount
+from marketmaking.waccount import WAccount
 
 class TransactionBuilder:
 
@@ -26,12 +26,15 @@ class TransactionBuilder:
         
 
     async def build_transactions(self, wrapped_account:WAccount, to_be_canceled, to_be_created):
+        self._logger.info('Deleting quotes')
         await self.delete_quotes(
             wrapped_account=wrapped_account,
             dex_contract=self.dex_contract,
             to_be_canceled=to_be_canceled,
             max_fee=self.max_fee
         )
+        self._logger.info('Done with deleting quotes')
+        self._logger.info('Creating quotes')
         await self.create_quotes(
             wrapped_account,
             market_id=self.market_id,
@@ -40,6 +43,7 @@ class TransactionBuilder:
             to_be_created=to_be_created,
             max_fee=self.max_fee
         )
+        self._logger.info('Done with creating quotes')
         
 
     async def delete_quotes(
@@ -51,7 +55,7 @@ class TransactionBuilder:
     ) -> None:
         '''Delete quotes based on the market maker's strategy.'''
         self._logger.info('Deleting quotes')
-        for order in enumerate(to_be_canceled):
+        for order in to_be_canceled:
             nonce = await wrapped_account.get_nonce()
             await dex_contract.functions['delete_maker_order'].invoke_v1(
                 maker_order_id=order['maker_order_id'],
@@ -59,7 +63,7 @@ class TransactionBuilder:
                 nonce = nonce
             )
             logging.info(f"Canceling: {order['maker_order_id']}")
-            wrapped_account.increment_nonce()
+            await wrapped_account.increment_nonce()
 
 
     async def create_quotes(
@@ -73,7 +77,7 @@ class TransactionBuilder:
     ) -> None:
         '''Create quotes based on the market maker's strategy.'''
         
-        for i, order in enumerate(to_be_created):
+        for order in to_be_created:
             if order['order_side'] == 'ask':
                 target_token_address = market_cfg[1]['base_token']
                 order_side = 'Ask'
@@ -81,7 +85,7 @@ class TransactionBuilder:
                 target_token_address = market_cfg[1]['quote_token']
                 order_side = 'Bid'
 
-            nonce = wrapped_account.get_nonce()
+            nonce = await wrapped_account.get_nonce()
 
             self._logger.info("Soon to sumbit order: q: %s, p: %s, s: %s, nonce: %s", order['amount'], order['price'], order_side, nonce)
             self._logger.debug("Soon to sumbit order: %s", dict(
@@ -106,5 +110,6 @@ class TransactionBuilder:
                 max_fee = max_fee,
                 nonce = nonce
             )
+            await wrapped_account.increment_nonce()
             self._logger.info("Submitting order: q: %s, p: %s, s: %s, nonce: %s", order['amount'], order['price'], order_side, nonce)
         self._logger.info('Done with order changes')

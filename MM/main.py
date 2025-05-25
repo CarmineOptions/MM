@@ -75,6 +75,15 @@ def get_account() -> Account:
     return account
 
 
+def pretty_print_orders(asks, bids):
+    logging.info('PRETTY PRINTED CURRENT ORDERS.')
+    for ask in sorted(asks, key=lambda x: -x['price']):
+        logging.info('\t\t%s; %s', ask['price'] / 10**18, ask['amount_remaining'] / 10**18)
+    logging.info('XXX')
+    for bid in sorted(bids, key=lambda x: -x['price']):
+        logging.info('\t\t%s; %s', bid['price'] / 10**18, bid['amount_remaining'] / 10**18)
+
+
 async def main():
     setup_logging('DEBUG')
     
@@ -121,9 +130,8 @@ async def main():
             quote_token_address=QUOTE_TOKEN_ADDRESS,
     )
 
-    state_market = StateMarket(accounts=[wrapped_account], market=market)
-
     state = State(markets=[market], accounts=[wrapped_account])
+    state_market = state.market_states[market.market_id]
 
     poc_mm_model = POCMMModel(
         state_market=state_market,
@@ -182,6 +190,8 @@ async def main():
                 fair_price = float(sorted(r.json(), key = lambda x: x['T'])[-1]['p'])
                 logging.info('Fair price queried: %s.', fair_price)
 
+                pretty_print_orders(asks, bids)
+
                 logging.info('Pulsing market maker with fair price: %s', fair_price)
                 await market_maker.pulse(data = {
                     'type': 'custom_oracle',
@@ -194,7 +204,8 @@ async def main():
                 await asyncio.sleep(5)
                 sys.exit(1)
                 # continue
-        await asyncio.sleep(5)
+        logging.info('Sleeping for 10 seconds before next pulse...')
+        await asyncio.sleep(10)
 
 
 # Run the main function

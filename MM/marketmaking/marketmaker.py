@@ -156,7 +156,7 @@ class MarketMaker:
                 # FIXME: reconciliation happened in the POCMMModel.
 
                 # Push the orders from the transaction builder through the blockchain connector.
-                self.transaction_builder.build_transactions(
+                await self.transaction_builder.build_transactions(
                     wrapped_account=account,
                     to_be_canceled=to_be_canceled,
                     to_be_created=to_be_created
@@ -186,7 +186,7 @@ class MarketMaker:
                 )
                 if claimable[0]:
                     self._logger.info(f'Claiming')
-                    latest_nonce = await self._get_nonce(account)
+                    latest_nonce = await account.get_nonce()
                     max_fee = await self._get_max_fee(account, Urgency.MEDIUM)
                     # TODO: push this into the transaction builder.
                     await market.dex_contract.functions['claim'].invoke_v1(
@@ -195,6 +195,7 @@ class MarketMaker:
                         max_fee = max_fee,
                         nonce = latest_nonce
                     )
+                    await account.increment_nonce()
                 self._logger.info(
                     'Claim done for account %s, dex %s, market %s.',
                     hex(account.address), hex(int(market.dex_address, 16)), market_id
@@ -206,7 +207,7 @@ class MarketMaker:
         self._logger.info("Setting up unlimited approvals for tokens...")
 
         for account in self.accounts:
-            nonce = await self._get_nonce(account)
+            nonce = await account.get_nonce()
 
             max_fee = await self._get_max_fee(account, Urgency.MEDIUM)
 
@@ -265,13 +266,13 @@ class MarketMaker:
             raise ValueError(f"Invalid urgency level: {urgency}")
 
 
-    async def _get_nonce(self, account: WAccount) -> int:
-        """
-        Get the nonce for the given account.
-        :param account: Account to be used for the transaction.
-        :return: Nonce for the transaction.
-        """
-        return await account.get_nonce()
+    # async def _get_nonce(self, account: WAccount) -> int:
+    #     """
+    #     Get the nonce for the given account.
+    #     :param account: Account to be used for the transaction.
+    #     :return: Nonce for the transaction.
+    #     """
+    #     return await account.get_nonce()
         
 
     def __str__(self) -> str:
