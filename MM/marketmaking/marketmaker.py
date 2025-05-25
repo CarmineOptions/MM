@@ -17,6 +17,7 @@ from marketmaking.market import Market
 from marketmaking.state import State
 from marketmaking.waccount import WAccount
 from marketmaking.pocmmmodel import POCMMModel
+from marketmaking.transaction_builder import TransactionBuilder
 
 
 ############################
@@ -55,7 +56,7 @@ class MarketMaker:
         mm_model: POCMMModel, # FIXME: this should be a base class
         reconciler: TODO,
         claim_rule: TODO,
-        transaction_builder: TODO,
+        transaction_builder: TransactionBuilder,
         blockchain_connectors: TODO,
     ) -> None:
         """
@@ -95,7 +96,7 @@ class MarketMaker:
         self.mm_model: TODO = mm_model
         self.reconciler: TODO = reconciler
         self.claim_rule: TODO = claim_rule
-        self.transaction_builder: TODO = transaction_builder
+        self.transaction_builder: TransactionBuilder = transaction_builder
         self.blockchain_connectors: List[TODO] = blockchain_connectors
 
     async def initialize_trading(self) -> None:
@@ -138,6 +139,10 @@ class MarketMaker:
             # Claim in case we have some claimable assets.
             await self.claim_tokens(data['market_id'])
 
+            # FIXME: parts here are used from the old version of market maker.
+            # To do this properly, calculate teh optimal orders for the market (don't iterate over accounts).
+            # Reconcile optimal vs. current orders (across accounts).
+            # Build transactions and push them through the transaction builder.
             for account in self.market_account_pairs[self.markets[data['market_id']]]:
                 # Calculate optimal orders for the market.
                 to_be_canceled, to_be_created = self.mm_model.get_optimal_orders(
@@ -145,12 +150,17 @@ class MarketMaker:
                     self.state.market_states[data['market_id']]
                 )
                 self._logger.info('to_be_canceled: %s, to_be_created: %s', to_be_canceled, to_be_created)
-                assert False, "TODO: implement the rest of the logic"
+                # assert False, "TODO: implement the rest of the logic"
 
-            # Reconcile the orders for the market.
-            # FIXME: reconciliation happened in the POCMMModel.
+                # Reconcile the orders for the market.
+                # FIXME: reconciliation happened in the POCMMModel.
 
-            # Push the orders from the transaction builder through the blockchain connector.
+                # Push the orders from the transaction builder through the blockchain connector.
+                self.transaction_builder.build_transactions(
+                    wrapped_account=account,
+                    to_be_canceled=to_be_canceled,
+                    to_be_created=to_be_created
+                )
 
 
 

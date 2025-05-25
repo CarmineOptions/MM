@@ -58,3 +58,12 @@ class WAccount:
         self._logger.info('Setting latest nonce to: %s, from %s', nonce, self._latest_transaction_nonce)
         self._latest_transaction_nonce = nonce
         self._latest_transaction_timestamp = datetime.datetime.now().timestamp()
+
+
+    async def increment_nonce(self) -> None:
+        """
+        Increment the latest nonce for the account.
+        This is used to ensure that the next transaction will have a unique nonce.
+        """
+        latest_nonce = await self.get_nonce()
+        await self.set_latest_nonce(latest_nonce + 1)

@@ -16,12 +16,13 @@ from starknet_py.net.account.account import Account
 from starknet_py.net.signer.stark_curve_signer import KeyPair
 from starknet_py.net.models.chains import StarknetChainId
 
-from marketmaking.marketmaker import MarketMaker
 from marketmaking.market import Market
-from marketmaking.waccount import WAccount
-from marketmaking.statemarket import StateMarket
-from marketmaking.state import State
+from marketmaking.marketmaker import MarketMaker
 from marketmaking.pocmmmodel import POCMMModel
+from marketmaking.state import State
+from marketmaking.statemarket import StateMarket
+from marketmaking.transaction_builder import TransactionBuilder
+from marketmaking.waccount import WAccount
 
 
 
@@ -105,7 +106,9 @@ async def main():
 
                 'order_dollar_size': 200 * 10**18,  # in $
                 'minimal_remaining_quote_size': 100,  # in $
-                'max_number_of_orders_per_side': 3
+                'max_number_of_orders_per_side': 3,
+
+                'max_fee': 9122241938326667
             }
     
     market = Market(
@@ -128,6 +131,13 @@ async def main():
         market_maker_cfg=market_maker_cfg
     )
 
+    transaction_builder = TransactionBuilder(
+        dex_contract=dex_contract,
+        market_id=market_id,
+        market_cfg=market_cfg,
+        max_fee=market_maker_cfg['max_fee']
+    )
+
     market_maker = MarketMaker(
         accounts=[wrapped_account],
         markets=[market],
@@ -136,7 +146,7 @@ async def main():
         mm_model=poc_mm_model,
         reconciler=None, # TODO:
         claim_rule=None,
-        transaction_builder=None,
+        transaction_builder=transaction_builder,
         blockchain_connectors=None
     )
 
