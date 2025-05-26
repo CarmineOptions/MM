@@ -21,7 +21,7 @@ class TransactionBuilder:
         self.dex_contract = dex_contract
         self.market_id = market_id
         self.market_cfg = market_cfg
-        
+
         self.max_fee = max_fee
         
 
@@ -60,7 +60,7 @@ class TransactionBuilder:
             await dex_contract.functions['delete_maker_order'].invoke_v1(
                 maker_order_id=order['maker_order_id'],
                 max_fee=max_fee,
-                nonce = nonce
+                nonce=nonce
             )
             logging.info(f"Canceling: {order['maker_order_id']}")
             await wrapped_account.increment_nonce()
