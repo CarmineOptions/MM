@@ -16,6 +16,7 @@ from starknet_py.net.account.account import Account
 from starknet_py.net.signer.stark_curve_signer import KeyPair
 from starknet_py.net.models.chains import StarknetChainId
 
+from oracles.simple_prices import get_price_fetcher
 from marketmaking.market import Market
 from marketmaking.marketmaker import MarketMaker
 from marketmaking.pocmmmodel import POCMMModel
@@ -37,12 +38,6 @@ WALLET_ADDRESS = "0x463de332da5b88a1676bfb4671dcbe4cc1a9147c46300a1658ed43a22d83
 ACCOUNT_PASSWORD=''
 PATH_TO_KEYSTORE="keystore.json"
 NETWORK='MAINNET'
-SOURCE_DATA = {
-    1: 'https://data-api.binance.vision/api/v3/aggTrades?symbol=ETHUSDC',
-    2: 'https://data-api.binance.vision/api/v3/aggTrades?symbol=STRKUSDC',
-    3: 'https://data-api.binance.vision/api/v3/aggTrades?symbol=BTCUSDC'
-}
-
 
 def setup_logging(log_level: str):
     """Configures logging for the application."""
@@ -158,6 +153,8 @@ async def main():
         blockchain_connectors=None
     )
 
+    get_price = get_price_fetcher(market_id)
+
     await market_maker.initialize_trading()
 
     while True:
@@ -186,8 +183,7 @@ async def main():
                 logging.info('Pulsed market maker with my orders: %s, %s.', bids, asks)
 
                 # Get current oracle price and pulse it.
-                r = requests.get(SOURCE_DATA[market_id])
-                fair_price = float(sorted(r.json(), key = lambda x: x['T'])[-1]['p'])
+                fair_price  = get_price()
                 logging.info('Fair price queried: %s.', fair_price)
 
                 pretty_print_orders(asks, bids)
