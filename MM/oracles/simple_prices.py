@@ -27,7 +27,7 @@ def wbtc_dog_price_fetcher() -> float:
     dog_price = requests.get('https://api.gateio.ws/api/v4/spot/trades?currency_pair=DOG_USDT&limit=1')
     dog_price = float(dog_price.json()[0]['price'])
 
-    return dog_price / btc_price
+    return btc_price / dog_price
 
 
 PRICE_FETCHERS: dict[int, Callable[[], float]] = {
