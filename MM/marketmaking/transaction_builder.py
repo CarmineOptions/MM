@@ -2,6 +2,7 @@
 from typing import Any, Dict
 import logging
 
+from MM.marketmaking.order import BasicOrder, FutureOrder
 from marketmaking.waccount import WAccount
 
 class TransactionBuilder:
@@ -25,7 +26,7 @@ class TransactionBuilder:
         self.max_fee = max_fee
         
 
-    async def build_transactions(self, wrapped_account:WAccount, to_be_canceled, to_be_created):
+    async def build_transactions(self, wrapped_account:WAccount, to_be_canceled: list[BasicOrder], to_be_created: list[FutureOrder]):
         self._logger.info('Deleting quotes')
         await self.delete_quotes(
             wrapped_account=wrapped_account,
@@ -50,7 +51,7 @@ class TransactionBuilder:
         self,
         wrapped_account: WAccount,
         dex_contract,
-        to_be_canceled,
+        to_be_canceled: list[BasicOrder],
         max_fee
     ) -> None:
         '''Delete quotes based on the market maker's strategy.'''
@@ -59,11 +60,11 @@ class TransactionBuilder:
             nonce = await wrapped_account.get_nonce()
             # TODO: Use ResourceBound instead of auto_estimate when invoking
             await dex_contract.functions['delete_maker_order'].invoke_v3(
-                maker_order_id=order['maker_order_id'],
+                maker_order_id=order.order_id,
                 nonce=nonce,
                 auto_estimate=True
             )
-            logging.info(f"Canceling: {order['maker_order_id']}")
+            logging.info(f"Canceling: {order.order_id}")
             await wrapped_account.increment_nonce()
 
 
@@ -73,13 +74,13 @@ class TransactionBuilder:
         market_id,
         market_cfg,
         dex_contract,
-        to_be_created,
+        to_be_created: list[FutureOrder],
         max_fee
     ) -> None:
         '''Create quotes based on the market maker's strategy.'''
         
         for order in to_be_created:
-            if order['order_side'] == 'ask':
+            if order.order_side.lower() == 'ask':
                 target_token_address = market_cfg[1]['base_token']
                 order_side = 'Ask'
             else:
@@ -88,12 +89,12 @@ class TransactionBuilder:
 
             nonce = await wrapped_account.get_nonce()
 
-            self._logger.info("Soon to sumbit order: q: %s, p: %s, s: %s, nonce: %s", order['amount'], order['price'], order_side, nonce)
+            self._logger.info("Soon to sumbit order: q: %s, p: %s, s: %s, nonce: %s", order.amount, order.price, order_side, nonce)
             self._logger.debug("Soon to sumbit order: %s", dict(
                 market_id = market_id,
                 target_token_address = target_token_address,
-                order_price = order['price'],
-                order_size = order['amount'],
+                order_price = order.price,
+                order_size = order.amount,
                 order_side = (order_side, None),
                 order_type = ('Basic', None),
                 time_limit = ('GTC', None),
@@ -104,14 +105,14 @@ class TransactionBuilder:
             await dex_contract.functions['submit_maker_order'].invoke_v3(
                 market_id = market_id,
                 target_token_address = target_token_address,
-                order_price = order['price'],
-                order_size = order['amount'],
+                order_price = order.price,
+                order_size = order.amount,
                 order_side = (order_side, None),
                 order_type = ('Basic', None),
                 time_limit = ('GTC', None),
-                nonce = nonce,
+                # nonce = nonce + 1,
                 auto_estimate=True
             )
             await wrapped_account.increment_nonce()
-            self._logger.info("Submitting order: q: %s, p: %s, s: %s, nonce: %s", order['amount'], order['price'], order_side, nonce)
+            self._logger.info("Submitting order: q: %s, p: %s, s: %s, nonce: %s", order.amount, order.price, order_side, nonce)
         self._logger.info('Done with order changes')
