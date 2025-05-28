@@ -104,20 +104,21 @@ class POCMMModel:
             # Create best order if there is no best order
             remaining = [order for order in side if order not in to_be_canceled]
             ordered_remaining = sorted(remaining, key=lambda x: x.price if side_name=='ask' else -x.price)
-            # order = ordered_remaining[0] # TODO: if there is remaining
             if (
                 (not ordered_remaining)
                 or
                 (
                     (side_name == 'bid')
                     and
-                    (order['price'] / 10**base_decimals < (1 - market_maker_cfg['max_relative_distance_from_FP']) * fair_price)
+                    # ordered_remaining will not be empty here (`or` performs short-circuit eval)
+                    (ordered_remaining[0].price / 10**base_decimals < (1 - market_maker_cfg['max_relative_distance_from_FP']) * fair_price)
                 )
                 or
                 (
                     (side_name == 'ask')
                     and
-                    ((1 + market_maker_cfg['max_relative_distance_from_FP']) * fair_price < order['price'] / 10**base_decimals)
+                    # ordered_remaining will not be empty here (`or` performs short-circuit eval)
+                    ((1 + market_maker_cfg['max_relative_distance_from_FP']) * fair_price < ordered_remaining[0].price / 10**base_decimals)
                 )
             ):
                 tick_size = market_cfg[1]['tick_size']
