@@ -70,7 +70,7 @@ class POCMMModel:
         
             for order in side:
                 # If the remaining order size is too small requote (cancel order)
-                if order.amount_remaining / 10**base_decimals * order.price / 10**base_decimals < market_maker_cfg['minimal_remaining_quote_size']:
+                if order.amount_remaining / 10**base_decimals * order.price / 10**18 < market_maker_cfg['minimal_remaining_quote_size']:
                     self._logger.info(f"Canceling order because of insufficient amount. amount: {order.amount_remaining}")
                     self._logger.debug(f"Canceling order because of insufficient amount. order: {order}")
                     to_be_canceled_side.append(order)
@@ -79,13 +79,13 @@ class POCMMModel:
                     (
                         (side_name == 'bid')
                         and
-                        ((1 - market_maker_cfg['min_relative_distance_from_FP']) * fair_price < order.price / 10**base_decimals)
+                        ((1 - market_maker_cfg['min_relative_distance_from_FP']) * fair_price < order.price / 10**18)
                     )
                     or
                     (
                         (side_name == 'ask')
                         and
-                        (order.price / 10**base_decimals < (1 + market_maker_cfg['min_relative_distance_from_FP']) * fair_price)
+                        (order.price / 10**18 < (1 + market_maker_cfg['min_relative_distance_from_FP']) * fair_price)
                     )
                 ):
                     self._logger.info(f"Canceling order because too close to FP. "
