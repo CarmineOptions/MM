@@ -188,11 +188,12 @@ class MarketMaker:
                     latest_nonce = await account.get_nonce()
                     max_fee = await self._get_max_fee(account, Urgency.MEDIUM)
                     # TODO: push this into the transaction builder.
-                    await market.dex_contract.functions['claim'].invoke_v1(
+                    # TODO: Use ResourceBound instead of auto_estimate when invoking
+                    await market.dex_contract.functions['claim'].invoke_v3(
                         token_address = token_address,
                         amount = claimable[0],
-                        max_fee = max_fee,
-                        nonce = latest_nonce
+                        nonce = latest_nonce,
+                        auto_estimate=True
                     )
                     await account.increment_nonce()
                 self._logger.info(
@@ -208,15 +209,17 @@ class MarketMaker:
         for account in self.accounts:
             nonce = await account.get_nonce()
 
+            # TODO: Use ResourceBound instead of auto_estimate when invoking
             max_fee = await self._get_max_fee(account, Urgency.MEDIUM)
 
             for market in self.account_market_pairs[account.address]:
                 # Approve base token
-                await (await market.base_token_contract.functions['approve'].invoke_v1(
+
+                await (await market.base_token_contract.functions['approve'].invoke_v3(
                     spender=int(market.dex_address, 16),
                     amount=MAX_UINT,
-                    max_fee=max_fee,
-                    nonce=nonce
+                    nonce=nonce,
+                    auto_estimate=True
                 )).wait_for_acceptance()
                 nonce += 1
                 self._logger.info(
@@ -224,13 +227,13 @@ class MarketMaker:
                     hex(account.address),
                     hex(market.base_token_address)
                 )
-        
+
                 # Approve quote token
-                await (await market.quote_token_contract.functions['approve'].invoke_v1(
+                await (await market.quote_token_contract.functions['approve'].invoke_v3(
                     spender=int(market.dex_address, 16),
                     amount=MAX_UINT,
-                    max_fee=max_fee,
-                    nonce=nonce
+                    nonce=nonce,
+                    auto_estimate=True
                 )).wait_for_acceptance()
                 nonce += 1
                 self._logger.info(

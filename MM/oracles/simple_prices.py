@@ -39,6 +39,11 @@ PRICE_FETCHERS: dict[int, Callable[[], float]] = {
 
 
 def get_price_fetcher(market_id: int) -> Callable[[], float]:
+    '''
+    Returns a function that is used to fetch price for given `market_id`.
+
+    Raises ValueError if there is no price fetcher for provided `market_id`
+    '''
     fetcher = PRICE_FETCHERS.get(market_id)
     if not fetcher:
         raise ValueError(f"No processor found for market_id {market_id}")

@@ -57,10 +57,11 @@ class TransactionBuilder:
         self._logger.info('Deleting quotes')
         for order in to_be_canceled:
             nonce = await wrapped_account.get_nonce()
-            await dex_contract.functions['delete_maker_order'].invoke_v1(
+            # TODO: Use ResourceBound instead of auto_estimate when invoking
+            await dex_contract.functions['delete_maker_order'].invoke_v3(
                 maker_order_id=order['maker_order_id'],
-                max_fee=max_fee,
-                nonce=nonce
+                nonce=nonce,
+                auto_estimate=True
             )
             logging.info(f"Canceling: {order['maker_order_id']}")
             await wrapped_account.increment_nonce()
@@ -99,7 +100,8 @@ class TransactionBuilder:
                 max_fee = max_fee,
                 nonce = nonce
             ))
-            await dex_contract.functions['submit_maker_order'].invoke_v1(
+            # TODO: Use ResourceBound instead of auto_estimate when invoking
+            await dex_contract.functions['submit_maker_order'].invoke_v3(
                 market_id = market_id,
                 target_token_address = target_token_address,
                 order_price = order['price'],
@@ -107,8 +109,8 @@ class TransactionBuilder:
                 order_side = (order_side, None),
                 order_type = ('Basic', None),
                 time_limit = ('GTC', None),
-                max_fee = max_fee,
-                nonce = nonce
+                nonce = nonce,
+                auto_estimate=True
             )
             await wrapped_account.increment_nonce()
             self._logger.info("Submitting order: q: %s, p: %s, s: %s, nonce: %s", order['amount'], order['price'], order_side, nonce)
