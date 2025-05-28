@@ -25,11 +25,12 @@ from marketmaking.state import State
 from marketmaking.statemarket import StateMarket
 from marketmaking.transaction_builder import TransactionBuilder
 from marketmaking.waccount import WAccount
-
+from marketmaking.order import BasicOrder
 
 
 REMUS_ADDRESS = '0x067e7555f9ff00f5c4e9b353ad1f400e2274964ea0942483fae97363fd5d7958'
-BASE_TOKEN_ADDRESS = 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
+# BASE_TOKEN_ADDRESS = 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
+BASE_TOKEN_ADDRESS = 0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d
 QUOTE_TOKEN_ADDRESS = 0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8
 
 RPC_URL = os.environ.get('STARKNET_RPC')
@@ -72,10 +73,10 @@ def setup_logging(log_level: str):
 
 def get_account() -> Account:
     """Get a market makers account."""
-    client = FullNodeClient(node_url=RPC_URL)
+    client = FullNodeClient(node_url=RPC_URL) # type: ignore
     account = Account(
         client = client,
-        address = WALLET_ADDRESS,
+        address = WALLET_ADDRESS, # type: ignore
         key_pair = KeyPair.from_keystore(PATH_TO_KEYSTORE, ACCOUNT_PASSWORD), # type: ignore
         chain = StarknetChainId[NETWORK]
     )
@@ -114,14 +115,14 @@ async def main():
 
     # configs - FIXME: should be in a config file
     all_remus_cfgs = await dex_contract.functions['get_all_market_configs'].call()
-    market_id = 1
+    market_id = 2
     market_cfg = [x for x in all_remus_cfgs[0] if x[0] == market_id][0]
     market_maker_cfg = {
                 'target_relative_distance_from_FP': 0.001, # where best order is created 
                 'max_relative_distance_from_FP': 0.003, # too far from FP to be considered best (it is considered deep)
                 'min_relative_distance_from_FP': 0.0005, # too close to FP to exist -> if closer kill the order
 
-                'order_dollar_size': 200 * 10**18,  # in $
+                'order_dollar_size': 1 * 10**18,  # in $
                 'minimal_remaining_quote_size': 100,  # in $
                 'max_number_of_orders_per_side': 3,
 
@@ -170,49 +171,62 @@ async def main():
 
     await market_maker.initialize_trading()
 
+    logging.warning("!!! Make sure `base_decimals` in pocmmmodel.py are correct !!!")
+    await asyncio.sleep(5)
+
+
     while True:
-        for market_id in [1]:
-            try:
+        try:
 
-                logging.info('Claiming tokens for market_id: %s', market_id)
-                await market_maker.claim_tokens(market_id=market_id)
-                logging.info('Claimed tokens for market_id: %s', market_id)
+            logging.info('Claiming tokens for market_id: %s', market_id)
+            await market_maker.claim_tokens(market_id=market_id)
+            logging.info('Claimed tokens for market_id: %s', market_id)
 
-                # Get my orders from the market and pulse them.
-                my_orders = await dex_contract.functions['get_all_user_orders'].call(
-                    user=wrapped_account.account.address
-                )
-                bids = [x for x in my_orders[0] if x['market_id'] == market_id and x['order_side'].variant == 'Bid']
-                asks = [x for x in my_orders[0] if x['market_id'] == market_id and x['order_side'].variant == 'Ask']
-                bids = sorted(bids, key = lambda x: -x['price'])
-                asks = sorted(asks, key = lambda x: -x['price'])
-                logging.info('My current orders: %s, %s.', bids, asks)
-                await market_maker.pulse(data = {
-                    'type': 'my_orders_snapshot',
-                    'market_id': market_id,
-                    'data': {'bids': bids, 'asks': asks},
-                    'account': wrapped_account.account.address
-                })
-                logging.info('Pulsed market maker with my orders: %s, %s.', bids, asks)
+            # Get my orders from the market and pulse them.
+            my_orders = await dex_contract.functions['get_all_user_orders'].call(
+                user=wrapped_account.account.address
+            )
+            bids = [x for x in my_orders[0] if x['market_id'] == market_id and x['order_side'].variant == 'Bid']
+            asks = [x for x in my_orders[0] if x['market_id'] == market_id and x['order_side'].variant == 'Ask']
+            bids = sorted(bids, key = lambda x: -x['price'])
+            asks = sorted(asks, key = lambda x: -x['price'])
+            bids = [
+                BasicOrder.from_remus_order(o)
+                for o in bids
+            ]
+            asks = [
+                BasicOrder.from_remus_order(o)
+                for o in asks
+            ]
 
-                # Get current oracle price and pulse it.
-                fair_price  = get_price()
-                logging.info('Fair price queried: %s.', fair_price)
+            logging.info('My current orders: %s, %s.', bids, asks)
+            await market_maker.pulse(data = {
+                'type': 'my_orders_snapshot',
+                'market_id': market_id,
+                'data': {'bids': bids, 'asks': asks},
+                'account': wrapped_account.account.address
+            })
+            logging.info('Pulsed market maker with my orders: %s, %s.', bids, asks)
 
-                pretty_print_orders(asks, bids)
+            # Get current oracle price and pulse it.
+            fair_price  = get_price()
+            logging.info('Fair price queried: %s.', fair_price)
 
-                logging.info('Pulsing market maker with fair price: %s', fair_price)
-                await market_maker.pulse(data = {
-                    'type': 'custom_oracle',
-                    'market_id': market_id,
-                    'data': {'price': fair_price},
-                })
-                logging.info('Pulsed market maker with fair price: %s', fair_price)
-            except Exception as e:
-                logging.error("Error error occurred: %s", str(e), exc_info=True)
-                await asyncio.sleep(5)
-                sys.exit(1)
-                # continue
+            pretty_print_orders(asks, bids)
+
+            logging.info('Pulsing market maker with fair price: %s', fair_price)
+            await market_maker.pulse(data = {
+                'type': 'custom_oracle',
+                'market_id': market_id,
+                'data': {'price': fair_price},
+            })
+            logging.info('Pulsed market maker with fair price: %s', fair_price)
+        except Exception as e:
+            logging.error("Error error occurred: %s", str(e), exc_info=True)
+            await asyncio.sleep(5)
+            sys.exit(1)
+            # continue
+
         logging.info('Sleeping for 10 seconds before next pulse...')
         await asyncio.sleep(10)
 

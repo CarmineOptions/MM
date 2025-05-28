@@ -2,7 +2,7 @@ from typing import Dict, List
 import logging
 
 from marketmaking.market import Market
-from marketmaking.order import Order
+from marketmaking.order import BasicOrder
 from marketmaking.waccount import WAccount
 
 
@@ -29,13 +29,17 @@ class StateMarket:
         self.oracle = None
 
         # Trades that are visible on-chain and L2 accepted
-        self.trades: List[TODO] = []
+        # TODO: Use this
+        # self.trades: List[TODO] = []
         # Trades that are pending.
-        self.pending_trades: List[TODO] = []
+        # TODO: Use this
+        # self.pending_trades: List[TODO] = []
 
-        self.my_orders: dict[int, list[Order]] = {account.address: [] for account in accounts}
-        self.pending_orders: dict[int, list[Order]] = {account.address: [] for account in accounts}
-        self.my_inflight_orders: dict[int, list[Order]] = {account.address: [] for account in accounts}
+        self.my_orders: dict[int, dict] = {account.address: {} for account in accounts}
+
+        # TODO: Use these
+        # self.pending_orders: dict[int, dict] = {account.address: [] for account in accounts}
+        # self.my_inflight_orders: dict[int, list[BasicOrder]] = {account.address: [] for account in accounts}
 
 
     def update(self, data: dict) -> None:
@@ -47,12 +51,14 @@ class StateMarket:
 
         if data['type'] == 'custom_oracle':
             self.oracle = data['data']
-        elif data['type'] == 'pending_order':
-            self.pending_orders[data['account']].append(data['data'])
         elif data['type'] == 'my_orders_snapshot':
             self.my_orders[data['account']] = data['data']
         else:
             raise NotImplementedError(f"Unknown data type: {data['type']}")
+            
+        # elif data['type'] == 'pending_order':
+        #     TODO: Use this
+        #     self.pending_orders[data['account']].append(data['data'])
 
 
     def initialize_orderbook(self) -> None:

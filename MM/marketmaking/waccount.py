@@ -58,7 +58,7 @@ class WAccount:
         """
         self._logger.info('Setting latest nonce to: %s, from %s', nonce, self._latest_transaction_nonce)
         self._latest_transaction_nonce = nonce
-        self._latest_transaction_timestamp = datetime.datetime.now().timestamp()
+        self._latest_transaction_timestamp = int(datetime.datetime.now().timestamp())
 
 
     async def increment_nonce(self) -> None:

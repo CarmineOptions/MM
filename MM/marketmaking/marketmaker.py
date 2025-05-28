@@ -32,14 +32,6 @@ MAX_UINT = 2**256 - 1
 
 # FIXME: pass logger everywhere
 
-class TODO:
-    """TODO: Placeholder for the actual class definition.
-    This should be replaced with the actual class that is being used in the code.
-    """
-    pass
-
-
-
 ############################
 # Event-driven market-maker.
 ############################
@@ -96,7 +88,7 @@ class MarketMaker:
         self.reconciler = reconciler
         self.claim_rule = claim_rule
         self.transaction_builder: TransactionBuilder = transaction_builder
-        self.blockchain_connectors: TODO = blockchain_connectors # TODO: type
+        self.blockchain_connectors = blockchain_connectors # TODO: type
 
     async def initialize_trading(self) -> None:
         """
