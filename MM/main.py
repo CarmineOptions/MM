@@ -13,7 +13,7 @@ import sys
 from starknet_py.net.full_node_client import FullNodeClient
 from starknet_py.contract import Contract
 from starknet_py.net.account.account import Account
-from starknet_py.net.signer.stark_curve_signer import KeyPair
+from starknet_py.net.signer.key_pair import KeyPair
 from starknet_py.net.models.chains import StarknetChainId
 
 from oracles.simple_prices import get_price_fetcher
@@ -116,7 +116,7 @@ async def main():
             }
     
     market = Market(
-            market_id=1,
+            market_id=market_id,
             dex_contract=dex_contract,
             base_token_contract=base_token_contract,
             quote_token_contract=quote_token_contract,
@@ -176,7 +176,7 @@ async def main():
                 logging.info('My current orders: %s, %s.', bids, asks)
                 await market_maker.pulse(data = {
                     'type': 'my_orders_snapshot',
-                    'market_id': 1,
+                    'market_id': market_id,
                     'data': {'bids': bids, 'asks': asks},
                     'account': wrapped_account.account.address
                 })
@@ -191,7 +191,7 @@ async def main():
                 logging.info('Pulsing market maker with fair price: %s', fair_price)
                 await market_maker.pulse(data = {
                     'type': 'custom_oracle',
-                    'market_id': 1,
+                    'market_id': market_id,
                     'data': {'price': fair_price},
                 })
                 logging.info('Pulsed market maker with fair price: %s', fair_price)

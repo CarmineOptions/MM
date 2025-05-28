@@ -9,7 +9,6 @@
 
 # This bot serves as market making bot for Remus DEX and Ekubo DEX.
 
-from typing import List, Dict
 import logging
 
 from marketmaking.enums import Urgency
@@ -49,15 +48,15 @@ class MarketMaker:
 
     def __init__(
         self,
-        accounts: List[WAccount],
-        markets: List[Market],
-        account_market_pairs: Dict[WAccount, List[Market]],
+        accounts: list[WAccount],
+        markets: list[Market],
+        account_market_pairs: dict[WAccount, list[Market]],
         state: State,
         mm_model: POCMMModel, # FIXME: this should be a base class
-        reconciler: TODO,
-        claim_rule: TODO,
+        reconciler, # TODO: type
+        claim_rule, # TODO: type
         transaction_builder: TransactionBuilder,
-        blockchain_connectors: TODO,
+        blockchain_connectors, # TODO: type
     ) -> None:
         """
         :param accounts: List of Starknet account classes.
@@ -76,28 +75,28 @@ class MarketMaker:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self._logger.info('Initializing MarketMaker')
         
-        self.accounts: List[WAccount] = accounts
-        self.map_accounts: Dict[str, WAccount] = {account.address: account for account in accounts}
-        self.markets: Dict[str, Market] = {market.market_id: market for market in markets}
+        self.accounts: list[WAccount] = accounts
+        self.map_accounts: dict[int, WAccount] = {account.address: account for account in accounts}
+        self.markets: dict[int, Market] = {market.market_id: market for market in markets}
         # List of all markets for give account. {account: [market1, market2],...}
-        self.account_market_pairs: Dict[str, List[TODO]] = {
+        self.account_market_pairs: dict[int, list[Market]] = {
             _account.address: _markets
             for _account, _markets in account_market_pairs.items()
         }
         # List of all accounts involved in a given market. {market: [account1, account2],...}
-        self.market_account_pairs: Dict[TODO, List[str]] = {}
+        self.market_account_pairs: dict[Market, list[WAccount]] = {}
         for market in self.markets.values():
             self.market_account_pairs[market] = []
             for account in self.accounts:
                 if market in self.account_market_pairs[account.address]:
                     self.market_account_pairs[market].append(account)
 
-        self.state: TODO = state
-        self.mm_model: TODO = mm_model
-        self.reconciler: TODO = reconciler
-        self.claim_rule: TODO = claim_rule
+        self.state = state
+        self.mm_model = mm_model
+        self.reconciler = reconciler
+        self.claim_rule = claim_rule
         self.transaction_builder: TransactionBuilder = transaction_builder
-        self.blockchain_connectors: List[TODO] = blockchain_connectors
+        self.blockchain_connectors: TODO = blockchain_connectors # TODO: type
 
     async def initialize_trading(self) -> None:
         """
@@ -116,7 +115,7 @@ class MarketMaker:
 
 
 
-    async def pulse(self, data: TODO) -> None:
+    async def pulse(self, data: dict) -> None:
         '''
         data are essentially all events coming from trading venues. Initially (in the first iteration)
         it is just price updates.
@@ -164,7 +163,7 @@ class MarketMaker:
 
 
 
-    async def claim_tokens(self, market_id: str) -> None:
+    async def claim_tokens(self, market_id: int) -> None:
         '''
         Initially it claims all the time. Later, it will claim only when needed.
         TODO: claim only when needed.

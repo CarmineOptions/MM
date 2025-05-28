@@ -22,23 +22,23 @@ class StateMarket:
 
         self.market: Market = market
         # Visible on-chain orderbook.
-        self.orderbook: TODO = None
+        self.orderbook = None
         self.orderbook_initialized: bool = False
         self.non_processed_event_queue: List[TODO] = []
 
-        self.oracle: TODO = None
+        self.oracle = None
 
         # Trades that are visible on-chain and L2 accepted
         self.trades: List[TODO] = []
         # Trades that are pending.
         self.pending_trades: List[TODO] = []
 
-        self.my_orders: Dict[str, Order] = {account.address: [] for account in accounts}
-        self.pending_orders: Dict[str, Order] = {account.address: [] for account in accounts}
-        self.my_inflight_orders: Dict[str, Order] = {account.address: [] for account in accounts}
+        self.my_orders: dict[int, list[Order]] = {account.address: [] for account in accounts}
+        self.pending_orders: dict[int, list[Order]] = {account.address: [] for account in accounts}
+        self.my_inflight_orders: dict[int, list[Order]] = {account.address: [] for account in accounts}
 
 
-    def update(self, data: TODO) -> None:
+    def update(self, data: dict) -> None:
         """
         Update the state with new data.
         :param data: New data to be added to the state.

@@ -11,13 +11,13 @@ class Market:
 
     def __init__(
             self,
-            market_id: str,
+            market_id: int,
             dex_contract: Contract,
             base_token_contract: Contract,
             quote_token_contract: Contract,
             dex_address: str,
-            base_token_address: str,
-            quote_token_address: str,
+            base_token_address: int,
+            quote_token_address: int,
     ) -> None:
         self.market_id = market_id
 
