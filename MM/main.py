@@ -9,6 +9,7 @@ import asyncio
 import logging
 import requests
 import sys
+import os
 
 from starknet_py.net.full_node_client import FullNodeClient
 from starknet_py.contract import Contract
@@ -31,12 +32,24 @@ REMUS_ADDRESS = '0x067e7555f9ff00f5c4e9b353ad1f400e2274964ea0942483fae97363fd5d7
 BASE_TOKEN_ADDRESS = 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
 QUOTE_TOKEN_ADDRESS = 0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8
 
-RPC_URL = "https://starknet-mainnet.public.blastapi.io/rpc/v0_7"
-WALLET_ADDRESS = "0x463de332da5b88a1676bfb4671dcbe4cc1a9147c46300a1658ed43a22d830c3"
+RPC_URL = os.environ.get('STARKNET_RPC')
+if RPC_URL is None:
+    raise ValueError('No `STARKNET_RPC` env found')
+
+WALLET_ADDRESS = os.environ.get('WALLET_ADDRESS')
+if WALLET_ADDRESS is None:
+    raise ValueError('No `WALLET_ADDRESS` env found')
 
 
-ACCOUNT_PASSWORD=''
-PATH_TO_KEYSTORE="keystore.json"
+ACCOUNT_PASSWORD = os.environ.get('ACCOUNT_PASSWORD')
+if ACCOUNT_PASSWORD is None:
+    raise ValueError("No `ACCOUNT_PASSWORD` env found")
+ACCOUNT_PASSWORD = ACCOUNT_PASSWORD.encode()
+
+PATH_TO_KEYSTORE = os.environ.get("KEYSTORE_PATH")
+if PATH_TO_KEYSTORE is None:
+    raise ValueError("No `KEYSTORE_PATH` env found")
+
 NETWORK='MAINNET'
 
 def setup_logging(log_level: str):
@@ -63,7 +76,7 @@ def get_account() -> Account:
     account = Account(
         client = client,
         address = WALLET_ADDRESS,
-        key_pair = KeyPair.from_keystore(PATH_TO_KEYSTORE, ACCOUNT_PASSWORD),
+        key_pair = KeyPair.from_keystore(PATH_TO_KEYSTORE, ACCOUNT_PASSWORD), # type: ignore
         chain = StarknetChainId[NETWORK]
     )
     logging.info("Succesfully loaded account.")
@@ -162,7 +175,7 @@ async def main():
             try:
 
                 logging.info('Claiming tokens for market_id: %s', market_id)
-                await market_maker.claim_tokens(market_id=1)
+                await market_maker.claim_tokens(market_id=market_id)
                 logging.info('Claimed tokens for market_id: %s', market_id)
 
                 # Get my orders from the market and pulse them.
