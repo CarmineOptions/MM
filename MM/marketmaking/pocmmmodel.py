@@ -89,7 +89,7 @@ class POCMMModel:
                     )
                 ):
                     self._logger.info(f"Canceling order because too close to FP. "
-                                      f"fair_price: {fair_price}, order price: {order.price / 10**base_decimals}")
+                                      f"fair_price: {fair_price}, order price: {order.price / 10**18}")
                     self._logger.debug(f"Canceling order because too close to FP. order: {order}")
                     to_be_canceled_side.append(order)
             # If there is too many orders in the market that are not being canceled, cancel those with the most distant price from FP
@@ -111,27 +111,27 @@ class POCMMModel:
                     (side_name == 'bid')
                     and
                     # ordered_remaining will not be empty here (`or` performs short-circuit eval)
-                    (ordered_remaining[0].price / 10**base_decimals < (1 - market_maker_cfg['max_relative_distance_from_FP']) * fair_price)
+                    (ordered_remaining[0].price / 10**18 < (1 - market_maker_cfg['max_relative_distance_from_FP']) * fair_price)
                 )
                 or
                 (
                     (side_name == 'ask')
                     and
                     # ordered_remaining will not be empty here (`or` performs short-circuit eval)
-                    ((1 + market_maker_cfg['max_relative_distance_from_FP']) * fair_price < ordered_remaining[0].price / 10**base_decimals)
+                    ((1 + market_maker_cfg['max_relative_distance_from_FP']) * fair_price < ordered_remaining[0].price / 10**18)
                 )
             ):
                 tick_size = market_cfg[1]['tick_size']
                 base_decimals_ = 18 if market_cfg[0] == 3 else base_decimals
                 if side_name == 'ask':
-                    optimal_price = int(fair_price * (1 + market_maker_cfg['target_relative_distance_from_FP']) * 10**base_decimals_)
+                    optimal_price = int(fair_price * (1 + market_maker_cfg['target_relative_distance_from_FP']) * 10**18)
                     optimal_price = optimal_price // tick_size
                     optimal_price = optimal_price * tick_size + tick_size
                 else:
-                    optimal_price = int(fair_price * (1 - market_maker_cfg['target_relative_distance_from_FP']) * 10**base_decimals_)
+                    optimal_price = int(fair_price * (1 - market_maker_cfg['target_relative_distance_from_FP']) * 10**18)
                     optimal_price = optimal_price // tick_size
                     optimal_price = optimal_price * tick_size
-                optimal_amount = market_maker_cfg['order_dollar_size'] / (optimal_price / 10**base_decimals_)
+                optimal_amount = market_maker_cfg['order_dollar_size'] / (optimal_price / 10**18)
                 optimal_amount = optimal_amount // market_cfg[1]['lot_size']
                 optimal_amount = optimal_amount * market_cfg[1]['lot_size']
         
