@@ -37,17 +37,18 @@ class WAccount:
 
         :return: Nonce for the transaction.
         '''
-        on_chain_nonce = await self.account.get_nonce()
-        self._logger.info('On-chain nonce for account %s: %s', hex(self.address), on_chain_nonce)
-        if self._latest_transaction_nonce is None:
-            return on_chain_nonce
-        elif self._latest_transaction_timestamp is None:
+        if (self._latest_transaction_nonce is None) or (self._latest_transaction_timestamp is None):
+            on_chain_nonce = await self.account.get_nonce()
+            self._logger.info('On-chain nonce for account A %s: %s', hex(self.address), on_chain_nonce)
             return on_chain_nonce
         elif (datetime.datetime.now().timestamp() - self._latest_transaction_timestamp) < self.PREFER_ONCHAIN_NONCE_THRESHOLD:
             # If the latest transaction was recent, use the latest nonce.
+            self._logger.info('Non-On-chain nonce for account B %s: %s', hex(self.address), self._latest_transaction_nonce)
             return self._latest_transaction_nonce
 
         # If the latest transaction was not recent, use the on-chain nonce.
+        on_chain_nonce = await self.account.get_nonce()
+        self._logger.info('On-chain nonce for account C %s: %s', hex(self.address), on_chain_nonce)
         return on_chain_nonce
 
 

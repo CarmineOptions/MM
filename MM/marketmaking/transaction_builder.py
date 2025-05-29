@@ -1,4 +1,4 @@
-
+import asyncio
 from typing import Any, Dict
 import logging
 
@@ -36,6 +36,7 @@ class TransactionBuilder:
         )
         self._logger.info('Done with deleting quotes')
         self._logger.info('Creating quotes')
+        await asyncio.sleep(1)  # Give some time for the deletion to be processed
         await self.create_quotes(
             wrapped_account,
             market_id=self.market_id,
@@ -55,17 +56,18 @@ class TransactionBuilder:
         max_fee
     ) -> None:
         '''Delete quotes based on the market maker's strategy.'''
-        self._logger.info('Deleting quotes')
+        self._logger.info('Deleting quotes F')
         for order in to_be_canceled:
             nonce = await wrapped_account.get_nonce()
+            await wrapped_account.increment_nonce()
             # TODO: Use ResourceBound instead of auto_estimate when invoking
-            await dex_contract.functions['delete_maker_order'].invoke_v3(
+            await (await dex_contract.functions['delete_maker_order'].invoke_v3(
                 maker_order_id=order.order_id,
                 nonce=nonce,
-                auto_estimate=True
-            )
-            logging.info(f"Canceling: {order.order_id}")
-            await wrapped_account.increment_nonce()
+                auto_estimate=True,
+                # skip_validate=True
+            )).wait_for_acceptance()
+            self._logger.info("Canceling: %s, nonce: %s", order.order_id, nonce)
 
 
     async def create_quotes(
@@ -88,6 +90,7 @@ class TransactionBuilder:
                 order_side = 'Bid'
 
             nonce = await wrapped_account.get_nonce()
+            await wrapped_account.increment_nonce()
 
             self._logger.info("Soon to sumbit order: q: %s, p: %s, s: %s, nonce: %s", order.amount, order.price, order_side, nonce)
             self._logger.debug("Soon to sumbit order: %s", dict(
@@ -102,17 +105,16 @@ class TransactionBuilder:
                 nonce = nonce
             ))
             # TODO: Use ResourceBound instead of auto_estimate when invoking
-            await dex_contract.functions['submit_maker_order'].invoke_v3(
-                market_id = market_id,
-                target_token_address = target_token_address,
-                order_price = order.price,
-                order_size = order.amount,
-                order_side = (order_side, None),
-                order_type = ('Basic', None),
-                time_limit = ('GTC', None),
-                # nonce = nonce + 1,
+            await (await dex_contract.functions['submit_maker_order'].invoke_v3(
+                market_id=market_id,
+                target_token_address=target_token_address,
+                order_price=order.price,
+                order_size=order.amount,
+                order_side=(order_side, None),
+                order_type=('Basic', None),
+                time_limit=('GTC', None),
+                nonce=nonce,
                 auto_estimate=True
-            )
-            await wrapped_account.increment_nonce()
+            )).wait_for_acceptance()
             self._logger.info("Submitting order: q: %s, p: %s, s: %s, nonce: %s", order.amount, order.price, order_side, nonce)
         self._logger.info('Done with order changes')

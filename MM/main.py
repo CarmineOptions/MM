@@ -32,9 +32,13 @@ from marketmaking.order import BasicOrder
 load_dotenv()
 
 REMUS_ADDRESS = '0x067e7555f9ff00f5c4e9b353ad1f400e2274964ea0942483fae97363fd5d7958'
-BASE_TOKEN_ADDRESS = 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
+# BASE_TOKEN_ADDRESS = 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
 # BASE_TOKEN_ADDRESS = 0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d
-QUOTE_TOKEN_ADDRESS = 0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8
+# QUOTE_TOKEN_ADDRESS = 0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8
+
+
+BASE_TOKEN_ADDRESS = 0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac # DOG
+QUOTE_TOKEN_ADDRESS = 0x040e81cfeb176bfdbc5047bbc55eb471cfab20a6b221f38d8fda134e1bfffca4 # wBTC
 
 RPC_URL = os.environ.get('STARKNET_RPC')
 if RPC_URL is None:
@@ -118,16 +122,16 @@ async def main():
 
     # configs - FIXME: should be in a config file
     all_remus_cfgs = await dex_contract.functions['get_all_market_configs'].call()
-    market_id = 1
+    market_id = 11
     market_cfg = [x for x in all_remus_cfgs[0] if x[0] == market_id][0]
     market_maker_cfg = {
-                'target_relative_distance_from_FP': 0.001, # where best order is created 
-                'max_relative_distance_from_FP': 0.003, # too far from FP to be considered best (it is considered deep)
+                'target_relative_distance_from_FP': 0.004, # where best order is created 
+                'max_relative_distance_from_FP': 0.075, # too far from FP to be considered best (it is considered deep)
                 'min_relative_distance_from_FP': 0.0005, # too close to FP to exist -> if closer kill the order
 
-                'order_dollar_size': 100 * 10**18,  # in $
-                'minimal_remaining_quote_size': 50,  # in $
-                'max_number_of_orders_per_side': 3,
+                'order_dollar_size': 2000 * 10**8,  # in DOG
+                'minimal_remaining_quote_size': 1000 * 10**8,  # in $
+                'max_number_of_orders_per_side': 1,
 
                 'max_fee': 9122241938326667
             }
