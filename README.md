@@ -11,6 +11,7 @@ Highlights of missing features:
 - Log into json, rather than .log file.
 - Better price fetching.
 - Create standardized connector to source data.
+- Handle "out of liquidity" situations.
 
 - In Market class, add execution of orders. Instead of calling invoke in reconciler, call "invoke" on our custom Market method (where one of the params is WAccount).
 - Add abstract classes.
