@@ -125,12 +125,12 @@ async def main():
     market_id = 11
     market_cfg = [x for x in all_remus_cfgs[0] if x[0] == market_id][0]
     market_maker_cfg = {
-                'target_relative_distance_from_FP': 0.004, # where best order is created 
+                'target_relative_distance_from_FP': 0.005, # where best order is created 
                 'max_relative_distance_from_FP': 0.075, # too far from FP to be considered best (it is considered deep)
                 'min_relative_distance_from_FP': 0.0005, # too close to FP to exist -> if closer kill the order
 
-                'order_dollar_size': 2000 * 10**8,  # in DOG
-                'minimal_remaining_quote_size': 1000 * 10**8,  # in $
+                'order_dollar_size': 5000 * 10**8,  # in DOG
+                'minimal_remaining_quote_size': 0,  # in $
                 'max_number_of_orders_per_side': 1,
 
                 'max_fee': 9122241938326667

@@ -71,7 +71,7 @@ class POCMMModel:
             for order in side:
                 # If the remaining order size is too small requote (cancel order)
                 if order.amount_remaining / 10**base_decimals * order.price / 10**18 < market_maker_cfg['minimal_remaining_quote_size']:
-                    self._logger.info(f"Canceling order because of insufficient amount. amount: {order.amount_remaining}")
+                    self._logger.info(f"Canceling order because of insufficient amount. amount remaining: {order.amount_remaining}, minimal remaining: {market_maker_cfg['minimal_remaining_quote_size']}")
                     self._logger.debug(f"Canceling order because of insufficient amount. order: {order}")
                     to_be_canceled_side.append(order)
                     continue

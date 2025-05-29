@@ -6,7 +6,7 @@ and about Starknet.
 
 The bot is currently operational, but a lot of work is required.
 
-Highlights of missing features:
+Missing features:
 - Config into actual cfg.
 - Log into json, rather than .log file.
 - Better price fetching.
@@ -17,11 +17,15 @@ Highlights of missing features:
 - Add abstract classes.
 - Separate logic in POCMMModel. One part is creation of optimal orders separate part is reconciliation.
 - Change v1 invoke to current version of invoke. Invoke from account with dex address, rather than dex Contract, with account already in place.
+- Remove f-strings from logging.
 
 - The bot is being prepared to handle multiple accounts. The work is half way done, meaning this is feature is not ready.
 - Handle multiple markets per DEX.
 - Handle multiple DEXes.
 
 - Create new reconciliation logic. Current version doesn't account for inflight orders.
-- Connect to wss, rather than API.
+- Consider to connect to wss, rather than API.
 - Build simple viewer/debugger of the past.
+
+Known bugs:
+- DOG/wBTC cancels orders because of insufficient order size. This is likely caused by incorrectly handeling the decimals.
