@@ -2,6 +2,7 @@ import asyncio
 from typing import Any, Dict
 import logging
 
+from venues.remus import RemusMarketConfig
 from marketmaking.order import BasicOrder, FutureOrder
 from marketmaking.waccount import WAccount
 
@@ -14,7 +15,7 @@ class TransactionBuilder:
     submitting new orders based on the market maker's strategy.
     '''
 
-    def __init__(self, dex_contract, market_id: int, market_cfg: Dict[str, Any], max_fee: int) -> None:
+    def __init__(self, dex_contract, market_id: int, market_cfg: RemusMarketConfig, max_fee: int) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self._logger.info('Initializing TransactionBuilder')
 
@@ -39,7 +40,6 @@ class TransactionBuilder:
         await asyncio.sleep(1)  # Give some time for the deletion to be processed
         await self.create_quotes(
             wrapped_account,
-            market_id=self.market_id,
             market_cfg=self.market_cfg,
             dex_contract=self.dex_contract,
             to_be_created=to_be_created,
@@ -73,8 +73,7 @@ class TransactionBuilder:
     async def create_quotes(
         self,
         wrapped_account: WAccount,
-        market_id,
-        market_cfg,
+        market_cfg: RemusMarketConfig,
         dex_contract,
         to_be_created: list[FutureOrder],
         max_fee
@@ -83,10 +82,10 @@ class TransactionBuilder:
         
         for order in to_be_created:
             if order.order_side.lower() == 'ask':
-                target_token_address = market_cfg['base_token']
+                target_token_address = market_cfg.base_token.address
                 order_side = 'Ask'
             else:
-                target_token_address = market_cfg['quote_token']
+                target_token_address = market_cfg.quote_token.address
                 order_side = 'Bid'
 
             nonce = await wrapped_account.get_nonce()
@@ -94,7 +93,7 @@ class TransactionBuilder:
 
             self._logger.info("Soon to sumbit order: q: %s, p: %s, s: %s, nonce: %s", order.amount, order.price, order_side, nonce)
             self._logger.debug("Soon to sumbit order: %s", dict(
-                market_id = market_id,
+                market_id = market_cfg.market_id,
                 target_token_address = target_token_address,
                 order_price = order.price,
                 order_size = order.amount,
@@ -106,7 +105,7 @@ class TransactionBuilder:
             ))
             # TODO: Use ResourceBound instead of auto_estimate when invoking
             await (await dex_contract.functions['submit_maker_order'].invoke_v3(
-                market_id=market_id,
+                market_id = market_cfg.market_id,
                 target_token_address=target_token_address,
                 order_price=order.price,
                 order_size=order.amount,

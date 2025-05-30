@@ -1,6 +1,7 @@
 from decimal import Decimal
 import logging
 
+from MM.venues.remus import RemusMarketConfig
 from cfg.cfg_classes import MarketMakerConfig
 from marketmaking.waccount import WAccount
 from marketmaking.order import BasicOrder, FutureOrder
@@ -11,7 +12,7 @@ from marketmaking.statemarket import StateMarket
 class POCMMModel:
     # POCMMModel contains the logic from the POC market maker. The goal is to test the SW and build the model later. 
     # The POCMMModel also contains reconciliation.
-    def __init__(self, state_market: StateMarket, market_cfg, market_maker_cfg: MarketMakerConfig) -> None:
+    def __init__(self, state_market: StateMarket, market_cfg: RemusMarketConfig, market_maker_cfg: MarketMakerConfig) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self._logger.info('Initializing POCMMModel')
 
@@ -45,7 +46,7 @@ class POCMMModel:
         asks: list[BasicOrder],
         bids: list[BasicOrder],
         market_maker_cfg: MarketMakerConfig,
-        market_cfg: dict,
+        market_cfg: RemusMarketConfig,
         fair_price: Decimal
     ) -> tuple[list[BasicOrder], list[FutureOrder]]:
         """
@@ -123,7 +124,7 @@ class POCMMModel:
                     ((1 + market_maker_cfg.max_relative_distance_from_FP) * fair_price < ordered_remaining[0].price / 10**18)
                 )
             ):
-                tick_size = Decimal(market_cfg['tick_size'])
+                tick_size = Decimal(market_cfg.tick_size)
                 if side_name == 'ask':
                     optimal_price = int(fair_price * (1 + market_maker_cfg.target_relative_distance_from_FP) * 10**18)
                     optimal_price = optimal_price // tick_size
@@ -133,8 +134,8 @@ class POCMMModel:
                     optimal_price = optimal_price // tick_size
                     optimal_price = optimal_price * tick_size
                 optimal_amount = market_maker_cfg.order_size / (optimal_price / 10**18)
-                optimal_amount = optimal_amount // market_cfg['lot_size']
-                optimal_amount = optimal_amount * market_cfg['lot_size']
+                optimal_amount = optimal_amount // market_cfg.lot_size
+                optimal_amount = optimal_amount * market_cfg.lot_size
         
                 new_order = FutureOrder(
                     order_side = side_name,

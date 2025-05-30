@@ -18,6 +18,7 @@ from starknet_py.net.account.account import Account
 from starknet_py.net.signer.key_pair import KeyPair
 from starknet_py.net.models.chains import StarknetChainId
 
+from MM.venues.remus import RemusDexView
 from instruments.starknet import get_sn_token_from_symbol
 from cfg.cfg_classes import AccountConfig
 from oracles.simple_prices import get_price_fetcher
@@ -106,7 +107,7 @@ def pretty_print_orders(asks, bids):
 
 
 async def main():
-    # TODO: Somf cfg validaiton (base!=quote, etc)
+    # TODO: Some cfg validaiton (base!=quote, etc)
     
     setup_logging('DEBUG')
 
@@ -114,6 +115,7 @@ async def main():
 
     cfg = load_config(args.cfg_path)
 
+    market_id = cfg.asset.market_id
     account = get_account(cfg.account)
     wrapped_account = WAccount(account=account)
 
@@ -126,30 +128,24 @@ async def main():
     if quote_token is None:
         raise ValueError(f"Token `{cfg.asset.quote_asset}` is not supported")
 
-    base_token_address = int(base_token.address, 0)
-    quote_token_address = int(quote_token.address, 0)
-
     quote_token_contract = await Contract.from_address(
-        address=quote_token_address,
+        address=quote_token.address,
         provider=account
     )
     base_token_contract = await Contract.from_address(
-        address=base_token_address,
+        address=base_token.address,
         provider=account
     )
     dex_contract = await Contract.from_address(
         address=REMUS_ADDRESS,
         provider=account
     )
-    # configs - FIXME: should be in a config file
-    all_remus_cfgs = await dex_contract.functions['get_all_market_configs'].call()
-    market_cfg = [x for x in all_remus_cfgs[0] if x[0] == cfg.asset.market_id][0][1]
 
-    if market_cfg['base_token'] != base_token_address:
-        raise ValueError("Base token and market config base token mismatch")
+    remus = RemusDexView(account = account)
+    market_cfg = await remus.get_market_config(market_id)
+    if market_cfg is None:
+        raise ValueError(f"Unable to fetch RemusMarketConfig for market_id={market_id}")
 
-    if market_cfg['quote_token'] != quote_token_address:
-        raise ValueError("Quote token and market config base token mismatch")
     
     market_maker_cfg = cfg.marketmaker
     
@@ -159,8 +155,8 @@ async def main():
             base_token_contract=base_token_contract,
             quote_token_contract=quote_token_contract,
             dex_address=REMUS_ADDRESS,
-            base_token_address=int(base_token_address),
-            quote_token_address=int(quote_token_address),
+            base_token_address=base_token.address,
+            quote_token_address=quote_token.address,
     )
 
     state = State(markets=[market], accounts=[wrapped_account])
@@ -191,15 +187,12 @@ async def main():
         blockchain_connectors=None
     )
 
-    market_id = cfg.asset.market_id
 
     get_price = get_price_fetcher(cfg.asset.market_id)
 
     await market_maker.initialize_trading()
 
     logging.warning("!!! Make sure `base_decimals` in pocmmmodel.py are correct !!!")
-    # await asyncio.sleep(5)
-
 
     while True:
         try:
@@ -212,18 +205,15 @@ async def main():
             my_orders = await dex_contract.functions['get_all_user_orders'].call(
                 user=wrapped_account.account.address
             )
-            bids = [x for x in my_orders[0] if x['market_id'] == market_id and x['order_side'].variant == 'Bid']
-            asks = [x for x in my_orders[0] if x['market_id'] == market_id and x['order_side'].variant == 'Ask']
-            bids = sorted(bids, key = lambda x: -x['price'])
-            asks = sorted(asks, key = lambda x: -x['price'])
-            bids = [
-                BasicOrder.from_remus_order(o)
-                for o in bids
-            ]
-            asks = [
-                BasicOrder.from_remus_order(o)
-                for o in asks
-            ]
+            my_orders = await remus.get_all_user_orders_for_market_id(
+                address = wrapped_account.account.address,
+                market_id = market_id
+            )
+
+            bids = [x for x in my_orders if x.market_id == market_id and x.order_side.lower() == 'bid']
+            asks = [x for x in my_orders if x.market_id == market_id and x.order_side.lower() == 'ask']
+            bids = sorted(bids, key = lambda x: -x.price)
+            asks = sorted(asks, key = lambda x: -x.price)
 
             logging.info('My current orders: %s, %s.', bids, asks)
             await market_maker.pulse(data = {
