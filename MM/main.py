@@ -18,6 +18,8 @@ from starknet_py.net.account.account import Account
 from starknet_py.net.signer.key_pair import KeyPair
 from starknet_py.net.models.chains import StarknetChainId
 
+from instruments.starknet import get_sn_token_from_symbol
+from cfg.cfg_classes import AccountConfig
 from oracles.simple_prices import get_price_fetcher
 from marketmaking.market import Market
 from marketmaking.marketmaker import MarketMaker
@@ -27,38 +29,17 @@ from marketmaking.statemarket import StateMarket
 from marketmaking.transaction_builder import TransactionBuilder
 from marketmaking.waccount import WAccount
 from marketmaking.order import BasicOrder
-
+from cfg import load_config
+from args import parse_args
 
 load_dotenv()
 
 REMUS_ADDRESS = '0x067e7555f9ff00f5c4e9b353ad1f400e2274964ea0942483fae97363fd5d7958'
-# BASE_TOKEN_ADDRESS = 0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
-# BASE_TOKEN_ADDRESS = 0x4718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d
-# QUOTE_TOKEN_ADDRESS = 0x53c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8
-
-
-BASE_TOKEN_ADDRESS = 0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac # DOG
-QUOTE_TOKEN_ADDRESS = 0x040e81cfeb176bfdbc5047bbc55eb471cfab20a6b221f38d8fda134e1bfffca4 # wBTC
-
-RPC_URL = os.environ.get('STARKNET_RPC')
-if RPC_URL is None:
-    raise ValueError('No `STARKNET_RPC` env found')
-
-WALLET_ADDRESS = os.environ.get('WALLET_ADDRESS')
-if WALLET_ADDRESS is None:
-    raise ValueError('No `WALLET_ADDRESS` env found')
-
-
-ACCOUNT_PASSWORD = os.environ.get('ACCOUNT_PASSWORD')
-if ACCOUNT_PASSWORD is None:
-    raise ValueError("No `ACCOUNT_PASSWORD` env found")
-ACCOUNT_PASSWORD = ACCOUNT_PASSWORD.encode()
-
-PATH_TO_KEYSTORE = os.environ.get("KEYSTORE_PATH")
-if PATH_TO_KEYSTORE is None:
-    raise ValueError("No `KEYSTORE_PATH` env found")
-
 NETWORK='MAINNET'
+
+
+# BASE_TOKEN_ADDRESS = 0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac # DOG
+# QUOTE_TOKEN_ADDRESS = 0x040e81cfeb176bfdbc5047bbc55eb471cfab20a6b221f38d8fda134e1bfffca4 # wBTC
 
 def setup_logging(log_level: str):
     """Configures logging for the application."""
@@ -77,14 +58,38 @@ def setup_logging(log_level: str):
     logging.getLogger().addHandler(console)
 
 
+def get_account(account_cfg: AccountConfig) -> Account:
+    """
+    Get a market makers account.
 
-def get_account() -> Account:
-    """Get a market makers account."""
-    client = FullNodeClient(node_url=RPC_URL) # type: ignore
+    Raises ValueError if any of needed environment variables is not defined.
+    """
+
+    rpc_url = account_cfg.rpc_url
+    if rpc_url is None:
+        raise ValueError(f"No rpc url found from env variable `{account_cfg.rpc_url_env}`")
+    
+    wallet_address = account_cfg.wallet_address
+    if wallet_address is None:
+        raise ValueError(f"No wallet address found from env variable `{account_cfg.wallet_address_env}`")
+
+    keystore_path = account_cfg.keystore_path
+    if keystore_path is None:
+        raise ValueError(f"No keystore path found from env variable `{account_cfg.keystore_path_env}`")
+
+    account_password = account_cfg.account_password
+    if account_password is None:
+        raise ValueError(f"No account password found from env variable `{account_cfg.account_password_env}`")
+
+
+    client = FullNodeClient(node_url=rpc_url) 
     account = Account(
         client = client,
-        address = WALLET_ADDRESS, # type: ignore
-        key_pair = KeyPair.from_keystore(PATH_TO_KEYSTORE, ACCOUNT_PASSWORD), # type: ignore
+        address = wallet_address,
+        key_pair = KeyPair.from_keystore(
+            keystore_path, 
+            account_password.encode() # type: ignore
+        ),
         chain = StarknetChainId[NETWORK]
     )
     logging.info("Succesfully loaded account.")
@@ -102,17 +107,33 @@ def pretty_print_orders(asks, bids):
 
 async def main():
     setup_logging('DEBUG')
-    
-    account = get_account()
 
+    args = parse_args()
+
+    cfg = load_config(args.cfg_path)
+
+    account = get_account(cfg.account)
     wrapped_account = WAccount(account=account)
 
+    base_token_address = cfg.asset.base_asset
+    quote_token_address = cfg.asset.quote_asset
+
+    base_token = get_sn_token_from_symbol(base_token_address)
+    if base_token is None:
+        raise ValueError(f"Token with address `{base_token_address}` is not supported")
+
+    quote_token = get_sn_token_from_symbol(quote_token_address)
+    if quote_token is None:
+        raise ValueError(f"Token with address `{quote_token_address}` is not supported")
+
+    
+
     quote_token_contract = await Contract.from_address(
-        address=QUOTE_TOKEN_ADDRESS,
+        address=int(quote_token_address, 0),
         provider=account
     )
     base_token_contract = await Contract.from_address(
-        address=BASE_TOKEN_ADDRESS,
+        address=int(base_token_address),
         provider=account
     )
     dex_contract = await Contract.from_address(

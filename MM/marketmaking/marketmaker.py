@@ -199,14 +199,12 @@ class MarketMaker:
         self._logger.info("Setting up unlimited approvals for tokens...")
 
         for account in self.accounts:
+            nonce = await account.get_nonce()
 
             # TODO: Use ResourceBound instead of auto_estimate when invoking
             max_fee = await self._get_max_fee(account, Urgency.MEDIUM)
 
             for market in self.account_market_pairs[account.address]:
-                nonce = await account.get_nonce()
-                await account.increment_nonce()
-                await account.increment_nonce()
                 # Approve base token
 
                 await (await market.base_token_contract.functions['approve'].invoke_v3(
@@ -215,6 +213,7 @@ class MarketMaker:
                     nonce=nonce,
                     auto_estimate=True
                 )).wait_for_acceptance()
+                nonce += 1
                 self._logger.info(
                     'Set unlimited approval for address: %s, base token: %s',
                     hex(account.address),
@@ -225,9 +224,10 @@ class MarketMaker:
                 await (await market.quote_token_contract.functions['approve'].invoke_v3(
                     spender=int(market.dex_address, 16),
                     amount=MAX_UINT,
-                    nonce=nonce+1,
+                    nonce=nonce,
                     auto_estimate=True
                 )).wait_for_acceptance()
+                nonce += 1
                 self._logger.info(
                     'Set unlimited approval for address: %s, quote token: %s',
                     hex(account.address),
@@ -235,6 +235,7 @@ class MarketMaker:
                 )
                 self._logger.info(f"Set unlimited approval for address")
 
+                await account.set_latest_nonce(nonce)
         self._logger.info(f"Setting unlimited approvals is done.")
 
 
