@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from instrument import Instrument
+from instruments.instrument import Instrument
 
 @dataclass
 class StarknetToken(Instrument):

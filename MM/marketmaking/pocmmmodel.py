@@ -1,5 +1,7 @@
+from decimal import Decimal
 import logging
 
+from cfg.cfg_classes import MarketMakerConfig
 from marketmaking.waccount import WAccount
 from marketmaking.order import BasicOrder, FutureOrder
 from marketmaking.statemarket import StateMarket
@@ -9,13 +11,13 @@ from marketmaking.statemarket import StateMarket
 class POCMMModel:
     # POCMMModel contains the logic from the POC market maker. The goal is to test the SW and build the model later. 
     # The POCMMModel also contains reconciliation.
-    def __init__(self, state_market: StateMarket, market_cfg, market_maker_cfg) -> None:
+    def __init__(self, state_market: StateMarket, market_cfg, market_maker_cfg: MarketMakerConfig) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self._logger.info('Initializing POCMMModel')
 
         # self.state_market: StateMarket = state_market
         self.market_cfg = market_cfg
-        self.market_maker_cfg = market_maker_cfg
+        self.market_maker_cfg: MarketMakerConfig = market_maker_cfg
 
 
     def get_optimal_orders(self, account: WAccount, state_market: StateMarket) -> tuple[list[BasicOrder], list[FutureOrder]]:
@@ -42,9 +44,9 @@ class POCMMModel:
         self,
         asks: list[BasicOrder],
         bids: list[BasicOrder],
-        market_maker_cfg,
-        market_cfg,
-        fair_price
+        market_maker_cfg: MarketMakerConfig,
+        market_cfg: dict,
+        fair_price: Decimal
     ) -> tuple[list[BasicOrder], list[FutureOrder]]:
         """
         If an existing quote has lower than market_maker_cfg['minimal_remaining_quote_size'] quantity, it is requoted.
@@ -70,8 +72,8 @@ class POCMMModel:
         
             for order in side:
                 # If the remaining order size is too small requote (cancel order)
-                if order.amount_remaining / 10**base_decimals * order.price / 10**18 < market_maker_cfg['minimal_remaining_quote_size']:
-                    self._logger.info(f"Canceling order because of insufficient amount. amount remaining: {order.amount_remaining}, minimal remaining: {market_maker_cfg['minimal_remaining_quote_size']}")
+                if order.amount_remaining / 10**base_decimals * order.price / 10**18 < market_maker_cfg.minimal_remaining_size:
+                    self._logger.info(f"Canceling order because of insufficient amount. amount remaining: {order.amount_remaining}, minimal remaining: {market_maker_cfg.minimal_remaining_size}")
                     self._logger.debug(f"Canceling order because of insufficient amount. order: {order}")
                     to_be_canceled_side.append(order)
                     continue
@@ -79,13 +81,13 @@ class POCMMModel:
                     (
                         (side_name == 'bid')
                         and
-                        ((1 - market_maker_cfg['min_relative_distance_from_FP']) * fair_price < order.price / 10**18)
+                        ((1 - market_maker_cfg.min_relative_distance_from_FP) * fair_price < order.price / 10**18)
                     )
                     or
                     (
                         (side_name == 'ask')
                         and
-                        (order.price / 10**18 < (1 + market_maker_cfg['min_relative_distance_from_FP']) * fair_price)
+                        (order.price / 10**18 < (1 + market_maker_cfg.min_relative_distance_from_FP) * fair_price)
                     )
                 ):
                     self._logger.info(f"Canceling order because too close to FP. "
@@ -94,10 +96,10 @@ class POCMMModel:
                     to_be_canceled_side.append(order)
             # If there is too many orders in the market that are not being canceled, cancel those with the most distant price from FP
             # to a point that only the "allowed" number of orders is being kept.
-            if len(side) - len(to_be_canceled_side) > market_maker_cfg['max_number_of_orders_per_side']:
+            if len(side) - len(to_be_canceled_side) > market_maker_cfg.max_orders_per_side:
                 # assumes "side" (e.g. asks and bids) are ordered from the best to the deepest
                 to_be_canceled_side.extend(
-                    [order for order in side if order not in to_be_canceled_side][market_maker_cfg['max_number_of_orders_per_side']:]
+                    [order for order in side if order not in to_be_canceled_side][market_maker_cfg.max_orders_per_side:]
                 )
             to_be_canceled.extend(to_be_canceled_side)
         
@@ -111,34 +113,33 @@ class POCMMModel:
                     (side_name == 'bid')
                     and
                     # ordered_remaining will not be empty here (`or` performs short-circuit eval)
-                    (ordered_remaining[0].price / 10**18 < (1 - market_maker_cfg['max_relative_distance_from_FP']) * fair_price)
+                    (ordered_remaining[0].price / 10**18 < (1 - market_maker_cfg.max_relative_distance_from_FP) * fair_price)
                 )
                 or
                 (
                     (side_name == 'ask')
                     and
                     # ordered_remaining will not be empty here (`or` performs short-circuit eval)
-                    ((1 + market_maker_cfg['max_relative_distance_from_FP']) * fair_price < ordered_remaining[0].price / 10**18)
+                    ((1 + market_maker_cfg.max_relative_distance_from_FP) * fair_price < ordered_remaining[0].price / 10**18)
                 )
             ):
-                tick_size = market_cfg[1]['tick_size']
-                base_decimals_ = 18 if market_cfg[0] == 3 else base_decimals
+                tick_size = Decimal(market_cfg['tick_size'])
                 if side_name == 'ask':
-                    optimal_price = int(fair_price * (1 + market_maker_cfg['target_relative_distance_from_FP']) * 10**18)
+                    optimal_price = int(fair_price * (1 + market_maker_cfg.target_relative_distance_from_FP) * 10**18)
                     optimal_price = optimal_price // tick_size
                     optimal_price = optimal_price * tick_size + tick_size
                 else:
-                    optimal_price = int(fair_price * (1 - market_maker_cfg['target_relative_distance_from_FP']) * 10**18)
+                    optimal_price = int(fair_price * (1 - market_maker_cfg.target_relative_distance_from_FP) * 10**18)
                     optimal_price = optimal_price // tick_size
                     optimal_price = optimal_price * tick_size
-                optimal_amount = market_maker_cfg['order_dollar_size'] / (optimal_price / 10**18)
-                optimal_amount = optimal_amount // market_cfg[1]['lot_size']
-                optimal_amount = optimal_amount * market_cfg[1]['lot_size']
+                optimal_amount = market_maker_cfg.order_size / (optimal_price / 10**18)
+                optimal_amount = optimal_amount // market_cfg['lot_size']
+                optimal_amount = optimal_amount * market_cfg['lot_size']
         
                 new_order = FutureOrder(
                     order_side = side_name,
                     amount = int(optimal_amount),
-                    price = optimal_price
+                    price = int(optimal_price)
                 )
                 to_be_created.append(new_order)
 

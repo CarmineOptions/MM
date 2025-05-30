@@ -31,6 +31,7 @@ class AccountConfig(BaseModel):
 class AssetConfig(BaseModel):
     base_asset: str
     quote_asset: str
+    market_id: int
 
 class MarketMakerConfig(BaseModel):
     target_relative_distance_from_FP: Decimal

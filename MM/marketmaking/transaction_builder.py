@@ -83,10 +83,10 @@ class TransactionBuilder:
         
         for order in to_be_created:
             if order.order_side.lower() == 'ask':
-                target_token_address = market_cfg[1]['base_token']
+                target_token_address = market_cfg['base_token']
                 order_side = 'Ask'
             else:
-                target_token_address = market_cfg[1]['quote_token']
+                target_token_address = market_cfg['quote_token']
                 order_side = 'Bid'
 
             nonce = await wrapped_account.get_nonce()

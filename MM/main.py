@@ -106,6 +106,8 @@ def pretty_print_orders(asks, bids):
 
 
 async def main():
+    # TODO: Somf cfg validaiton (base!=quote, etc)
+    
     setup_logging('DEBUG')
 
     args = parse_args()
@@ -115,56 +117,50 @@ async def main():
     account = get_account(cfg.account)
     wrapped_account = WAccount(account=account)
 
-    base_token_address = cfg.asset.base_asset
-    quote_token_address = cfg.asset.quote_asset
 
-    base_token = get_sn_token_from_symbol(base_token_address)
+    base_token = get_sn_token_from_symbol(cfg.asset.base_asset)
     if base_token is None:
-        raise ValueError(f"Token with address `{base_token_address}` is not supported")
+        raise ValueError(f"Token `{cfg.asset.base_asset}` is not supported")
 
-    quote_token = get_sn_token_from_symbol(quote_token_address)
+    quote_token = get_sn_token_from_symbol(cfg.asset.quote_asset)
     if quote_token is None:
-        raise ValueError(f"Token with address `{quote_token_address}` is not supported")
+        raise ValueError(f"Token `{cfg.asset.quote_asset}` is not supported")
 
-    
+    base_token_address = int(base_token.address, 0)
+    quote_token_address = int(quote_token.address, 0)
 
     quote_token_contract = await Contract.from_address(
-        address=int(quote_token_address, 0),
+        address=quote_token_address,
         provider=account
     )
     base_token_contract = await Contract.from_address(
-        address=int(base_token_address),
+        address=base_token_address,
         provider=account
     )
     dex_contract = await Contract.from_address(
         address=REMUS_ADDRESS,
         provider=account
     )
-
     # configs - FIXME: should be in a config file
     all_remus_cfgs = await dex_contract.functions['get_all_market_configs'].call()
-    market_id = 11
-    market_cfg = [x for x in all_remus_cfgs[0] if x[0] == market_id][0]
-    market_maker_cfg = {
-                'target_relative_distance_from_FP': 0.005, # where best order is created 
-                'max_relative_distance_from_FP': 0.075, # too far from FP to be considered best (it is considered deep)
-                'min_relative_distance_from_FP': 0.0005, # too close to FP to exist -> if closer kill the order
+    market_cfg = [x for x in all_remus_cfgs[0] if x[0] == cfg.asset.market_id][0][1]
 
-                'order_dollar_size': 5000 * 10**8,  # in DOG
-                'minimal_remaining_quote_size': 0,  # in $
-                'max_number_of_orders_per_side': 1,
+    if market_cfg['base_token'] != base_token_address:
+        raise ValueError("Base token and market config base token mismatch")
 
-                'max_fee': 9122241938326667
-            }
+    if market_cfg['quote_token'] != quote_token_address:
+        raise ValueError("Quote token and market config base token mismatch")
+    
+    market_maker_cfg = cfg.marketmaker
     
     market = Market(
-            market_id=market_id,
+            market_id=cfg.asset.market_id,
             dex_contract=dex_contract,
             base_token_contract=base_token_contract,
             quote_token_contract=quote_token_contract,
             dex_address=REMUS_ADDRESS,
-            base_token_address=BASE_TOKEN_ADDRESS,
-            quote_token_address=QUOTE_TOKEN_ADDRESS,
+            base_token_address=int(base_token_address),
+            quote_token_address=int(quote_token_address),
     )
 
     state = State(markets=[market], accounts=[wrapped_account])
@@ -178,9 +174,9 @@ async def main():
 
     transaction_builder = TransactionBuilder(
         dex_contract=dex_contract,
-        market_id=market_id,
+        market_id=cfg.asset.market_id,
         market_cfg=market_cfg,
-        max_fee=market_maker_cfg['max_fee']
+        max_fee=0
     )
 
     market_maker = MarketMaker(
@@ -195,12 +191,14 @@ async def main():
         blockchain_connectors=None
     )
 
-    get_price = get_price_fetcher(market_id)
+    market_id = cfg.asset.market_id
+
+    get_price = get_price_fetcher(cfg.asset.market_id)
 
     await market_maker.initialize_trading()
 
     logging.warning("!!! Make sure `base_decimals` in pocmmmodel.py are correct !!!")
-    await asyncio.sleep(5)
+    # await asyncio.sleep(5)
 
 
     while True:
