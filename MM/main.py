@@ -141,7 +141,7 @@ async def main():
         provider=account
     )
 
-    remus = RemusDexView(account = account)
+    remus = await RemusDexView.from_provider(provider = account)
     market_cfg = await remus.get_market_config(market_id)
     if market_cfg is None:
         raise ValueError(f"Unable to fetch RemusMarketConfig for market_id={market_id}")

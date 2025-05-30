@@ -1,10 +1,14 @@
 from dataclasses import dataclass
+from decimal import Decimal
 import logging
 from typing import OrderedDict
 
 from starknet_py.net.account.account import Account
-from starknet_py.contract import Contract
+from starknet_py.net.full_node_client import FullNodeClient
+from starknet_py.contract import Contract, PreparedFunctionInvokeV3
 
+
+from instruments.instrument import InstrumentAmount
 from marketmaking.order import BasicOrder
 from instruments.starknet import StarknetToken, get_sn_token_from_address
 
@@ -18,7 +22,7 @@ class RemusFeesConfig:
     @staticmethod
     def from_dict(fees: dict) -> "RemusFeesConfig":
         return RemusFeesConfig(
-            taker_fee_bps=fees['taker_fee_bps'],
+            taker_fee_bps = fees['taker_fee_bps'],
             maker_fee_bps = fees['maker_fee_bps']
         )
 
@@ -53,16 +57,24 @@ class RemusMarketConfig:
 
 class RemusDexView:
     """
-    Class representing RemusDex contract. Currently for view functions only
+    Class representing RemusDex view functions for polling the dex state. 
     """
-    async def __init__(self, account: Account):
+    def __init__(self, contract: Contract):
+        self._contract = contract
 
-        self._contract = await Contract.from_address(
+    @staticmethod
+    async def from_provider(provider: Account | FullNodeClient):
+        contract = await Contract.from_address(
             address=REMUS_ADDRESS,
-            provider =account
+            provider = provider
         )
 
+        return RemusDexView(contract = contract)
+
     async def get_market_config(self, market_id: int) -> RemusMarketConfig | None:
+        """
+        Returns RemusMarketConfig for given market_id
+        """
         config = await self._contract.functions['get_market_config'].call(market_id = market_id)       
 
         if config[0]['base_token'] == 0:
@@ -71,7 +83,9 @@ class RemusDexView:
         return RemusMarketConfig.from_dict(config[0], market_id=market_id) 
     
     async def get_all_user_orders(self, address: int) -> list[BasicOrder]:
-        
+        """
+        Returns all user orders.
+        """
         orders = await self._contract.functions['get_all_user_orders'].call(
             user=address
         )
@@ -81,9 +95,55 @@ class RemusDexView:
         ]
     
     async def get_all_user_orders_for_market_id(self, address: int, market_id: int) -> list[BasicOrder]:
+        """
+        Returns all user orders that are present on market given by market_id
+        """
         orders = await self.get_all_user_orders(address)
         
         return [
             o for o in orders
             if o.market_id == market_id
         ]
+
+    async def get_claimable(self, token: StarknetToken, user_address: int) -> Decimal:
+        # TODO: Use some class here representing the amount of token that'll include decimals etc
+        claimable = await self._contract.functions['get_claimable'].call(
+            token_address = token.address,
+            user_address = user_address
+        )
+
+        return Decimal(claimable[0])
+
+class RemusDexClient:
+    """
+    Client for interacting with RemusDex. 
+
+    This client should be used with single Account only. 
+    MultiClient will be implemented in the future.
+    """
+    async def __init__(self, account: Account):
+        self._contract = await Contract.from_address(
+            address = REMUS_ADDRESS,
+            provider = account
+        )
+        self.view = RemusDexView(provider = account)
+
+    async def get_claim_call(self, token: StarknetToken, amount: Decimal, nonce: int | None) -> PreparedFunctionInvokeV3 | None:
+        if amount <= 0:
+            return None
+        
+        if nonce is not None:
+            call = self._contract.functions['claim'].prepare_invoke_v3(
+                token_address = token.address,
+                amount = int(amount),
+                nonce = nonce,
+                auto_estimate=True
+            )
+        else: 
+            call = self._contract.functions['claim'].prepare_invoke_v3(
+                token_address = token.address,
+                amount = int(amount),
+                auto_estimate=True
+            )
+        
+        return call
