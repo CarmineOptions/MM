@@ -1,3 +1,12 @@
+
+## ⚠️ Disclaimer
+
+This project is for **educational and research purposes only**. It does **not constitute financial advice** or a recommendation to trade. Use it at your own risk.
+
+We make **no guarantees** about performance, profitability, or safety. You are solely responsible for any outcomes, and must ensure compliance with applicable laws and regulations.
+
+
+
 # MM
 
 This MM bot is heavily inspired by https://github.com/blockworks-foundation/mango-explorer/
