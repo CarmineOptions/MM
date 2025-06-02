@@ -178,3 +178,5 @@ cython_debug/
 
 # Keys to STRK account
 keystore.json
+.vscode/
+playground.ipynb
