@@ -1,5 +1,7 @@
 from starknet_py.contract import Contract
 
+from venues.remus.remus import RemusDexClient
+
 
 
 class Market:
@@ -12,7 +14,7 @@ class Market:
     def __init__(
             self,
             market_id: int,
-            dex_contract: Contract,
+            dex_contract: RemusDexClient,
             base_token_contract: Contract,
             quote_token_contract: Contract,
             dex_address: str,

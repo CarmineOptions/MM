@@ -18,7 +18,7 @@ from starknet_py.net.account.account import Account
 from starknet_py.net.signer.key_pair import KeyPair
 from starknet_py.net.models.chains import StarknetChainId
 
-from MM.venues.remus.remus import RemusDexView
+from MM.venues.remus.remus import RemusDexClient, RemusDexView
 from instruments.starknet import get_sn_token_from_symbol
 from cfg.cfg_classes import AccountConfig
 from oracles.simple_prices import get_price_fetcher
@@ -100,10 +100,10 @@ def get_account(account_cfg: AccountConfig) -> Account:
 def pretty_print_orders(asks, bids):
     logging.info('PRETTY PRINTED CURRENT ORDERS.')
     for ask in sorted(asks, key=lambda x: -x.price):
-        logging.info('\t\t%s; %s', ask.price / 10**18, ask.amount_remaining / 10**18)
+        logging.info('\t\t%s; %s', ask.price , ask.amount_remaining )
     logging.info('XXX')
     for bid in sorted(bids, key=lambda x: -x.price):
-        logging.info('\t\t%s; %s', bid.price / 10**18, bid.amount_remaining / 10**18)
+        logging.info('\t\t%s; %s', bid.price, bid.amount_remaining)
 
 
 async def main():
@@ -136,13 +136,10 @@ async def main():
         address=base_token.address,
         provider=account
     )
-    dex_contract = await Contract.from_address(
-        address=REMUS_ADDRESS,
-        provider=account
-    )
 
-    remus = await RemusDexView.from_provider(provider = account)
-    market_cfg = await remus.get_market_config(market_id)
+    remus_client = await RemusDexClient.from_account(account = account)
+    market_cfg = await remus_client.view.get_market_config(market_id)
+
     if market_cfg is None:
         raise ValueError(f"Unable to fetch RemusMarketConfig for market_id={market_id}")
     
@@ -150,7 +147,7 @@ async def main():
     
     market = Market(
             market_id=cfg.asset.market_id,
-            dex_contract=dex_contract,
+            dex_contract=remus_client,
             base_token_contract=base_token_contract,
             quote_token_contract=quote_token_contract,
             dex_address=REMUS_ADDRESS,
@@ -168,7 +165,7 @@ async def main():
     )
 
     transaction_builder = TransactionBuilder(
-        dex_contract=dex_contract,
+        remus_client=remus_client,
         market_id=cfg.asset.market_id,
         market_cfg=market_cfg,
         max_fee=0
@@ -201,10 +198,7 @@ async def main():
             logging.info('Claimed tokens for market_id: %s', market_id)
 
             # Get my orders from the market and pulse them.
-            my_orders = await dex_contract.functions['get_all_user_orders'].call(
-                user=wrapped_account.account.address
-            )
-            my_orders = await remus.get_all_user_orders_for_market_id(
+            my_orders = await remus_client.view.get_all_user_orders_for_market_id(
                 address = wrapped_account.account.address,
                 market_id = market_id
             )

@@ -10,7 +10,7 @@ from starknet_py.contract import Contract, PreparedFunctionInvokeV3
 
 from MM.venues.remus.remus_market_configs import RemusMarketConfig, get_preloaded_remus_market_config
 from instruments.instrument import InstrumentAmount
-from marketmaking.order import BasicOrder
+from marketmaking.order import BasicOrder, FutureOrder
 from instruments.starknet import StarknetToken, get_sn_token_from_address
 
 REMUS_ADDRESS = '0x067e7555f9ff00f5c4e9b353ad1f400e2274964ea0942483fae97363fd5d7958'
@@ -124,14 +124,23 @@ class RemusDexClient:
     This client should be used with single Account only.
     MultiClient will be implemented in the future.
     """
-    async def __init__(self, account: Account):
-        self._contract = await Contract.from_address(
-            address = REMUS_ADDRESS,
-            provider = account
-        )
+    def __init__(self, contract: Contract):
+        self._contract = contract
         self.view = RemusDexView(contract=self._contract)
 
-    async def get_claim_call(self, token: StarknetToken, amount: Decimal, nonce: int | None) -> PreparedFunctionInvokeV3 | None:
+    @staticmethod
+    async def from_account(account: Account) -> "RemusDexClient":
+        contract = await Contract.from_address(
+            address=REMUS_ADDRESS,
+            provider=account
+        )
+
+        return RemusDexClient(
+            contract = contract
+        )
+
+
+    async def prep_claim_call(self, token: StarknetToken, amount: Decimal, nonce: int | None = None) -> PreparedFunctionInvokeV3 | None:
         if amount <= 0:
             return None
         
@@ -149,10 +158,76 @@ class RemusDexClient:
                 amount = int(amount),
                 auto_estimate=True
             )
-        
         return call
     
+    async def prep_submit_maker_order_call(
+            self, 
+            order: FutureOrder, 
+            market_cfg: RemusMarketConfig, 
+            nonce: int | None = None
+    ) -> PreparedFunctionInvokeV3:
+        """
+        Prepares submit_maker_order Invoke from FutureOrder.
+        """
+        base_token_decimals = market_cfg.base_token.decimals
+        amount_raw = int(order.amount * 10 ** base_token_decimals)
+        amount_raw = amount_raw // market_cfg.lot_size
+        amount_raw = amount_raw * market_cfg.lot_size
 
 
-    
-    
+        price_raw = order.price * 10**18
+        price_raw = price_raw // market_cfg.tick_size
+        price_raw = price_raw * market_cfg.tick_size
+        if order.order_side.lower() == 'ask':
+            price_raw = price_raw + market_cfg.tick_size
+
+        if order.order_side.lower() == 'ask':
+            target_token_address = market_cfg.base_token.address
+            order_side = 'Ask'
+        else:
+            target_token_address = market_cfg.quote_token.address
+            order_side = 'Bid'
+
+
+        if nonce is None:
+            return self._contract.functions['submit_maker_order'].prepare_invoke_v3(
+                market_id = market_cfg.market_id,
+                target_token_address=target_token_address,
+                order_price=order.price,
+                order_size=order.amount,
+                order_side=(order_side, None),
+                order_type=('Basic', None),
+                time_limit=('GTC', None),
+                auto_estimate=True
+            )
+        else: 
+            return self._contract.functions['submit_maker_order'].prepare_invoke_v3(
+                market_id = market_cfg.market_id,
+                target_token_address=target_token_address,
+                order_price=order.price,
+                order_size=order.amount,
+                order_side=(order_side, None),
+                order_type=('Basic', None),
+                time_limit=('GTC', None),
+                nonce=nonce,
+                auto_estimate=True
+            )
+
+
+    def prep_delete_maker_order_call(
+            self, 
+            order: BasicOrder, 
+            nonce: int | None = None
+    ) -> PreparedFunctionInvokeV3:
+
+        if nonce is None:
+            return self._contract.functions['delete_maker_order'].prepare_invoke_v3(
+                maker_order_id = order.order_id,
+                auto_estimate = True
+            )
+
+        return self._contract.functions['delete_maker_order'].prepare_invoke_v3(
+            maker_order_id = order.order_id,
+            auto_estimate = True,
+            nonce = nonce
+        )

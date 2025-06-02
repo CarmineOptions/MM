@@ -28,9 +28,11 @@ class BasicOrder:
 @dataclass
 class FutureOrder:
     """
-    Class representing an order that will be sent to the chain.
+    Class representing an order that will be sent to the chain. Should always be in human-readable form
     """
     order_side: str # TODO: use Literal or enum here
-    amount: int
-    price: int
+    amount: Decimal
+    price: Decimal
+    platform: str
+    venue: str
 
