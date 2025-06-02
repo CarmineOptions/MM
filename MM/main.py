@@ -18,7 +18,7 @@ from starknet_py.net.account.account import Account
 from starknet_py.net.signer.key_pair import KeyPair
 from starknet_py.net.models.chains import StarknetChainId
 
-from MM.venues.remus import RemusDexView
+from MM.venues.remus.remus import RemusDexView
 from instruments.starknet import get_sn_token_from_symbol
 from cfg.cfg_classes import AccountConfig
 from oracles.simple_prices import get_price_fetcher
@@ -145,7 +145,6 @@ async def main():
     market_cfg = await remus.get_market_config(market_id)
     if market_cfg is None:
         raise ValueError(f"Unable to fetch RemusMarketConfig for market_id={market_id}")
-
     
     market_maker_cfg = cfg.marketmaker
     

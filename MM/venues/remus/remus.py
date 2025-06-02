@@ -8,56 +8,18 @@ from starknet_py.net.full_node_client import FullNodeClient
 from starknet_py.contract import Contract, PreparedFunctionInvokeV3
 
 
+from MM.venues.remus.remus_market_configs import RemusMarketConfig, get_preloaded_remus_market_config
 from instruments.instrument import InstrumentAmount
 from marketmaking.order import BasicOrder
 from instruments.starknet import StarknetToken, get_sn_token_from_address
 
 REMUS_ADDRESS = '0x067e7555f9ff00f5c4e9b353ad1f400e2274964ea0942483fae97363fd5d7958'
+REMUS_IDENTIFIER = 'REMUS'
 
-@dataclass
-class RemusFeesConfig:
-    taker_fee_bps: int
-    maker_fee_bps: int
-
-    @staticmethod
-    def from_dict(fees: dict) -> "RemusFeesConfig":
-        return RemusFeesConfig(
-            taker_fee_bps = fees['taker_fee_bps'],
-            maker_fee_bps = fees['maker_fee_bps']
-        )
-
-@dataclass
-class RemusMarketConfig:
-    market_id: int
-    base_token: StarknetToken
-    quote_token: StarknetToken
-    tick_size: int
-    lot_size: int
-    trading_enabled: bool
-    fees: RemusFeesConfig
-
-    @staticmethod
-    def from_dict(cfg: dict, market_id: int) -> "RemusMarketConfig | None":
-        base_token = get_sn_token_from_address(cfg['base_token'])
-        quote_token = get_sn_token_from_address(cfg['quote_token'])
-        
-        if base_token is None or quote_token is None:
-            logging.error(f"Unable to find tokens for base/quote: {cfg['base_token']}/{cfg['quote_token']}, market_id: {market_id}")
-            return None
-
-        return RemusMarketConfig(
-            market_id = market_id,
-            base_token = base_token,
-            quote_token = quote_token,
-            tick_size = cfg['tick_size'],
-            lot_size = cfg['lot_size'],
-            trading_enabled = cfg['trading_enabled'],
-            fees = RemusFeesConfig.from_dict(cfg['fees'])
-        )
 
 class RemusDexView:
     """
-    Class representing RemusDex view functions for polling the dex state. 
+    Class representing RemusDex view functions for polling the dex state.
     """
     def __init__(self, contract: Contract):
         self._contract = contract
@@ -73,7 +35,8 @@ class RemusDexView:
 
     async def get_market_config(self, market_id: int) -> RemusMarketConfig | None:
         """
-        Returns RemusMarketConfig for given market_id
+        Returns RemusMarketConfig for given market_id.
+        Fetches values directly from chain.
         """
         config = await self._contract.functions['get_market_config'].call(market_id = market_id)       
 
@@ -82,17 +45,58 @@ class RemusDexView:
 
         return RemusMarketConfig.from_dict(config[0], market_id=market_id) 
     
+    async def get_all_market_configs(self) -> list[RemusMarketConfig | None]:
+        """
+        Returns all RemusMarketConfigs.
+        Fetches values directly from chain.
+        """
+        configs = await self._contract.functions['get_all_market_configs'].call()
+
+        return [
+            RemusMarketConfig.from_dict(cfg = i[1], market_id= i[0])
+            for i in configs[0]
+        ]
+    
     async def get_all_user_orders(self, address: int) -> list[BasicOrder]:
         """
-        Returns all user orders.
+        Returns all user orders, but only those on markets that have preloaded market configs.
         """
         orders = await self._contract.functions['get_all_user_orders'].call(
             user=address
         )
 
-        return [
-            BasicOrder.from_remus_order(orders[0])
-        ]
+        normalized_orders: list[BasicOrder] = []
+
+        for o in orders[0]:
+            market_id = int(o['market_id'])
+            market_cfg = get_preloaded_remus_market_config(market_id)
+            if market_cfg is None:
+                logging.error(f"No market cfg for market id `{market_id}` found, skipping orders.")
+                continue
+            
+            base_token = market_cfg.base_token
+            price = Decimal(o['price']) / 10**18
+
+            amount = Decimal(o['amount']) / 10**base_token.decimals
+            amount_remaining = Decimal(o['amount_remaining']) / 10**base_token.decimals
+            order_id = int(o['order_id'])
+            order_side = o['order_side'].variant
+            entry_time = int(o['entry_time'])
+
+            new_o = BasicOrder(
+                price = price,
+                amount = amount,
+                amount_remaining = amount_remaining,
+                order_id = order_id,
+                order_side = order_side,
+                entry_time = entry_time,
+                market_id = market_id,
+                platform = 'Starknet',
+                venue = REMUS_IDENTIFIER
+            )
+            normalized_orders.append(new_o)
+
+        return normalized_orders
     
     async def get_all_user_orders_for_market_id(self, address: int, market_id: int) -> list[BasicOrder]:
         """
@@ -111,14 +115,13 @@ class RemusDexView:
             token_address = token.address,
             user_address = user_address
         )
-
         return Decimal(claimable[0])
 
 class RemusDexClient:
     """
-    Client for interacting with RemusDex. 
+    Client for interacting with RemusDex.
 
-    This client should be used with single Account only. 
+    This client should be used with single Account only.
     MultiClient will be implemented in the future.
     """
     async def __init__(self, account: Account):
@@ -126,12 +129,13 @@ class RemusDexClient:
             address = REMUS_ADDRESS,
             provider = account
         )
-        self.view = RemusDexView(provider = account)
+        self.view = RemusDexView(contract=self._contract)
 
     async def get_claim_call(self, token: StarknetToken, amount: Decimal, nonce: int | None) -> PreparedFunctionInvokeV3 | None:
         if amount <= 0:
             return None
         
+        # TODO: Add fees
         if nonce is not None:
             call = self._contract.functions['claim'].prepare_invoke_v3(
                 token_address = token.address,
@@ -147,3 +151,8 @@ class RemusDexClient:
             )
         
         return call
+    
+
+
+    
+    

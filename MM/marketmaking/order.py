@@ -7,7 +7,7 @@ from typing import Literal
 class BasicOrder:
     """
     Simple class representing on-chain order. 
-    All values are expected to be in "raw" form.
+    All values are expected to be in "human-readable" form.
     """
     price: Decimal
     amount: Decimal
@@ -19,18 +19,10 @@ class BasicOrder:
     order_side: str
     entry_time: int
 
+    platform: str
+    venue: str
 
-    @staticmethod
-    def from_remus_order(o: dict) -> "BasicOrder":
-        return BasicOrder(
-            price = Decimal(o['price']),
-            amount = Decimal(o['amount']),
-            amount_remaining = Decimal(o['amount_remaining']),
-            order_id = int(o['maker_order_id']),
-            market_id= int(o['market_id']),
-            order_side = o['order_side'].variant,
-            entry_time = int(o['entry_time'])
-        )
+    # TODO: Add info regarding instruments here too, or use InstrumentAmount
 
 
 @dataclass
