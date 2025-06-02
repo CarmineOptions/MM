@@ -1,5 +1,7 @@
 from starknet_py.contract import Contract
 
+from instruments.starknet import StarknetToken
+from venues.remus.remus_market_configs import RemusMarketConfig
 from venues.remus.remus import RemusDexClient
 
 
@@ -14,22 +16,18 @@ class Market:
     def __init__(
             self,
             market_id: int,
-            dex_contract: RemusDexClient,
+            remus_client: RemusDexClient,
             base_token_contract: Contract,
             quote_token_contract: Contract,
-            dex_address: str,
-            base_token_address: int,
-            quote_token_address: int,
+            market_cfg: RemusMarketConfig
     ) -> None:
         self.market_id = market_id
 
-        self.dex_contract = dex_contract
+        self.remus_client = remus_client
         self.base_token_contract = base_token_contract
         self.quote_token_contract = quote_token_contract
 
-        self.dex_address = dex_address
-        self.base_token_address = base_token_address
-        self.quote_token_address = quote_token_address
+        self.market_cfg = market_cfg
     
     def restart_contracts(self) -> None:
         """

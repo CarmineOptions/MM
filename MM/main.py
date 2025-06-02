@@ -147,12 +147,10 @@ async def main():
     
     market = Market(
             market_id=cfg.asset.market_id,
-            dex_contract=remus_client,
+            remus_client=remus_client,
             base_token_contract=base_token_contract,
             quote_token_contract=quote_token_contract,
-            dex_address=REMUS_ADDRESS,
-            base_token_address=base_token.address,
-            quote_token_address=quote_token.address,
+            market_cfg = market_cfg
     )
 
     state = State(markets=[market], accounts=[wrapped_account])

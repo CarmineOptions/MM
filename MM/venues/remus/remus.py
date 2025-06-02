@@ -118,6 +118,7 @@ class RemusDexView:
         return Decimal(claimable[0])
 
 class RemusDexClient:
+    address = REMUS_ADDRESS
     """
     Client for interacting with RemusDex.
 
@@ -140,42 +141,28 @@ class RemusDexClient:
         )
 
 
-    async def prep_claim_call(self, token: StarknetToken, amount: Decimal, nonce: int | None = None) -> PreparedFunctionInvokeV3 | None:
-        if amount <= 0:
-            return None
-        
+    def prep_claim_call(self, token: StarknetToken, amount: Decimal) -> PreparedFunctionInvokeV3:
         # TODO: Add fees
-        if nonce is not None:
-            call = self._contract.functions['claim'].prepare_invoke_v3(
-                token_address = token.address,
-                amount = int(amount),
-                nonce = nonce,
-                auto_estimate=True
-            )
-        else: 
-            call = self._contract.functions['claim'].prepare_invoke_v3(
-                token_address = token.address,
-                amount = int(amount),
-                auto_estimate=True
-            )
-        return call
+        return self._contract.functions['claim'].prepare_invoke_v3(
+            token_address = token.address,
+            amount = int(amount),
+        )
     
-    async def prep_submit_maker_order_call(
+    def prep_submit_maker_order_call(
             self, 
             order: FutureOrder, 
             market_cfg: RemusMarketConfig, 
-            nonce: int | None = None
     ) -> PreparedFunctionInvokeV3:
         """
         Prepares submit_maker_order Invoke from FutureOrder.
         """
         base_token_decimals = market_cfg.base_token.decimals
+
         amount_raw = int(order.amount * 10 ** base_token_decimals)
         amount_raw = amount_raw // market_cfg.lot_size
         amount_raw = amount_raw * market_cfg.lot_size
 
-
-        price_raw = order.price * 10**18
+        price_raw = int(order.price * 10**18)
         price_raw = price_raw // market_cfg.tick_size
         price_raw = price_raw * market_cfg.tick_size
         if order.order_side.lower() == 'ask':
@@ -188,46 +175,21 @@ class RemusDexClient:
             target_token_address = market_cfg.quote_token.address
             order_side = 'Bid'
 
-
-        if nonce is None:
-            return self._contract.functions['submit_maker_order'].prepare_invoke_v3(
-                market_id = market_cfg.market_id,
-                target_token_address=target_token_address,
-                order_price=order.price,
-                order_size=order.amount,
-                order_side=(order_side, None),
-                order_type=('Basic', None),
-                time_limit=('GTC', None),
-                auto_estimate=True
-            )
-        else: 
-            return self._contract.functions['submit_maker_order'].prepare_invoke_v3(
-                market_id = market_cfg.market_id,
-                target_token_address=target_token_address,
-                order_price=order.price,
-                order_size=order.amount,
-                order_side=(order_side, None),
-                order_type=('Basic', None),
-                time_limit=('GTC', None),
-                nonce=nonce,
-                auto_estimate=True
-            )
-
+        return self._contract.functions['submit_maker_order'].prepare_invoke_v3(
+            market_id = market_cfg.market_id,
+            target_token_address=target_token_address,
+            order_price=price_raw,
+            order_size=amount_raw,
+            order_side=(order_side, None),
+            order_type=('Basic', None),
+            time_limit=('GTC', None),
+        )
 
     def prep_delete_maker_order_call(
             self, 
             order: BasicOrder, 
-            nonce: int | None = None
     ) -> PreparedFunctionInvokeV3:
 
-        if nonce is None:
-            return self._contract.functions['delete_maker_order'].prepare_invoke_v3(
-                maker_order_id = order.order_id,
-                auto_estimate = True
-            )
-
         return self._contract.functions['delete_maker_order'].prepare_invoke_v3(
-            maker_order_id = order.order_id,
-            auto_estimate = True,
-            nonce = nonce
+            maker_order_id = order.order_id
         )

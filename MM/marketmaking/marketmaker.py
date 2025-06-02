@@ -166,31 +166,35 @@ class MarketMaker:
 
         for account in accounts:
             # Claim tokens for the market.
-            for token_address in [market.base_token_address, market.quote_token_address]:
-                claimable = await market.dex_contract.functions['get_claimable'].call(
-                    token_address = token_address,
-                    user_address = account.address
+            for token in [market.market_cfg.base_token, market.market_cfg.quote_token]:
+                claimable = await market.remus_client.view.get_claimable(
+                    token = token,
+                    user_address= account.address
                 )
+                
                 self._logger.info(
                     'Claimable amount is %s for token %s, account %s.',
-                    claimable, hex(token_address), hex(account.address)
+                    claimable, hex(token.address), hex(account.address)
                 )
-                if claimable[0]:
+                
+                if claimable:
                     self._logger.info(f'Claiming')
                     latest_nonce = await account.get_nonce()
-                    max_fee = await self._get_max_fee(account, Urgency.MEDIUM)
                     # TODO: push this into the transaction builder.
                     # TODO: Use ResourceBound instead of auto_estimate when invoking
-                    await market.dex_contract.functions['claim'].invoke_v3(
-                        token_address = token_address,
-                        amount = claimable[0],
-                        nonce = latest_nonce,
-                        auto_estimate=True
-                    )
+
+                    call = market.remus_client.prep_claim_call(
+                        token=token,
+                        amount=claimable,
+                    ) 
+
+                    await call.invoke(auto_estimate=True, nonce = latest_nonce)
+
                     await account.increment_nonce()
+
                 self._logger.info(
                     'Claim done for account %s, dex %s, market %s.',
-                    hex(account.address), hex(int(market.dex_address, 16)), market_id
+                    hex(account.address), hex(int(market.remus_client.address, 16)), market_id
                 )
 
 
@@ -202,13 +206,12 @@ class MarketMaker:
             nonce = await account.get_nonce()
 
             # TODO: Use ResourceBound instead of auto_estimate when invoking
-            max_fee = await self._get_max_fee(account, Urgency.MEDIUM)
 
             for market in self.account_market_pairs[account.address]:
                 # Approve base token
 
                 await (await market.base_token_contract.functions['approve'].invoke_v3(
-                    spender=int(market.dex_address, 16),
+                    spender=int(market.remus_client.address, 16),
                     amount=MAX_UINT,
                     nonce=nonce,
                     auto_estimate=True
@@ -217,12 +220,12 @@ class MarketMaker:
                 self._logger.info(
                     'Set unlimited approval for address: %s, base token: %s',
                     hex(account.address),
-                    hex(market.base_token_address)
+                    hex(market.market_cfg.base_token.address)
                 )
 
                 # Approve quote token
                 await (await market.quote_token_contract.functions['approve'].invoke_v3(
-                    spender=int(market.dex_address, 16),
+                    spender=int(market.remus_client.address, 16),
                     amount=MAX_UINT,
                     nonce=nonce,
                     auto_estimate=True
@@ -231,7 +234,7 @@ class MarketMaker:
                 self._logger.info(
                     'Set unlimited approval for address: %s, quote token: %s',
                     hex(account.address),
-                    hex(market.quote_token_address)
+                    hex(market.market_cfg.quote_token.address)
                 )
                 self._logger.info(f"Set unlimited approval for address")
 
