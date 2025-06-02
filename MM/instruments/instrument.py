@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 class Instrument(ABC):
-    net: str
+    platform: str
     symbol: str
     name: str
     decimals: int

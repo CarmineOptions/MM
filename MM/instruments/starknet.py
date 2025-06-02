@@ -3,7 +3,7 @@ from instruments.instrument import Instrument
 
 @dataclass
 class StarknetToken(Instrument):
-    net: str
+    platform: str
     symbol: str
     name: str
     decimals: int
@@ -11,7 +11,7 @@ class StarknetToken(Instrument):
 
 # TODO: Once needed, add testnet capabilities
 SN_ETH = StarknetToken(
-    net = "Starknet",
+    platform = "Starknet",
     symbol = "ETH",
     name = "ETH",
     decimals = 18,
@@ -19,7 +19,7 @@ SN_ETH = StarknetToken(
 )
 
 SN_WBTC = StarknetToken(
-    net = "Starknet",
+    platform = "Starknet",
     symbol = "WBTC",
     name = "wBTC",
     decimals = 8,
@@ -27,7 +27,7 @@ SN_WBTC = StarknetToken(
 )
 
 SN_USDC = StarknetToken(
-    net = "Starknet",
+    platform = "Starknet",
     symbol = "USDC",
     name = "USDC",
     decimals = 6,
@@ -35,7 +35,7 @@ SN_USDC = StarknetToken(
 )
 
 SN_STRK = StarknetToken(
-    net = "Starknet",
+    platform = "Starknet",
     symbol = "STRK",
     name = "STRK",
     decimals = 18,
@@ -43,7 +43,7 @@ SN_STRK = StarknetToken(
 )
 
 SN_DOG = StarknetToken(
-    net = "Starknet",
+    platform = "Starknet",
     symbol = "DOG",
     name = "DOG GO TO THE MOON",
     decimals = 5,
