@@ -1,0 +1,33 @@
+[account]
+# Configuration of account and connection
+
+rpc_url_env = "RPC_URL"
+wallet_address_env = "WALLET_ADDRESS"
+account_password_env = "ACCOUNT_PASSWORD"
+keystore_path_env = "KEYSTORE_PATH"
+
+
+[asset]
+# Market configuration goes here - what and where are we trading
+
+# TODO: add `net` (where are we trading) here  
+# TODO: add `venue` (on what venue are we trading) here 
+base_asset = "STRK"
+quote_asset = "USDC"
+
+# TODO: This is currently remus specific
+market_id = 2
+
+[marketmaker]
+
+# TODO: Once more strategies are available, indicate what class/strategy will be used
+
+target_relative_distance_from_FP = "0.005" # where best order is created 
+max_relative_distance_from_FP = "0.075" # too far from FP to be considered best (it is considered deep)
+min_relative_distance_from_FP = "0.0005" # too close to FP to exist -> if closer kill the order
+
+order_size = "10"   # in Quote asset (human-readable)
+minimal_remaining_size = "0"  # in Base asset (human-readable)
+max_orders_per_side = 1
+
+# TODO: add fee related config values

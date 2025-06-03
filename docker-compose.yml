@@ -1,0 +1,11 @@
+services:
+  remus-strk-usdc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - /home/chepe/.starkli:/keystores
+    restart: unless-stopped
+    command: ["--cfg", "./strats/remus_strk_usdc.toml"]

@@ -18,7 +18,7 @@ from starknet_py.net.account.account import Account
 from starknet_py.net.signer.key_pair import KeyPair
 from starknet_py.net.models.chains import StarknetChainId
 
-from MM.venues.remus.remus import RemusDexClient, RemusDexView
+from venues.remus.remus import RemusDexClient
 from instruments.starknet import get_sn_token_from_symbol
 from cfg.cfg_classes import AccountConfig
 from oracles.simple_prices import get_price_fetcher
@@ -33,11 +33,9 @@ from marketmaking.order import BasicOrder
 from cfg import load_config
 from args import parse_args
 
-load_dotenv()
 
 REMUS_ADDRESS = '0x067e7555f9ff00f5c4e9b353ad1f400e2274964ea0942483fae97363fd5d7958'
 NETWORK='MAINNET'
-
 
 # BASE_TOKEN_ADDRESS = 0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac # DOG
 # QUOTE_TOKEN_ADDRESS = 0x040e81cfeb176bfdbc5047bbc55eb471cfab20a6b221f38d8fda134e1bfffca4 # wBTC

@@ -8,7 +8,7 @@ from starknet_py.net.full_node_client import FullNodeClient
 from starknet_py.contract import Contract, PreparedFunctionInvokeV3
 
 
-from MM.venues.remus.remus_market_configs import RemusMarketConfig, get_preloaded_remus_market_config
+from venues.remus.remus_market_configs import RemusMarketConfig, get_preloaded_remus_market_config
 from instruments.instrument import InstrumentAmount
 from marketmaking.order import BasicOrder, FutureOrder
 from instruments.starknet import StarknetToken, get_sn_token_from_address
