@@ -4,9 +4,9 @@ services:
       context: .
       dockerfile: Dockerfile
     env_file:
-      - .env
+      - ${HOME}/.keystores/.env
     volumes:
-      - /home/chepe/.starkli:/keystores
+      - ${HOME}/.keystores:/keystores
     restart: unless-stopped
     command: ["--cfg", "./strats/remus_eth_usdc.toml"]
 
@@ -15,9 +15,9 @@ services:
       context: .
       dockerfile: Dockerfile
     env_file:
-      - .env
+      - ${HOME}/.keystores/.env
     volumes:
-      - /home/chepe/.starkli:/keystores
+      - ${HOME}/.keystores:/keystores
     restart: unless-stopped
     command: ["--cfg", "./strats/remus_strk_usdc.toml"]
 
@@ -26,9 +26,9 @@ services:
       context: .
       dockerfile: Dockerfile
     env_file:
-      - .env
+      - ${HOME}/.keystores/.env
     volumes:
-      - /home/chepe/.starkli:/keystores
+      - ${HOME}/.keystores:/keystores
     restart: unless-stopped
     command: ["--cfg", "./strats/remus_wbtc_usdc.toml"]
 
@@ -37,8 +37,8 @@ services:
       context: .
       dockerfile: Dockerfile
     env_file:
-      - .env
+      - ${HOME}/.keystores/.env
     volumes:
-      - /home/chepe/.starkli:/keystores
+      - ${HOME}/.keystores:/keystores
     restart: unless-stopped
     command: ["--cfg", "./strats/remus_wbtc_dog.toml"]
