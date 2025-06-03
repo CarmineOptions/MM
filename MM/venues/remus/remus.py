@@ -79,7 +79,7 @@ class RemusDexView:
 
             amount = Decimal(o['amount']) / 10**base_token.decimals
             amount_remaining = Decimal(o['amount_remaining']) / 10**base_token.decimals
-            order_id = int(o['order_id'])
+            order_id = int(o['maker_order_id'])
             order_side = o['order_side'].variant
             entry_time = int(o['entry_time'])
 
