@@ -9,6 +9,8 @@ services:
       - ${HOME}/.keystores:/keystores
     restart: unless-stopped
     command: ["--cfg", "./strats/remus_eth_usdc.toml"]
+    ports:
+      - "8000:8000" 
 
   remus-strk-usdc:
     build:
