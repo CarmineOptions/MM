@@ -5,6 +5,7 @@ is build for multiple markets and multiple accounts.
 Other "deploy scripts" that are yet to be created will be able to manage multiple markets and
 multiple accounts.
 """
+import time
 from dotenv import load_dotenv
 import asyncio
 import logging
@@ -32,13 +33,10 @@ from marketmaking.waccount import WAccount
 from marketmaking.order import BasicOrder
 from cfg import load_config
 from args import parse_args
-
+from monitoring import metrics
 
 REMUS_ADDRESS = '0x067e7555f9ff00f5c4e9b353ad1f400e2274964ea0942483fae97363fd5d7958'
 NETWORK='MAINNET'
-
-# BASE_TOKEN_ADDRESS = 0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac # DOG
-# QUOTE_TOKEN_ADDRESS = 0x040e81cfeb176bfdbc5047bbc55eb471cfab20a6b221f38d8fda134e1bfffca4 # wBTC
 
 def setup_logging(log_level: str):
     """Configures logging for the application."""
@@ -55,6 +53,8 @@ def setup_logging(log_level: str):
 
     # Attach to root logger
     logging.getLogger().addHandler(console)
+    logging.getLogger().addHandler(metrics.PrometheusMetricsErrorHandler())
+
 
 
 def get_account(account_cfg: AccountConfig) -> Account:
@@ -106,6 +106,8 @@ def pretty_print_orders(asks, bids):
 
 async def main():
     # TODO: Some cfg validaiton (base!=quote, etc)
+
+    metrics.start_metrics_server()
     
     setup_logging('DEBUG')
 
@@ -188,6 +190,7 @@ async def main():
 
     while True:
         try:
+            loop_start_time = time.time()
 
             logging.info('Claiming tokens for market_id: %s', market_id)
             await market_maker.claim_tokens(market_id=market_id)
@@ -232,6 +235,7 @@ async def main():
             sys.exit(1)
             # continue
 
+        metrics.track_loop_time(time.time() - loop_start_time)
         logging.info('Sleeping for 10 seconds before next pulse...')
         await asyncio.sleep(10)
 
