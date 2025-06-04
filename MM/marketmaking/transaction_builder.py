@@ -6,6 +6,7 @@ from venues.remus.remus import RemusDexClient
 from venues.remus.remus_market_configs import RemusMarketConfig
 from marketmaking.order import BasicOrder, FutureOrder
 from marketmaking.waccount import WAccount
+from monitoring import metrics
 
 class TransactionBuilder:
 
@@ -64,6 +65,8 @@ class TransactionBuilder:
 
             await (await call.invoke(auto_estimate=True, nonce = nonce)).wait_for_acceptance()
 
+            metrics.track_orders_canceled(1)
+
             self._logger.info("Canceling: %s, nonce: %s", order.order_id, nonce)
 
 
@@ -104,6 +107,8 @@ class TransactionBuilder:
                 order = order,
                 market_cfg = market_cfg,
             ).invoke(auto_estimate=True, nonce = nonce)).wait_for_acceptance()
+
+            metrics.track_orders_sent(1)
             
             self._logger.info("Submitting order: q: %s, p: %s, s: %s, nonce: %s", order.amount, order.price, order_side, nonce)
         self._logger.info('Done with order changes')
