@@ -1,14 +1,14 @@
 services:
-  remus-eth-usdc:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    env_file:
-      - ${HOME}/.keystores/.env
-    volumes:
-      - ${HOME}/.keystores:/keystores
-    restart: unless-stopped
-    command: ["--cfg", "./strats/remus_eth_usdc.toml"]
+  # remus-eth-usdc:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - ${HOME}/.keystores/.env
+  #   volumes:
+  #     - ${HOME}/.keystores:/keystores
+  #   restart: unless-stopped
+  #   command: ["--cfg", "./strats/remus_eth_usdc.toml"]
 
   # remus-strk-usdc:
   #   build:
