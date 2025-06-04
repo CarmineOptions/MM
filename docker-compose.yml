@@ -9,30 +9,28 @@ services:
       - ${HOME}/.keystores:/keystores
     restart: unless-stopped
     command: ["--cfg", "./strats/remus_eth_usdc.toml"]
-    ports:
-      - "8000:8000" 
 
-  remus-strk-usdc:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    env_file:
-      - ${HOME}/.keystores/.env
-    volumes:
-      - ${HOME}/.keystores:/keystores
-    restart: unless-stopped
-    command: ["--cfg", "./strats/remus_strk_usdc.toml"]
+  # remus-strk-usdc:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - ${HOME}/.keystores/.env
+  #   volumes:
+  #     - ${HOME}/.keystores:/keystores
+  #   restart: unless-stopped
+  #   command: ["--cfg", "./strats/remus_strk_usdc.toml"]
 
-  remus-wbtc-usdc:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    env_file:
-      - ${HOME}/.keystores/.env
-    volumes:
-      - ${HOME}/.keystores:/keystores
-    restart: unless-stopped
-    command: ["--cfg", "./strats/remus_wbtc_usdc.toml"]
+  # remus-wbtc-usdc:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - ${HOME}/.keystores/.env
+  #   volumes:
+  #     - ${HOME}/.keystores:/keystores
+  #   restart: unless-stopped
+  #   command: ["--cfg", "./strats/remus_wbtc_usdc.toml"]
 
   remus-wbtc-dog:
     build:

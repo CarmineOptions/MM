@@ -8,7 +8,7 @@ import tomli
 class AccountConfig(BaseModel):
     rpc_url_env: str
     wallet_address_env: str
-    account_password_env: str
+    password_path_env: str
     keystore_path_env: str
 
     @property
@@ -18,14 +18,21 @@ class AccountConfig(BaseModel):
     @property
     def wallet_address(self) -> str | None:
         return os.environ.get(self.wallet_address_env)
-    
-    @property
-    def account_password(self) -> str | None:
-        return os.environ.get(self.account_password_env)
 
     @property
     def keystore_path(self) -> str | None:
         return os.environ.get(self.keystore_path_env)
+    
+    @property 
+    def password(self) -> str | None:
+        path = os.environ.get(self.password_path_env)
+        if path is None:
+            return None
+        
+        with open(path, 'r') as f:
+            pwd = f.read().strip()
+
+        return pwd
 
 
 class AssetConfig(BaseModel):

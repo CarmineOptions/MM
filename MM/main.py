@@ -76,9 +76,9 @@ def get_account(account_cfg: AccountConfig) -> Account:
     if keystore_path is None:
         raise ValueError(f"No keystore path found from env variable `{account_cfg.keystore_path_env}`")
 
-    account_password = account_cfg.account_password
+    account_password = account_cfg.password
     if account_password is None:
-        raise ValueError(f"No account password found from env variable `{account_cfg.account_password_env}`")
+        raise ValueError(f"No account password found from env variable `{account_cfg.password_path_env}`")
 
 
     client = FullNodeClient(node_url=rpc_url) 
