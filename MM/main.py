@@ -232,7 +232,6 @@ async def main():
         except Exception as e:
             logging.error("Error error occurred: %s", str(e), exc_info=True)
             await asyncio.sleep(5)
-            sys.exit(1)
             # continue
 
         metrics.track_loop_time(time.time() - loop_start_time)
