@@ -37,7 +37,6 @@ class POCMMModel:
             asks=state_market.my_orders[account.account.address]['asks'],
             bids=state_market.my_orders[account.account.address]['bids'],
             market_maker_cfg=self.market_maker_cfg,
-            market_cfg=self.market_cfg,
             fair_price=fair_price  
         )
 
@@ -46,7 +45,6 @@ class POCMMModel:
         asks: list[BasicOrder],
         bids: list[BasicOrder],
         market_maker_cfg: MarketMakerConfig,
-        market_cfg: RemusMarketConfig,
         fair_price: Decimal
     ) -> tuple[list[BasicOrder], list[FutureOrder]]:
         """
@@ -60,10 +58,6 @@ class POCMMModel:
         """
         to_be_canceled: list[BasicOrder] = []
         to_be_created: list[FutureOrder] = []
-
-        # base_decimals = token_config.decimals[market_cfg[1]['base_token']]  # for example ETH
-        base_decimals = 18  # FIXME: this should be config
-        # raise NotImplemented
 
         # FIXME: This is weird, is it really the case that the quote decimals are not needed here
         # quote_decimals = token_config.decimals[market_cfg[1]['quote_token']]  # for example USDC
@@ -126,15 +120,9 @@ class POCMMModel:
             ):
                 if side_name.lower() == 'ask':
                     optimal_price = fair_price * (1 + market_maker_cfg.target_relative_distance_from_FP)
-                    # optimal_price = optimal_price // tick_size
-                    # optimal_price = optimal_price * tick_size + tick_size
                 else:
                     optimal_price = fair_price * (1 - market_maker_cfg.target_relative_distance_from_FP)
-                    # optimal_price = optimal_price // tick_size
-                    # optimal_price = optimal_price * tick_size
                 optimal_amount = market_maker_cfg.order_size / (optimal_price)
-                # optimal_amount = optimal_amount // market_cfg.lot_size
-                # optimal_amount = optimal_amount * market_cfg.lot_size
         
                 new_order = FutureOrder(
                     order_side = side_name,
