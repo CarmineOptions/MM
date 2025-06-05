@@ -1,4 +1,3 @@
-import asyncio
 import websockets
 import json
 import logging
@@ -14,8 +13,10 @@ class WebSocketConnector:
         self.rpc_url = rpc_url
         self.connection = None
         self._logger = logging.getLogger(self.__class__.__name__)
-        handler = logging.FileHandler('websocket_connector.log')
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler = logging.FileHandler("websocket_connector.log")
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
         handler.setFormatter(formatter)
         self._logger.addHandler(handler)
         self._logger.setLevel(logging.INFO)

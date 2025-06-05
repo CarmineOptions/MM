@@ -5,13 +5,11 @@ is build for multiple markets and multiple accounts.
 Other "deploy scripts" that are yet to be created will be able to manage multiple markets and
 multiple accounts.
 """
+
 import time
-from dotenv import load_dotenv
 import asyncio
 import logging
-import requests
 import sys
-import os
 
 from starknet_py.net.full_node_client import FullNodeClient
 from starknet_py.contract import Contract
@@ -27,25 +25,21 @@ from marketmaking.market import Market
 from marketmaking.marketmaker import MarketMaker
 from marketmaking.pocmmmodel import POCMMModel
 from marketmaking.state import State
-from marketmaking.statemarket import StateMarket
 from marketmaking.transaction_builder import TransactionBuilder
 from marketmaking.waccount import WAccount
-from marketmaking.order import BasicOrder
 from cfg import load_config
 from args import parse_args
 from monitoring import metrics
 
-REMUS_ADDRESS = '0x067e7555f9ff00f5c4e9b353ad1f400e2274964ea0942483fae97363fd5d7958'
-NETWORK='MAINNET'
+REMUS_ADDRESS = "0x067e7555f9ff00f5c4e9b353ad1f400e2274964ea0942483fae97363fd5d7958"
+NETWORK = "MAINNET"
+
 
 def setup_logging(log_level: str):
     """Configures logging for the application."""
     log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     logging.basicConfig(
-        filename='marketmaker.log',
-        filemode='a',
-        level=logging.INFO,
-        format=log_format
+        filename="marketmaker.log", filemode="a", level=logging.INFO, format=log_format
     )
     console = logging.StreamHandler(sys.stdout)
     console.setLevel(logging.INFO)
@@ -54,7 +48,6 @@ def setup_logging(log_level: str):
     # Attach to root logger
     logging.getLogger().addHandler(console)
     logging.getLogger().addHandler(metrics.PrometheusMetricsErrorHandler())
-
 
 
 def get_account(account_cfg: AccountConfig) -> Account:
@@ -66,50 +59,57 @@ def get_account(account_cfg: AccountConfig) -> Account:
 
     rpc_url = account_cfg.rpc_url
     if rpc_url is None:
-        raise ValueError(f"No rpc url found from env variable `{account_cfg.rpc_url_env}`")
-    
+        raise ValueError(
+            f"No rpc url found from env variable `{account_cfg.rpc_url_env}`"
+        )
+
     wallet_address = account_cfg.wallet_address
     if wallet_address is None:
-        raise ValueError(f"No wallet address found from env variable `{account_cfg.wallet_address_env}`")
+        raise ValueError(
+            f"No wallet address found from env variable `{account_cfg.wallet_address_env}`"
+        )
 
     keystore_path = account_cfg.keystore_path
     if keystore_path is None:
-        raise ValueError(f"No keystore path found from env variable `{account_cfg.keystore_path_env}`")
+        raise ValueError(
+            f"No keystore path found from env variable `{account_cfg.keystore_path_env}`"
+        )
 
     account_password = account_cfg.password
     if account_password is None:
-        raise ValueError(f"No account password found from env variable `{account_cfg.password_path_env}`")
+        raise ValueError(
+            f"No account password found from env variable `{account_cfg.password_path_env}`"
+        )
 
-
-    client = FullNodeClient(node_url=rpc_url) 
+    client = FullNodeClient(node_url=rpc_url)
     account = Account(
-        client = client,
-        address = wallet_address,
-        key_pair = KeyPair.from_keystore(
-            keystore_path, 
-            account_password.encode() # type: ignore
+        client=client,
+        address=wallet_address,
+        key_pair=KeyPair.from_keystore(
+            keystore_path,
+            account_password.encode(),  # type: ignore
         ),
-        chain = StarknetChainId[NETWORK]
+        chain=StarknetChainId[NETWORK],
     )
     logging.info("Succesfully loaded account.")
     return account
 
 
 def pretty_print_orders(asks, bids):
-    logging.info('PRETTY PRINTED CURRENT ORDERS.')
+    logging.info("PRETTY PRINTED CURRENT ORDERS.")
     for ask in sorted(asks, key=lambda x: -x.price):
-        logging.info('\t\t%s; %s', ask.price , ask.amount_remaining )
-    logging.info('XXX')
+        logging.info("\t\t%s; %s", ask.price, ask.amount_remaining)
+    logging.info("XXX")
     for bid in sorted(bids, key=lambda x: -x.price):
-        logging.info('\t\t%s; %s', bid.price, bid.amount_remaining)
+        logging.info("\t\t%s; %s", bid.price, bid.amount_remaining)
 
 
 async def main():
     # TODO: Some cfg validaiton (base!=quote, etc)
 
     metrics.start_metrics_server()
-    
-    setup_logging('DEBUG')
+
+    setup_logging("DEBUG")
 
     args = parse_args()
 
@@ -118,7 +118,6 @@ async def main():
     market_id = cfg.asset.market_id
     account = get_account(cfg.account)
     wrapped_account = WAccount(account=account)
-
 
     base_token = get_sn_token_from_symbol(cfg.asset.base_asset)
     if base_token is None:
@@ -129,28 +128,26 @@ async def main():
         raise ValueError(f"Token `{cfg.asset.quote_asset}` is not supported")
 
     quote_token_contract = await Contract.from_address(
-        address=quote_token.address,
-        provider=account
+        address=quote_token.address, provider=account
     )
     base_token_contract = await Contract.from_address(
-        address=base_token.address,
-        provider=account
+        address=base_token.address, provider=account
     )
 
-    remus_client = await RemusDexClient.from_account(account = account)
+    remus_client = await RemusDexClient.from_account(account=account)
     market_cfg = await remus_client.view.get_market_config(market_id)
 
     if market_cfg is None:
         raise ValueError(f"Unable to fetch RemusMarketConfig for market_id={market_id}")
-    
+
     market_maker_cfg = cfg.marketmaker
-    
+
     market = Market(
-            market_id=cfg.asset.market_id,
-            remus_client=remus_client,
-            base_token_contract=base_token_contract,
-            quote_token_contract=quote_token_contract,
-            market_cfg = market_cfg
+        market_id=cfg.asset.market_id,
+        remus_client=remus_client,
+        base_token_contract=base_token_contract,
+        quote_token_contract=quote_token_contract,
+        market_cfg=market_cfg,
     )
 
     state = State(markets=[market], accounts=[wrapped_account])
@@ -159,14 +156,14 @@ async def main():
     poc_mm_model = POCMMModel(
         state_market=state_market,
         market_cfg=market_cfg,
-        market_maker_cfg=market_maker_cfg
+        market_maker_cfg=market_maker_cfg,
     )
 
     transaction_builder = TransactionBuilder(
         remus_client=remus_client,
         market_id=cfg.asset.market_id,
         market_cfg=market_cfg,
-        max_fee=0
+        max_fee=0,
     )
 
     market_maker = MarketMaker(
@@ -175,12 +172,11 @@ async def main():
         account_market_pairs={wrapped_account: [market]},
         state=state,
         mm_model=poc_mm_model,
-        reconciler=None, # TODO:
+        reconciler=None,  # TODO:
         claim_rule=None,
         transaction_builder=transaction_builder,
-        blockchain_connectors=None
+        blockchain_connectors=None,
     )
-
 
     get_price = get_price_fetcher(cfg.asset.market_id)
 
@@ -192,50 +188,61 @@ async def main():
         try:
             loop_start_time = time.time()
 
-            logging.info('Claiming tokens for market_id: %s', market_id)
+            logging.info("Claiming tokens for market_id: %s", market_id)
             await market_maker.claim_tokens(market_id=market_id)
-            logging.info('Claimed tokens for market_id: %s', market_id)
+            logging.info("Claimed tokens for market_id: %s", market_id)
 
             # Get my orders from the market and pulse them.
             my_orders = await remus_client.view.get_all_user_orders_for_market_id(
-                address = wrapped_account.account.address,
-                market_id = market_id
+                address=wrapped_account.account.address, market_id=market_id
             )
 
-            bids = [x for x in my_orders if x.market_id == market_id and x.order_side.lower() == 'bid']
-            asks = [x for x in my_orders if x.market_id == market_id and x.order_side.lower() == 'ask']
-            bids = sorted(bids, key = lambda x: -x.price)
-            asks = sorted(asks, key = lambda x: -x.price)
+            bids = [
+                x
+                for x in my_orders
+                if x.market_id == market_id and x.order_side.lower() == "bid"
+            ]
+            asks = [
+                x
+                for x in my_orders
+                if x.market_id == market_id and x.order_side.lower() == "ask"
+            ]
+            bids = sorted(bids, key=lambda x: -x.price)
+            asks = sorted(asks, key=lambda x: -x.price)
 
-            logging.info('My current orders: %s, %s.', bids, asks)
-            await market_maker.pulse(data = {
-                'type': 'my_orders_snapshot',
-                'market_id': market_id,
-                'data': {'bids': bids, 'asks': asks},
-                'account': wrapped_account.account.address
-            })
-            logging.info('Pulsed market maker with my orders: %s, %s.', bids, asks)
+            logging.info("My current orders: %s, %s.", bids, asks)
+            await market_maker.pulse(
+                data={
+                    "type": "my_orders_snapshot",
+                    "market_id": market_id,
+                    "data": {"bids": bids, "asks": asks},
+                    "account": wrapped_account.account.address,
+                }
+            )
+            logging.info("Pulsed market maker with my orders: %s, %s.", bids, asks)
 
             # Get current oracle price and pulse it.
-            fair_price  = get_price()
-            logging.info('Fair price queried: %s.', fair_price)
+            fair_price = get_price()
+            logging.info("Fair price queried: %s.", fair_price)
 
             pretty_print_orders(asks, bids)
 
-            logging.info('Pulsing market maker with fair price: %s', fair_price)
-            await market_maker.pulse(data = {
-                'type': 'custom_oracle',
-                'market_id': market_id,
-                'data': {'price': fair_price},
-            })
-            logging.info('Pulsed market maker with fair price: %s', fair_price)
+            logging.info("Pulsing market maker with fair price: %s", fair_price)
+            await market_maker.pulse(
+                data={
+                    "type": "custom_oracle",
+                    "market_id": market_id,
+                    "data": {"price": fair_price},
+                }
+            )
+            logging.info("Pulsed market maker with fair price: %s", fair_price)
         except Exception as e:
             logging.error("Error error occurred: %s", str(e), exc_info=True)
             await asyncio.sleep(5)
             # continue
 
         metrics.track_loop_time(time.time() - loop_start_time)
-        logging.info('Sleeping for 10 seconds before next pulse...')
+        logging.info("Sleeping for 10 seconds before next pulse...")
         await asyncio.sleep(10)
 
 

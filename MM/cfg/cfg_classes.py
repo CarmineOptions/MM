@@ -2,7 +2,6 @@ import os
 from decimal import Decimal
 
 from pydantic import BaseModel
-import tomli
 
 
 class AccountConfig(BaseModel):
@@ -22,14 +21,14 @@ class AccountConfig(BaseModel):
     @property
     def keystore_path(self) -> str | None:
         return os.environ.get(self.keystore_path_env)
-    
-    @property 
+
+    @property
     def password(self) -> str | None:
         path = os.environ.get(self.password_path_env)
         if path is None:
             return None
-        
-        with open(path, 'r') as f:
+
+        with open(path, "r") as f:
             pwd = f.read().strip()
 
         return pwd
@@ -39,6 +38,7 @@ class AssetConfig(BaseModel):
     base_asset: str
     quote_asset: str
     market_id: int
+
 
 class MarketMakerConfig(BaseModel):
     target_relative_distance_from_FP: Decimal

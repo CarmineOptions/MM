@@ -36,19 +36,19 @@ MAX_UINT = 2**256 - 1
 # Event-driven market-maker.
 ############################
 
-class MarketMaker:
 
+class MarketMaker:
     def __init__(
         self,
         accounts: list[WAccount],
         markets: list[Market],
         account_market_pairs: dict[WAccount, list[Market]],
         state: State,
-        mm_model: POCMMModel, # FIXME: this should be a base class
-        reconciler, # TODO: type
-        claim_rule, # TODO: type
+        mm_model: POCMMModel,  # FIXME: this should be a base class
+        reconciler,  # TODO: type
+        claim_rule,  # TODO: type
         transaction_builder: TransactionBuilder,
-        blockchain_connectors, # TODO: type
+        blockchain_connectors,  # TODO: type
     ) -> None:
         """
         :param accounts: List of Starknet account classes.
@@ -65,11 +65,15 @@ class MarketMaker:
         :param blockchain_connectors: Sends transactions out to the blockchain
         """
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self._logger.info('Initializing MarketMaker')
-        
+        self._logger.info("Initializing MarketMaker")
+
         self.accounts: list[WAccount] = accounts
-        self.map_accounts: dict[int, WAccount] = {account.address: account for account in accounts}
-        self.markets: dict[int, Market] = {market.market_id: market for market in markets}
+        self.map_accounts: dict[int, WAccount] = {
+            account.address: account for account in accounts
+        }
+        self.markets: dict[int, Market] = {
+            market.market_id: market for market in markets
+        }
         # List of all markets for give account. {account: [market1, market2],...}
         self.account_market_pairs: dict[int, list[Market]] = {
             _account.address: _markets
@@ -88,7 +92,7 @@ class MarketMaker:
         self.reconciler = reconciler
         self.claim_rule = claim_rule
         self.transaction_builder: TransactionBuilder = transaction_builder
-        self.blockchain_connectors = blockchain_connectors # TODO: type
+        self.blockchain_connectors = blockchain_connectors  # TODO: type
 
     async def initialize_trading(self) -> None:
         """
@@ -105,10 +109,8 @@ class MarketMaker:
         # for market in self.markets:
         #     await self.state.market_states[market].orderbook.update()
 
-
-
     async def pulse(self, data: dict) -> None:
-        '''
+        """
         data are essentially all events coming from trading venues. Initially (in the first iteration)
         it is just price updates.
 
@@ -117,30 +119,32 @@ class MarketMaker:
         data = {
             'type': ...,
             'market_id': ...,
-            'data': ...,        
+            'data': ...,
         }
-        '''
+        """
 
         # Update the state with new data.
-        self.state.market_states[data['market_id']].update(data)
+        self.state.market_states[data["market_id"]].update(data)
 
         # Updating only for the market that received update.
-        if data['type'] == 'custom_oracle':
-
+        if data["type"] == "custom_oracle":
             # Claim in case we have some claimable assets.
-            await self.claim_tokens(data['market_id'])
+            await self.claim_tokens(data["market_id"])
 
             # FIXME: parts here are used from the old version of market maker.
             # To do this properly, calculate teh optimal orders for the market (don't iterate over accounts).
             # Reconcile optimal vs. current orders (across accounts).
             # Build transactions and push them through the transaction builder.
-            for account in self.market_account_pairs[self.markets[data['market_id']]]:
+            for account in self.market_account_pairs[self.markets[data["market_id"]]]:
                 # Calculate optimal orders for the market.
                 to_be_canceled, to_be_created = self.mm_model.get_optimal_orders(
-                    account,
-                    self.state.market_states[data['market_id']]
+                    account, self.state.market_states[data["market_id"]]
                 )
-                self._logger.info('to_be_canceled: %s, to_be_created: %s', to_be_canceled, to_be_created)
+                self._logger.info(
+                    "to_be_canceled: %s, to_be_created: %s",
+                    to_be_canceled,
+                    to_be_created,
+                )
                 # assert False, "TODO: implement the rest of the logic"
 
                 # Reconcile the orders for the market.
@@ -150,17 +154,15 @@ class MarketMaker:
                 await self.transaction_builder.build_transactions(
                     wrapped_account=account,
                     to_be_canceled=to_be_canceled,
-                    to_be_created=to_be_created
+                    to_be_created=to_be_created,
                 )
 
-
-
     async def claim_tokens(self, market_id: int) -> None:
-        '''
+        """
         Initially it claims all the time. Later, it will claim only when needed.
         TODO: claim only when needed.
         :param market_id: Market ID for which to claim tokens.
-        '''
+        """
         market = self.markets[market_id]
         accounts = self.market_account_pairs[market]
 
@@ -168,17 +170,18 @@ class MarketMaker:
             # Claim tokens for the market.
             for token in [market.market_cfg.base_token, market.market_cfg.quote_token]:
                 claimable = await market.remus_client.view.get_claimable(
-                    token = token,
-                    user_address= account.address
+                    token=token, user_address=account.address
                 )
-                
+
                 self._logger.info(
-                    'Claimable amount is %s for token %s, account %s.',
-                    claimable, hex(token.address), hex(account.address)
+                    "Claimable amount is %s for token %s, account %s.",
+                    claimable,
+                    hex(token.address),
+                    hex(account.address),
                 )
-                
+
                 if claimable:
-                    self._logger.info(f'Claiming')
+                    self._logger.info("Claiming")
                     latest_nonce = await account.get_nonce()
                     # TODO: push this into the transaction builder.
                     # TODO: Use ResourceBound instead of auto_estimate when invoking
@@ -186,17 +189,18 @@ class MarketMaker:
                     call = market.remus_client.prep_claim_call(
                         token=token,
                         amount=claimable,
-                    ) 
+                    )
 
-                    await call.invoke(auto_estimate=True, nonce = latest_nonce)
+                    await call.invoke(auto_estimate=True, nonce=latest_nonce)
 
                     await account.increment_nonce()
 
                 self._logger.info(
-                    'Claim done for account %s, dex %s, market %s.',
-                    hex(account.address), hex(int(market.remus_client.address, 16)), market_id
+                    "Claim done for account %s, dex %s, market %s.",
+                    hex(account.address),
+                    hex(int(market.remus_client.address, 16)),
+                    market_id,
                 )
-
 
     async def _setup_unlimited_approvals(self) -> None:
         """Set up unlimited approvals for base and quote tokens."""
@@ -210,40 +214,43 @@ class MarketMaker:
             for market in self.account_market_pairs[account.address]:
                 # Approve base token
 
-                await (await market.base_token_contract.functions['approve'].invoke_v3(
-                    spender=int(market.remus_client.address, 16),
-                    amount=MAX_UINT,
-                    nonce=nonce,
-                    auto_estimate=True
-                )).wait_for_acceptance()
+                await (
+                    await market.base_token_contract.functions["approve"].invoke_v3(
+                        spender=int(market.remus_client.address, 16),
+                        amount=MAX_UINT,
+                        nonce=nonce,
+                        auto_estimate=True,
+                    )
+                ).wait_for_acceptance()
                 nonce += 1
                 self._logger.info(
-                    'Set unlimited approval for address: %s, base token: %s',
+                    "Set unlimited approval for address: %s, base token: %s",
                     hex(account.address),
-                    hex(market.market_cfg.base_token.address)
+                    hex(market.market_cfg.base_token.address),
                 )
 
                 # Approve quote token
-                await (await market.quote_token_contract.functions['approve'].invoke_v3(
-                    spender=int(market.remus_client.address, 16),
-                    amount=MAX_UINT,
-                    nonce=nonce,
-                    auto_estimate=True
-                )).wait_for_acceptance()
+                await (
+                    await market.quote_token_contract.functions["approve"].invoke_v3(
+                        spender=int(market.remus_client.address, 16),
+                        amount=MAX_UINT,
+                        nonce=nonce,
+                        auto_estimate=True,
+                    )
+                ).wait_for_acceptance()
                 nonce += 1
                 self._logger.info(
-                    'Set unlimited approval for address: %s, quote token: %s',
+                    "Set unlimited approval for address: %s, quote token: %s",
                     hex(account.address),
-                    hex(market.market_cfg.quote_token.address)
+                    hex(market.market_cfg.quote_token.address),
                 )
-                self._logger.info(f"Set unlimited approval for address")
+                self._logger.info("Set unlimited approval for address")
 
                 await account.set_latest_nonce(nonce)
-        self._logger.info(f"Setting unlimited approvals is done.")
-
+        self._logger.info("Setting unlimited approvals is done.")
 
     async def _get_max_fee(self, account: WAccount, urgency: Urgency) -> int:
-        '''
+        """
         Finds optimal maximum fee for the transaction. For given urgency level.
         :param account: Account to be used for the transaction.
         :param urgency: Urgency level for the transaction.
@@ -252,7 +259,7 @@ class MarketMaker:
 
         FIME: Find different max fee for different accounts.
         FXME: This might be based on the current gas price. That's why this is async.
-        '''
+        """
         if urgency == Urgency.LOW:
             return MAX_FEE
         elif urgency == Urgency.MEDIUM:
@@ -262,7 +269,6 @@ class MarketMaker:
         else:
             raise ValueError(f"Invalid urgency level: {urgency}")
 
-
     # async def _get_nonce(self, account: WAccount) -> int:
     #     """
     #     Get the nonce for the given account.
@@ -270,7 +276,6 @@ class MarketMaker:
     #     :return: Nonce for the transaction.
     #     """
     #     return await account.get_nonce()
-        
 
     def __str__(self) -> str:
         return f"""« MM market maker for market {self.markets}»"""

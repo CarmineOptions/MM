@@ -12,3 +12,11 @@ dependencies = [
     "tomli>=2.2.1",
     "prometheus-client>=0.22.1",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.11.12",
+]
+
+[tool.ruff]
+extend-exclude = ['test.py']
