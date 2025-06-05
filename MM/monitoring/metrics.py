@@ -3,7 +3,7 @@ import logging
 import time
 
 
-def start_metrics_server(port: int = 8000):
+def start_metrics_server(port: int = 8000) -> None:
     start_http_server(port)
 
 
@@ -23,18 +23,18 @@ total_orders_canceled = Counter(
 
 
 class PrometheusMetricsErrorHandler(logging.Handler):
-    def emit(self, record):
+    def emit(self, record: logging.LogRecord) -> None:
         if record.levelno >= logging.ERROR:
             last_error_gauge.set(int(time.time()))
 
 
-def track_loop_time(interval: float):
+def track_loop_time(interval: float) -> None:
     loop_time.set(interval)
 
 
-def track_orders_sent(val: int):
+def track_orders_sent(val: int) -> None:
     total_orders_sent.inc(val)
 
 
-def track_orders_canceled(val: int):
+def track_orders_canceled(val: int) -> None:
     total_orders_canceled.inc(val)

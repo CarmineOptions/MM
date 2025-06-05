@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from marketmaking.market import Market
 from marketmaking.waccount import WAccount
@@ -32,13 +33,13 @@ class StateMarket:
         # TODO: Use this
         # self.pending_trades: List[TODO] = []
 
-        self.my_orders: dict[int, dict] = {account.address: {} for account in accounts}
+        self.my_orders: dict[int, dict[str, Any]] = {account.address: {} for account in accounts}
 
         # TODO: Use these
         # self.pending_orders: dict[int, dict] = {account.address: [] for account in accounts}
         # self.my_inflight_orders: dict[int, list[BasicOrder]] = {account.address: [] for account in accounts}
 
-    def update(self, data: dict) -> None:
+    def update(self, data: dict[str, Any]) -> None:
         """
         Update the state with new data.
         :param data: New data to be added to the state.

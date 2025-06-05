@@ -17,6 +17,7 @@ from starknet_py.net.account.account import Account
 from starknet_py.net.signer.key_pair import KeyPair
 from starknet_py.net.models.chains import StarknetChainId
 
+from marketmaking.order import BasicOrder
 from venues.remus.remus import RemusDexClient
 from instruments.starknet import get_sn_token_from_symbol
 from cfg.cfg_classes import AccountConfig
@@ -35,7 +36,7 @@ REMUS_ADDRESS = "0x067e7555f9ff00f5c4e9b353ad1f400e2274964ea0942483fae97363fd5d7
 NETWORK = "MAINNET"
 
 
-def setup_logging(log_level: str):
+def setup_logging(log_level: str) -> None:
     """Configures logging for the application."""
     log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     logging.basicConfig(
@@ -95,7 +96,7 @@ def get_account(account_cfg: AccountConfig) -> Account:
     return account
 
 
-def pretty_print_orders(asks, bids):
+def pretty_print_orders(asks: list[BasicOrder], bids: list[BasicOrder]) -> None:
     logging.info("PRETTY PRINTED CURRENT ORDERS.")
     for ask in sorted(asks, key=lambda x: -x.price):
         logging.info("\t\t%s; %s", ask.price, ask.amount_remaining)
@@ -104,7 +105,7 @@ def pretty_print_orders(asks, bids):
         logging.info("\t\t%s; %s", bid.price, bid.amount_remaining)
 
 
-async def main():
+async def main() -> None:
     # TODO: Some cfg validaiton (base!=quote, etc)
 
     metrics.start_metrics_server()

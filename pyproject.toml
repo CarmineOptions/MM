@@ -15,8 +15,17 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "mypy>=1.16.0",
     "ruff>=0.11.12",
+    "types-requests>=2.32.0.20250602",
 ]
 
 [tool.ruff]
+# TODO: Once there's time, do a proper ruff setup
 extend-exclude = ['test.py']
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+namespace_packages = true
+exclude = 'test|websocketconnector.py'

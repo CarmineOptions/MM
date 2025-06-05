@@ -1,5 +1,5 @@
 import tomli
-from MM.cfg.cfg_classes import StrategyConfig
+from .cfg_classes import StrategyConfig
 
 
 def load_config(path: str) -> StrategyConfig:

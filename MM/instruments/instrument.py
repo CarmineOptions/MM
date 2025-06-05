@@ -8,7 +8,7 @@ class Instrument(ABC):
     symbol: str
     name: str
     decimals: int
-    address: str
+    address: int
 
 
 @dataclass
@@ -18,4 +18,6 @@ class InstrumentAmount:
 
     @property
     def amount_hr(self) -> Decimal:
-        return Decimal(self.amount_raw) / 10**self.instrument.decimals
+        amt_raw = Decimal(self.amount_raw)
+        multiplier = Decimal(10**self.instrument.decimals)
+        return amt_raw / multiplier

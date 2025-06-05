@@ -29,10 +29,13 @@ def wbtc_dog_price_fetcher() -> Decimal:
     btc_price = fetch_price_from_url(
         "https://data-api.binance.vision/api/v3/aggTrades?symbol=BTCUSDC"
     )
-    dog_price = requests.get(
+    dog_price_response = requests.get(
         "https://api.gateio.ws/api/v4/spot/trades?currency_pair=DOG_USDT&limit=1"
     )
-    dog_price = Decimal(dog_price.json()[0]["price"])
+
+    dog_price_response.raise_for_status()
+
+    dog_price = Decimal(dog_price_response.json()[0]["price"])
 
     return btc_price / dog_price
 

@@ -10,6 +10,7 @@
 # This bot serves as market making bot for Remus DEX and Ekubo DEX.
 
 import logging
+from typing import Any
 
 from marketmaking.enums import Urgency
 from marketmaking.market import Market
@@ -45,10 +46,10 @@ class MarketMaker:
         account_market_pairs: dict[WAccount, list[Market]],
         state: State,
         mm_model: POCMMModel,  # FIXME: this should be a base class
-        reconciler,  # TODO: type
-        claim_rule,  # TODO: type
+        reconciler: None,  # TODO: type
+        claim_rule: None,  # TODO: type
         transaction_builder: TransactionBuilder,
-        blockchain_connectors,  # TODO: type
+        blockchain_connectors: None,  # TODO: type
     ) -> None:
         """
         :param accounts: List of Starknet account classes.
@@ -109,7 +110,7 @@ class MarketMaker:
         # for market in self.markets:
         #     await self.state.market_states[market].orderbook.update()
 
-    async def pulse(self, data: dict) -> None:
+    async def pulse(self, data: dict[str, Any]) -> None:
         """
         data are essentially all events coming from trading venues. Initially (in the first iteration)
         it is just price updates.

@@ -26,7 +26,7 @@ class RemusDexView:
         self._contract = contract
 
     @staticmethod
-    async def from_provider(provider: Account | FullNodeClient):
+    async def from_provider(provider: Account | FullNodeClient) -> "RemusDexView":
         contract = await Contract.from_address(address=REMUS_ADDRESS, provider=provider)
 
         return RemusDexView(contract=contract)

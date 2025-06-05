@@ -38,7 +38,7 @@ class TransactionBuilder:
         wrapped_account: WAccount,
         to_be_canceled: list[BasicOrder],
         to_be_created: list[FutureOrder],
-    ):
+    ) -> None:
         self._logger.info("Deleting quotes")
         await self.delete_quotes(
             wrapped_account=wrapped_account,

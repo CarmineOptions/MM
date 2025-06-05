@@ -1,7 +1,7 @@
 from decimal import Decimal
 import logging
 
-from MM.venues.remus.remus_market_configs import RemusMarketConfig
+from venues.remus.remus_market_configs import RemusMarketConfig
 from cfg.cfg_classes import MarketMakerConfig
 from marketmaking.waccount import WAccount
 from marketmaking.order import BasicOrder, FutureOrder

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import logging
+from typing import Any
 
 from instruments.starknet import (
     SN_ETH,
@@ -18,7 +19,7 @@ class RemusFeesConfig:
     maker_fee_bps: int
 
     @staticmethod
-    def from_dict(fees: dict) -> "RemusFeesConfig":
+    def from_dict(fees: dict[str, Any]) -> "RemusFeesConfig":
         return RemusFeesConfig(
             taker_fee_bps=fees["taker_fee_bps"], maker_fee_bps=fees["maker_fee_bps"]
         )
@@ -35,7 +36,7 @@ class RemusMarketConfig:
     fees: RemusFeesConfig
 
     @staticmethod
-    def from_dict(cfg: dict, market_id: int) -> "RemusMarketConfig | None":
+    def from_dict(cfg: dict[str, Any], market_id: int) -> "RemusMarketConfig | None":
         base_token = get_sn_token_from_address(cfg["base_token"])
         quote_token = get_sn_token_from_address(cfg["quote_token"])
 
