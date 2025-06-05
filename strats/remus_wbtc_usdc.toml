@@ -3,7 +3,7 @@
 
 rpc_url_env = "RPC_URL"
 wallet_address_env = "WALLET_ADDRESS"
-account_password_env = "ACCOUNT_PASSWORD"
+password_path_env = "KEYSTORE_PWD_PATH"
 keystore_path_env = "KEYSTORE_PATH"
 
 
