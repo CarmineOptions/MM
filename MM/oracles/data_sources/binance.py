@@ -1,4 +1,5 @@
 
+import asyncio
 from decimal import Decimal
 from typing import Awaitable, Callable, final
 import httpx
@@ -21,10 +22,11 @@ async def fetch_price(base: str, quote: str) -> Decimal:
     return Decimal(data[0]["p"])
 
 async def fetch_cross_price(base: str, quote: str, via: str = "USDT") -> Decimal:
-    base_price = await fetch_price(base, via)
-    quote_price = await fetch_price(quote, via)
+    base_price, quote_price = await asyncio.gather(
+        fetch_price(base, via),
+        fetch_price(quote, via)
+    )
     return base_price / quote_price
-
 
 @final
 class BinanceDataSource(DataSource):

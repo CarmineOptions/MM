@@ -38,6 +38,7 @@ class AssetConfig(BaseModel):
     base_asset: str
     quote_asset: str
     market_id: int
+    price_source: str
 
 
 class MarketMakerConfig(BaseModel):
