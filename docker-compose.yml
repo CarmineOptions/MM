@@ -72,4 +72,4 @@ secrets:
   keystore-remus-wbtc-usdc:
     external: true
   pwd-remus-wbtc-usdc:
- 
+    external: true
