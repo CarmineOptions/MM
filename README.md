@@ -28,7 +28,7 @@ Missing features:
 - Separate logic in POCMMModel. One part is creation of optimal orders separate part is reconciliation.
 - Change v1 invoke to current version of invoke. Invoke from account with dex address, rather than dex Contract, with account already in place.
 - Remove f-strings from logging.
-
+- Implement max_fee (or rather ResourceBounds in case of invoke_v3)
 - The bot is being prepared to handle multiple accounts. The work is half way done, meaning this is feature is not ready.
 - Handle multiple markets per DEX.
 - Handle multiple DEXes.

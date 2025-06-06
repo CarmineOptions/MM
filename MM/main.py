@@ -167,9 +167,8 @@ async def main() -> None:
     )
 
     market_maker = MarketMaker(
-        accounts=[wrapped_account],
-        markets=[market],
-        account_market_pairs={wrapped_account: [market]},
+        account=wrapped_account,
+        market=market,
         state=state,
         mm_model=poc_mm_model,
         reconciler=None,  # TODO:
