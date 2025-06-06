@@ -81,3 +81,13 @@ class WAccount:
         """
         latest_nonce = await self.get_nonce()
         await self.set_latest_nonce(latest_nonce + 1)
+
+
+    async def reset_latest_nonce(self) -> None:
+        """
+        Reset the latest nonce for the account.
+        This is usually used when there is observed error between the on chain nonce and the self._latest_transaction_nonce.
+        """
+        self._logger.info('Resetting latest nonce from %s', self._latest_transaction_nonce)
+        self._latest_transaction_nonce = None
+        self._latest_transaction_timestamp = None

@@ -11,11 +11,12 @@ import asyncio
 import logging
 import sys
 
-from starknet_py.net.full_node_client import FullNodeClient
 from starknet_py.contract import Contract
+from starknet_py.exceptions import ClientError
 from starknet_py.net.account.account import Account
-from starknet_py.net.signer.key_pair import KeyPair
+from starknet_py.net.full_node_client import FullNodeClient
 from starknet_py.net.models.chains import StarknetChainId
+from starknet_py.net.signer.key_pair import KeyPair
 
 from marketmaking.order import BasicOrder
 from venues.remus.remus import RemusDexClient
@@ -238,6 +239,12 @@ async def main() -> None:
             )
             logging.info("Pulsed market maker with fair price: %s", fair_price)
         except Exception as e:
+            # Catching here and not as "except ClientError" because there can be many different ClientErrors
+            if isinstance(e, ClientError) and 'Account nonce' in e.message:
+                logging.error("Account nonce error, trying to reinitialize account...")
+                await wrapped_account.reset_latest_nonce()
+                logging.info("Reinitialized account.")
+
             logging.error("Error error occurred: %s", str(e), exc_info=True)
             await asyncio.sleep(5)
             # continue
