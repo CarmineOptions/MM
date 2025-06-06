@@ -221,7 +221,7 @@ async def main() -> None:
             logging.info("Pulsed market maker with my orders: %s, %s.", bids, asks)
 
             # Get current oracle price and pulse it.
-            fair_price = data_source.get_price()
+            fair_price = await data_source.get_price()
             logging.info("Fair price queried: %s.", fair_price)
 
             pretty_print_orders(asks, bids)
