@@ -12,7 +12,7 @@ import logging
 import sys
 
 from starknet_py.contract import Contract
-from starknet_py.exceptions import ClientError
+from starknet_py.net.client_errors import ClientError
 from starknet_py.net.account.account import Account
 from starknet_py.net.full_node_client import FullNodeClient
 from starknet_py.net.models.chains import StarknetChainId
