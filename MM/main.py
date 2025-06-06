@@ -18,11 +18,11 @@ from starknet_py.net.full_node_client import FullNodeClient
 from starknet_py.net.models.chains import StarknetChainId
 from starknet_py.net.signer.key_pair import KeyPair
 
+from oracles.data_sources import get_data_source
 from marketmaking.order import BasicOrder
 from venues.remus.remus import RemusDexClient
 from instruments.starknet import get_sn_token_from_symbol
 from cfg.cfg_classes import AccountConfig
-from oracles.simple_prices import get_price_fetcher
 from marketmaking.market import Market
 from marketmaking.marketmaker import MarketMaker
 from marketmaking.pocmmmodel import POCMMModel
@@ -180,11 +180,8 @@ async def main() -> None:
         blockchain_connectors=None,
     )
 
-    get_price = get_price_fetcher(cfg.asset.market_id)
-
+    data_source = get_data_source(cfg.asset.price_source, cfg.asset.base_asset, cfg.asset.quote_asset)
     await market_maker.initialize_trading()
-
-    logging.warning("!!! Make sure `base_decimals` in pocmmmodel.py are correct !!!")
 
     while True:
         try:
@@ -224,7 +221,7 @@ async def main() -> None:
             logging.info("Pulsed market maker with my orders: %s, %s.", bids, asks)
 
             # Get current oracle price and pulse it.
-            fair_price = get_price()
+            fair_price = data_source.get_price()
             logging.info("Fair price queried: %s.", fair_price)
 
             pretty_print_orders(asks, bids)

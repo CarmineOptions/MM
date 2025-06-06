@@ -21,7 +21,8 @@ Missing features:
 - Create standardized connector to source data.
 - Handle "out of liquidity" situations.
 - Create and use some "InstrumentAmount" class that will carry info about denomination token etc.
-
+- add some setup validation
+  - eg. all ABCs inherit from abc SetupValidator with method `validate_setup` that is called by market maker during initialization
 - In Market class, add execution of orders. Instead of calling invoke in reconciler, call "invoke" on our custom Market method (where one of the params is WAccount).
 - Add abstract classes.
 - Separate logic in POCMMModel. One part is creation of optimal orders separate part is reconciliation.

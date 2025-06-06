@@ -18,6 +18,8 @@ quote_asset = "USDC"
 # TODO: This is currently remus specific
 market_id = 3
 
+price_source = 'binance'
+
 [marketmaker]
 
 # TODO: Once more strategies are available, indicate what class/strategy will be used
