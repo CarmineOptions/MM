@@ -125,7 +125,7 @@ class MarketMaker:
         """
 
         # Update the state with new data.
-        self.state.market_states[data["market_id"]].update(data)
+        self.state.market_state.update(data)
 
         # Updating only for the market that received update.
         if data["type"] == "custom_oracle":
@@ -139,7 +139,7 @@ class MarketMaker:
             for account in self.market_account_pairs[self.markets[data["market_id"]]]:
                 # Calculate optimal orders for the market.
                 to_be_canceled, to_be_created = self.mm_model.get_optimal_orders(
-                    account, self.state.market_states[data["market_id"]]
+                    account, self.state.market_state
                 )
                 self._logger.info(
                     "to_be_canceled: %s, to_be_created: %s",

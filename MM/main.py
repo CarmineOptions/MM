@@ -152,11 +152,9 @@ async def main() -> None:
         market_cfg=market_cfg,
     )
 
-    state = State(markets=[market], accounts=[wrapped_account])
-    state_market = state.market_states[market.market_id]
+    state = State(market=market)
 
     poc_mm_model = POCMMModel(
-        state_market=state_market,
         market_cfg=market_cfg,
         market_maker_cfg=market_maker_cfg,
     )

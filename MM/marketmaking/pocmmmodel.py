@@ -13,32 +13,27 @@ class POCMMModel:
     # The POCMMModel also contains reconciliation.
     def __init__(
         self,
-        state_market: StateMarket,
         market_cfg: RemusMarketConfig,
         market_maker_cfg: MarketMakerConfig,
     ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self._logger.info("Initializing POCMMModel")
 
-        # self.state_market: StateMarket = state_market
         self.market_cfg = market_cfg
         self.market_maker_cfg: MarketMakerConfig = market_maker_cfg
 
     def get_optimal_orders(
         self, account: WAccount, state_market: StateMarket
     ) -> tuple[list[BasicOrder], list[FutureOrder]]:
-        if not isinstance(state_market.oracle, dict):
+        if not isinstance(state_market.oracle, Decimal):
             self._logger.error("State market oracle not initialized")
             return [], []
 
-        fair_price = state_market.oracle.get("price")
-        if fair_price is None:
-            self._logger.error("State market oracle has no price")
-            return [], []
+        fair_price = state_market.oracle
 
         return self._get_optimal_quotes(
-            asks=state_market.my_orders[account.account.address]["asks"],
-            bids=state_market.my_orders[account.account.address]["bids"],
+            asks=state_market.my_orders["asks"],
+            bids=state_market.my_orders["bids"],
             market_maker_cfg=self.market_maker_cfg,
             fair_price=fair_price,
         )
