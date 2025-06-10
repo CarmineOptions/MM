@@ -26,7 +26,7 @@ from cfg.cfg_classes import AccountConfig
 from marketmaking.market import Market
 from marketmaking.marketmaker import MarketMaker
 from marketmaking.pocmmmodel import POCMMModel
-from marketmaking.state import State
+from state.state import State
 from marketmaking.transaction_builder import TransactionBuilder
 from marketmaking.waccount import WAccount
 from cfg import load_config
@@ -152,7 +152,12 @@ async def main() -> None:
         market_cfg=market_cfg,
     )
 
-    state = State(market=market)
+    data_source = get_data_source(cfg.asset.price_source, cfg.asset.base_asset, cfg.asset.quote_asset)
+    state = State(
+        market = market,
+        account = wrapped_account,
+        fair_price_fetcher = data_source
+    )
 
     poc_mm_model = POCMMModel(
         market_cfg=market_cfg,
@@ -169,7 +174,6 @@ async def main() -> None:
     market_maker = MarketMaker(
         account=wrapped_account,
         market=market,
-        state=state,
         mm_model=poc_mm_model,
         reconciler=None,  # TODO:
         claim_rule=None,
@@ -177,61 +181,24 @@ async def main() -> None:
         blockchain_connectors=None,
     )
 
-    data_source = get_data_source(cfg.asset.price_source, cfg.asset.base_asset, cfg.asset.quote_asset)
     await market_maker.initialize_trading()
 
     while True:
         try:
             loop_start_time = time.time()
 
-            logging.info("Claiming tokens for market_id: %s", market_id)
-            await market_maker.claim_tokens(market_id=market_id)
-            logging.info("Claimed tokens for market_id: %s", market_id)
+            await state.update()
 
-            # Get my orders from the market and pulse them.
-            my_orders = await remus_client.view.get_all_user_orders_for_market_id(
-                address=wrapped_account.account.address, market_id=market_id
-            )
-
-            bids = [
-                x
-                for x in my_orders
-                if x.order_side.lower() == "bid"
-            ]
-            asks = [
-                x
-                for x in my_orders
-                if x.order_side.lower() == "ask"
-            ]
-            bids = sorted(bids, key=lambda x: -x.price)
-            asks = sorted(asks, key=lambda x: -x.price)
-
-            logging.info("My current orders: %s, %s.", bids, asks)
-            await market_maker.pulse(
-                data={
-                    "type": "my_orders_snapshot",
-                    "market_id": market_id,
-                    "data": {"bids": bids, "asks": asks},
-                    "account": wrapped_account.account.address,
-                }
-            )
-            logging.info("Pulsed market maker with my orders: %s, %s.", bids, asks)
+            logging.info("My current orders: %s", state.account.open_orders)
 
             # Get current oracle price and pulse it.
-            fair_price = await data_source.get_price()
-            logging.info("Fair price queried: %s.", fair_price)
+            logging.info("Fair price queried: %s.", state.fair_price)
 
-            pretty_print_orders(asks, bids)
+            pretty_print_orders(state.account.open_orders.asks, state.account.open_orders.bids)
 
-            logging.info("Pulsing market maker with fair price: %s", fair_price)
-            await market_maker.pulse(
-                data={
-                    "type": "custom_oracle",
-                    "market_id": market_id,
-                    "data": {"price": fair_price},
-                }
-            )
-            logging.info("Pulsed market maker with fair price: %s", fair_price)
+            await market_maker.pulse(state = state)
+
+            logging.info("Pulsed market maker with fair price: %s", state.fair_price)
         except Exception as e:
             # Catching here and not as "except ClientError" because there can be many different ClientErrors
             if isinstance(e, ClientError) and 'Account nonce' in e.message:

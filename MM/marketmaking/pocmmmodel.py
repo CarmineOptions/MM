@@ -5,8 +5,7 @@ from venues.remus.remus_market_configs import RemusMarketConfig
 from cfg.cfg_classes import MarketMakerConfig
 from marketmaking.waccount import WAccount
 from marketmaking.order import BasicOrder, FutureOrder
-from marketmaking.statemarket import StateMarket
-
+from state.state import State
 
 class POCMMModel:
     # POCMMModel contains the logic from the POC market maker. The goal is to test the SW and build the model later.
@@ -23,21 +22,17 @@ class POCMMModel:
         self.market_maker_cfg: MarketMakerConfig = market_maker_cfg
 
     def get_optimal_orders(
-        self, account: WAccount, state_market: StateMarket
+        self, account: WAccount, state: State
     ) -> tuple[list[BasicOrder], list[FutureOrder]]:
-        if state_market.oracle is None:
+        if state.fair_price == 0:
             self._logger.error("State market oracle not initialized")
             return [], []
 
-        
-
-        fair_price = state_market.oracle
-
         return self._get_optimal_quotes(
-            asks=state_market.my_orders["asks"],
-            bids=state_market.my_orders["bids"],
+            asks=state.account.open_orders.asks,
+            bids=state.account.open_orders.bids,
             market_maker_cfg=self.market_maker_cfg,
-            fair_price=fair_price,
+            fair_price=state.fair_price,
         )
 
     def _get_optimal_quotes(
