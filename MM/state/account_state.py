@@ -1,48 +1,10 @@
 from dataclasses import dataclass
 
 
-from marketmaking.order import BasicOrder
+from marketmaking.order import OpenOrders
 from marketmaking.waccount import WAccount
 from marketmaking.market import Market
 
-@dataclass(frozen=True)
-class OpenOrders:
-    """
-    Class that holds lists of bids and asks.
-    """
-    bids: list[BasicOrder]
-    asks: list[BasicOrder]
-
-    @property
-    def all_orders(self) -> list[BasicOrder]:
-        return self.bids + self.asks
-
-    @staticmethod
-    def from_list(orders: list[BasicOrder]) -> "OpenOrders":
-        """
-        Constructs lists of OpenOrders from list of BasicOrder, separating
-        them into *sorted* bids and asks. 
-        
-        Doesn't check if they are all from the same market/venue...
-        """
-
-        bids = []
-        asks = []
-
-        for o in orders:
-            if o.order_side.lower() == 'bid':
-                bids.append(o)
-                continue
-
-            asks.append(o)
-
-        bids = sorted(bids, key=lambda x: -x.price)
-        asks = sorted(asks, key=lambda x: -x.price)
-
-        return OpenOrders(
-            bids = bids,
-            asks = asks
-        )
 
 
 class AccountState:
