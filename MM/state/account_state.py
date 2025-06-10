@@ -5,7 +5,7 @@ from marketmaking.order import BasicOrder
 from marketmaking.waccount import WAccount
 from marketmaking.market import Market
 
-@dataclass
+@dataclass(frozen=True)
 class OpenOrders:
     """
     Class that holds lists of bids and asks.
@@ -20,8 +20,8 @@ class OpenOrders:
     @staticmethod
     def from_list(orders: list[BasicOrder]) -> "OpenOrders":
         """
-        Constructs list OpenOrders from list of BasicOrder, separating
-        them into bids and asks. 
+        Constructs lists of OpenOrders from list of BasicOrder, separating
+        them into *sorted* bids and asks. 
         
         Doesn't check if they are all from the same market/venue...
         """
