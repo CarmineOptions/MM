@@ -13,6 +13,10 @@ class OpenOrders:
     bids: list[BasicOrder]
     asks: list[BasicOrder]
 
+    @property
+    def all_orders(self) -> list[BasicOrder]:
+        return self.bids + self.asks
+
     @staticmethod
     def from_list(orders: list[BasicOrder]) -> "OpenOrders":
         """

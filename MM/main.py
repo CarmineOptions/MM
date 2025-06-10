@@ -24,7 +24,7 @@ from venues.remus.remus import RemusDexClient
 from instruments.starknet import get_sn_token_from_symbol
 from cfg.cfg_classes import AccountConfig
 from marketmaking.market import Market
-from marketmaking.marketmaker import MarketMaker
+from marketmaking.marketmakers.marketmaker import MarketMaker
 from marketmaking.pocmmmodel import POCMMModel
 from state.state import State
 from marketmaking.transaction_builder import TransactionBuilder
