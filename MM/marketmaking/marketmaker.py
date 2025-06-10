@@ -10,11 +10,10 @@
 # This bot serves as market making bot for Remus DEX and Ekubo DEX.
 
 import logging
-from typing import Any
 
 from marketmaking.market import Market
-from marketmaking.state import State
 from marketmaking.waccount import WAccount
+from state.state import State
 from marketmaking.pocmmmodel import POCMMModel
 from marketmaking.transaction_builder import TransactionBuilder
 
@@ -42,7 +41,6 @@ class MarketMaker:
         self,
         account: WAccount,
         market: Market,
-        state: State,
         mm_model: POCMMModel,  # FIXME: this should be a base class
         reconciler: None,  # TODO: type
         claim_rule: None,  # TODO: type
@@ -69,7 +67,6 @@ class MarketMaker:
         self.account = account
         self.market = market
 
-        self.state = state
         self.mm_model = mm_model
         self.reconciler = reconciler
         self.claim_rule = claim_rule
@@ -91,54 +88,42 @@ class MarketMaker:
         # for market in self.markets:
         #     await self.state.market_states[market].orderbook.update()
 
-    async def pulse(self, data: dict[str, Any]) -> None:
+    async def pulse(self, state: State) -> None:
         """
-        data are essentially all events coming from trading venues. Initially (in the first iteration)
-        it is just price updates.
-
-        :param data: New data to be added to the self.state.
-
-        data = {
-            'type': ...,
-            'market_id': ...,
-            'data': ...,
-        }
+        Main pulsing function that takes in updated State and then 
+        proceeds to claim tokens, calculate optimal orders and send them
+        to the market.
         """
 
-        # Update the state with new data.
-        self.state.market_state.update(data)
+        # Claim in case we have some claimable assets.
+        await self.claim_tokens()
 
-        # Updating only for the market that received update.
-        if data["type"] == "custom_oracle":
-            # Claim in case we have some claimable assets.
-            await self.claim_tokens(data["market_id"])
+        # FIXME: parts here are used from the old version of market maker.
+        # To do this properly, calculate teh optimal orders for the market (don't iterate over accounts).
+        # Reconcile optimal vs. current orders (across accounts).
+        # Build transactions and push them through the transaction builder.
 
-            # FIXME: parts here are used from the old version of market maker.
-            # To do this properly, calculate teh optimal orders for the market (don't iterate over accounts).
-            # Reconcile optimal vs. current orders (across accounts).
-            # Build transactions and push them through the transaction builder.
+        # Calculate optimal orders for the market.
+        to_be_canceled, to_be_created = self.mm_model.get_optimal_orders(
+            self.account, state
+        )
+        self._logger.info(
+            "to_be_canceled: %s, to_be_created: %s",
+            to_be_canceled,
+            to_be_created,
+        )
 
-            # Calculate optimal orders for the market.
-            to_be_canceled, to_be_created = self.mm_model.get_optimal_orders(
-                self.account, self.state.market_state
-            )
-            self._logger.info(
-                "to_be_canceled: %s, to_be_created: %s",
-                to_be_canceled,
-                to_be_created,
-            )
+        # Reconcile the orders for the market.
+        # FIXME: reconciliation happened in the POCMMModel.
 
-            # Reconcile the orders for the market.
-            # FIXME: reconciliation happened in the POCMMModel.
+        # Push the orders from the transaction builder through the blockchain connector.
+        await self.transaction_builder.build_transactions(
+            wrapped_account=self.account,
+            to_be_canceled=to_be_canceled,
+            to_be_created=to_be_created,
+        )
 
-            # Push the orders from the transaction builder through the blockchain connector.
-            await self.transaction_builder.build_transactions(
-                wrapped_account=self.account,
-                to_be_canceled=to_be_canceled,
-                to_be_created=to_be_created,
-            )
-
-    async def claim_tokens(self, market_id: int) -> None:
+    async def claim_tokens(self) -> None:
         """
         Initially it claims all the time. Later, it will claim only when needed.
         TODO: claim only when needed.
@@ -147,6 +132,9 @@ class MarketMaker:
         market = self.market
         account = self.account
         # Claim tokens for the market.
+
+        logging.info("Claiming tokens for market_id: %s", self.market.market_id)
+        
         for token in [market.market_cfg.base_token, market.market_cfg.quote_token]:
             claimable = await market.remus_client.view.get_claimable(
                 token=token, user_address=account.address
@@ -178,7 +166,7 @@ class MarketMaker:
                 "Claim done for account %s, dex %s, market %s.",
                 hex(account.address),
                 hex(int(market.remus_client.address, 16)),
-                market_id,
+                self.market.market_id,
             )
 
     async def _setup_unlimited_approvals(self) -> None:
