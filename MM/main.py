@@ -152,11 +152,9 @@ async def main() -> None:
         market_cfg=market_cfg,
     )
 
-    state = State(markets=[market], accounts=[wrapped_account])
-    state_market = state.market_states[market.market_id]
+    state = State(market=market)
 
     poc_mm_model = POCMMModel(
-        state_market=state_market,
         market_cfg=market_cfg,
         market_maker_cfg=market_maker_cfg,
     )
@@ -169,9 +167,8 @@ async def main() -> None:
     )
 
     market_maker = MarketMaker(
-        accounts=[wrapped_account],
-        markets=[market],
-        account_market_pairs={wrapped_account: [market]},
+        account=wrapped_account,
+        market=market,
         state=state,
         mm_model=poc_mm_model,
         reconciler=None,  # TODO:
@@ -199,12 +196,12 @@ async def main() -> None:
             bids = [
                 x
                 for x in my_orders
-                if x.market_id == market_id and x.order_side.lower() == "bid"
+                if x.order_side.lower() == "bid"
             ]
             asks = [
                 x
                 for x in my_orders
-                if x.market_id == market_id and x.order_side.lower() == "ask"
+                if x.order_side.lower() == "ask"
             ]
             bids = sorted(bids, key=lambda x: -x.price)
             asks = sorted(asks, key=lambda x: -x.price)
