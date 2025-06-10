@@ -29,6 +29,7 @@ Missing features:
 - Change v1 invoke to current version of invoke. Invoke from account with dex address, rather than dex Contract, with account already in place.
 - Remove f-strings from logging.
 - Implement max_fee (or rather ResourceBounds in case of invoke_v3)
+- When fetching fp, store info about when it was produces and check was stale prices
 - The bot is being prepared to handle multiple accounts. The work is half way done, meaning this is feature is not ready.
 - Handle multiple markets per DEX.
 - Handle multiple DEXes.

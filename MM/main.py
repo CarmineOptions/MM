@@ -196,12 +196,12 @@ async def main() -> None:
             bids = [
                 x
                 for x in my_orders
-                if x.market_id == market_id and x.order_side.lower() == "bid"
+                if x.order_side.lower() == "bid"
             ]
             asks = [
                 x
                 for x in my_orders
-                if x.market_id == market_id and x.order_side.lower() == "ask"
+                if x.order_side.lower() == "ask"
             ]
             bids = sorted(bids, key=lambda x: -x.price)
             asks = sorted(asks, key=lambda x: -x.price)

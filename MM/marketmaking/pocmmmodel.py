@@ -25,9 +25,11 @@ class POCMMModel:
     def get_optimal_orders(
         self, account: WAccount, state_market: StateMarket
     ) -> tuple[list[BasicOrder], list[FutureOrder]]:
-        if not isinstance(state_market.oracle, Decimal):
+        if state_market.oracle is None:
             self._logger.error("State market oracle not initialized")
             return [], []
+
+        
 
         fair_price = state_market.oracle
 
