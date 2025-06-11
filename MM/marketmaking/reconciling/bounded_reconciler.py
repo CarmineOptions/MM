@@ -37,11 +37,11 @@ class BoundedReconciler(OrderReconciler):
 
         reconciled = ReconciledOrders(
             to_cancel = [],
-            to_place= []
+            to_place = []
         )
 
-        bids_keeped: list[BasicOrder] = []
-        asks_keeped: list[BasicOrder] = []
+        bids_kept: list[BasicOrder] = []
+        asks_kept: list[BasicOrder] = []
         for order in existing_orders.all_orders:
             if self._is_order_too_close(order, state):
                 reconciled.to_cancel.append(order)
@@ -52,19 +52,19 @@ class BoundedReconciler(OrderReconciler):
                 continue
             
             if order.is_bid():
-                bids_keeped.append(order)
+                bids_kept.append(order)
             else:
-                asks_keeped.append(order)
+                asks_kept.append(order)
         
         # Order lists from deepest orders to best ones
-        bids_keeped.sort(key = lambda x: x.price)
-        asks_keeped.sort(key = lambda x: -x.price)
+        bids_kept.sort(key = lambda x: x.price)
+        asks_kept.sort(key = lambda x: -x.price)
 
 
-        if self._new_orders_needed(state, bids_keeped):
+        if self._new_orders_needed(state, bids_kept):
             reconciled.to_place += desired_orders.bids
 
-        if self._new_orders_needed(state, asks_keeped):
+        if self._new_orders_needed(state, asks_kept):
             reconciled.to_place += desired_orders.asks
         
         return reconciled
