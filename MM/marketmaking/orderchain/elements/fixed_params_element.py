@@ -1,9 +1,9 @@
 
 from decimal import Decimal
 from typing import final
+from marketmaking.orderchain.elements.element import OrderChainElement
 from marketmaking.order import DesiredOrders, FutureOrder
 from state.state import State
-from marketmaking.orderchain.order_chain import OrderChainElement
 
 @final
 class FixedParamsElement(OrderChainElement):
@@ -18,7 +18,7 @@ class FixedParamsElement(OrderChainElement):
         self._order_size = order_size_quote
 
 
-    def process(self, state: State, orders: DesiredOrders) -> DesiredOrders:
+    def process(self, state: State, _: DesiredOrders) -> DesiredOrders:
         
         new_orders = DesiredOrders(
             bids = [],
