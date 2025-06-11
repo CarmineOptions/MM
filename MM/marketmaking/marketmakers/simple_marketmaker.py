@@ -2,13 +2,13 @@
 import logging
 
 from marketmaking.market import Market
-from marketmaking.marketmakers.marketmaker import MAX_UINT
 from marketmaking.orderchain.order_chain import OrderChain
 from marketmaking.reconciling.order_reconciler import OrderReconciler
 from marketmaking.transaction_builder import TransactionBuilder
 from marketmaking.waccount import WAccount
 from state.state import State
 
+MAX_UINT = 2**256 - 1
 
 class SimpleMarketMaker:
     """

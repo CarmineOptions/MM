@@ -14,7 +14,7 @@ import logging
 from marketmaking.market import Market
 from marketmaking.waccount import WAccount
 from state.state import State
-from marketmaking.pocmmmodel import POCMMModel
+from .pocmmmodel import POCMMModel
 from marketmaking.transaction_builder import TransactionBuilder
 
 
