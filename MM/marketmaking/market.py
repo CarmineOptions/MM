@@ -26,6 +26,17 @@ class PositionInfo:
     @property
     def total_quote(self) -> Decimal:
         return self.balance_quote + self.claimable_quote + self.in_orders_quote
+    
+    @staticmethod
+    def empty() -> "PositionInfo":
+        return PositionInfo(
+            balance_base=Decimal(0),
+            balance_quote=Decimal(0),
+            claimable_base=Decimal(0),
+            claimable_quote=Decimal(0),
+            in_orders_base=Decimal(0),
+            in_orders_quote=Decimal(0),
+        )
 class Market:
     """
     Describes the market and it's parameters.
@@ -57,7 +68,7 @@ class Market:
         # FIXME
         pass
     
-    async def _get_total_position(self, address: int) -> PositionInfo:
+    async def get_total_position(self, address: int) -> PositionInfo:
         (
             orders,
             claimable_base,
