@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import dataclass
 from decimal import Decimal
 from starknet_py.contract import Contract
@@ -57,18 +58,21 @@ class Market:
         pass
     
     async def _get_total_position(self, address: int) -> PositionInfo:
-        orders = await self.remus_client.view.get_all_user_orders_for_market_id(address, self.market_cfg.market_id)
+        (
+            orders,
+            claimable_base,
+            claimable_quote,
+            balance_base,
+            balance_quote
+        ) = await asyncio.gather(
+            self.remus_client.view.get_all_user_orders_for_market_id(address, self.market_cfg.market_id),
+            self.remus_client.view.get_claimable_hr(self.market_cfg.base_token, address),
+            self.remus_client.view.get_claimable_hr(self.market_cfg.quote_token, address),
+            self.base_token_contract.functions['balanceOf'].call( account = address),
+            self.quote_token_contract.functions['balanceOf'].call( account = address),
+        )
+
         orders_base, orders_quote = _get_base_quote_position_from_orders(orders)
-
-        claimable_base = await self.remus_client.view.get_claimable_hr(self.market_cfg.base_token, address)
-        claimable_quote = await self.remus_client.view.get_claimable_hr(self.market_cfg.quote_token, address)
-
-        balance_base = await self.base_token_contract.functions['balanceOf'].call(
-            account = address
-        )
-        balance_quote = await self.quote_token_contract.functions['balanceOf'].call(
-            account = address
-        )
         
         return PositionInfo(
             balance_base = balance_base[0] / 10 **self.market_cfg.base_token.decimals,
