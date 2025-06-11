@@ -24,6 +24,8 @@ class BasicOrder:
 
     # TODO: Add info regarding instruments here too, or use InstrumentAmount
 
+    def is_bid(self) -> bool:
+        return self.order_side.lower() == 'bid'
 
 @dataclass
 class FutureOrder:

@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 
 
 from marketmaking.order import OpenOrders

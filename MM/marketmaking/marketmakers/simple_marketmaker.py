@@ -144,6 +144,7 @@ class SimpleMarketMaker:
 
         reconciled = self.order_reconciler.reconcile(
             existing_orders=open_orders, 
+            state = state,
             desired_orders=desired_orders
         )
 

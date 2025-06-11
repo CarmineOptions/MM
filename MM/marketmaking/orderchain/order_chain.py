@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from marketmaking.order import DesiredOrders, FutureOrder
+from marketmaking.order import DesiredOrders
 from state.state import State
 
 class OrderChainElement(ABC):
