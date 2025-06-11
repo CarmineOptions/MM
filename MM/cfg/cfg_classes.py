@@ -41,17 +41,35 @@ class AssetConfig(BaseModel):
     price_source: str
 
 
-class MarketMakerConfig(BaseModel):
-    target_relative_distance_from_FP: Decimal
-    max_relative_distance_from_FP: Decimal
-    min_relative_distance_from_FP: Decimal
+class OrderChainElementConfig(BaseModel):
+    name: str
+    args: dict[str, Decimal | int]
 
-    order_size: Decimal
-    minimal_remaining_size: Decimal
-    max_orders_per_side: int
+    @staticmethod
+    def from_dict(d: dict[str, int | Decimal]) -> "OrderChainElementConfig":
+        name = d['name']
+        del d['name']
+        return OrderChainElementConfig(
+            name = str(name),
+            args = d
+        )
 
+class ReconcilerConfig(BaseModel):
+    name: str
+    args: dict[str, Decimal | int]
+    
+    @staticmethod
+    def from_dict(d: dict[str, int | Decimal]) -> "ReconcilerConfig":
+        name = d['name']
+        del d['name']
+        return ReconcilerConfig(
+            name = str(name),
+            args = d
+        )
 
 class StrategyConfig(BaseModel):
     account: AccountConfig
     asset: AssetConfig
-    marketmaker: MarketMakerConfig
+    order_chain: list[OrderChainElementConfig]
+    reconciler: ReconcilerConfig
+

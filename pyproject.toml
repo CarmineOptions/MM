@@ -29,4 +29,4 @@ extend-exclude = ['test.py']
 python_version = "3.12"
 strict = true
 namespace_packages = true
-exclude = 'test|websocketconnector.py'
+exclude = 'test|websocketconnector\.py|.*/legacy(/.*)?'

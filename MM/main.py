@@ -18,14 +18,15 @@ from starknet_py.net.full_node_client import FullNodeClient
 from starknet_py.net.models.chains import StarknetChainId
 from starknet_py.net.signer.key_pair import KeyPair
 
+from marketmaking.orderchain.order_chain import OrderChain
+from marketmaking.reconciling import get_reconciler
 from oracles.data_sources import get_data_source
 from marketmaking.order import BasicOrder
 from venues.remus.remus import RemusDexClient
 from instruments.starknet import get_sn_token_from_symbol
 from cfg.cfg_classes import AccountConfig
 from marketmaking.market import Market
-from marketmaking.marketmaker import MarketMaker
-from marketmaking.pocmmmodel import POCMMModel
+from marketmaking.marketmakers.simple_marketmaker import SimpleMarketMaker
 from state.state import State
 from marketmaking.transaction_builder import TransactionBuilder
 from marketmaking.waccount import WAccount
@@ -117,6 +118,11 @@ async def main() -> None:
 
     cfg = load_config(args.cfg_path)
 
+    order_chain = OrderChain.from_config(cfg.order_chain)
+
+    reconciler = get_reconciler(cfg.reconciler)
+
+
     market_id = cfg.asset.market_id
     account = get_account(cfg.account)
     wrapped_account = WAccount(account=account)
@@ -142,7 +148,6 @@ async def main() -> None:
     if market_cfg is None:
         raise ValueError(f"Unable to fetch RemusMarketConfig for market_id={market_id}")
 
-    market_maker_cfg = cfg.marketmaker
 
     market = Market(
         market_id=cfg.asset.market_id,
@@ -159,10 +164,6 @@ async def main() -> None:
         fair_price_fetcher = data_source
     )
 
-    poc_mm_model = POCMMModel(
-        market_cfg=market_cfg,
-        market_maker_cfg=market_maker_cfg,
-    )
 
     transaction_builder = TransactionBuilder(
         remus_client=remus_client,
@@ -171,14 +172,12 @@ async def main() -> None:
         max_fee=0,
     )
 
-    market_maker = MarketMaker(
-        account=wrapped_account,
-        market=market,
-        mm_model=poc_mm_model,
-        reconciler=None,  # TODO:
-        claim_rule=None,
-        transaction_builder=transaction_builder,
-        blockchain_connectors=None,
+    market_maker  = SimpleMarketMaker(
+        account = wrapped_account,
+        market = market, 
+        order_reconciler=reconciler,
+        order_chain=order_chain,
+        tx_builder=transaction_builder
     )
 
     await market_maker.initialize_trading()
