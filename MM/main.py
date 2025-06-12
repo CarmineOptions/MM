@@ -189,9 +189,10 @@ async def main() -> None:
             await state.update()
 
             logging.info("My current orders: %s", state.account.open_orders)
-
-            # Get current oracle price and pulse it.
             logging.info("Fair price queried: %s.", state.fair_price)
+            logging.info("Current position: %s", state.account.position)
+
+            metrics.track_position(state.account.position)
 
             pretty_print_orders(state.account.open_orders.asks, state.account.open_orders.bids)
 

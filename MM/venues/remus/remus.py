@@ -16,6 +16,7 @@ from instruments.starknet import StarknetToken
 REMUS_ADDRESS = "0x067e7555f9ff00f5c4e9b353ad1f400e2274964ea0942483fae97363fd5d7958"
 REMUS_IDENTIFIER = "REMUS"
 
+    
 
 class RemusDexView:
     """
@@ -110,11 +111,14 @@ class RemusDexView:
         return [o for o in orders if o.market_id == market_id]
 
     async def get_claimable(self, token: StarknetToken, user_address: int) -> Decimal:
-        # TODO: Use some class here representing the amount of token that'll include decimals etc
         claimable = await self._contract.functions["get_claimable"].call(
             token_address=token.address, user_address=user_address
         )
         return Decimal(claimable[0])
+
+    async def get_claimable_hr(self, token: StarknetToken, user_address: int) -> Decimal:
+        claimable = await self.get_claimable(token, user_address)
+        return Decimal(claimable / 10 ** token.decimals)
 
 
 class RemusDexClient:
