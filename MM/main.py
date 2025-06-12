@@ -192,8 +192,7 @@ async def main() -> None:
             logging.info("Fair price queried: %s.", state.fair_price)
             logging.info("Current position: %s", state.account.position)
 
-            metrics.track_base_position(float(state.account.position.total_base))
-            metrics.track_quote_position(float(state.account.position.total_quote))
+            metrics.track_position(state.account.position)
 
             pretty_print_orders(state.account.open_orders.asks, state.account.open_orders.bids)
 

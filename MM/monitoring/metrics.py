@@ -2,6 +2,8 @@ from prometheus_client import Counter, Gauge, start_http_server
 import logging
 import time
 
+from marketmaking.market import PositionInfo
+
 
 def start_metrics_server(port: int = 8000) -> None:
     start_http_server(port)
@@ -49,3 +51,7 @@ def track_base_position(val: float) -> None:
 
 def track_quote_position(val: float) -> None:
     current_position_quote.set(val)
+
+def track_position(position: PositionInfo) -> None:
+    track_base_position(float(position.total_base))
+    track_quote_position(float(position.total_quote))
