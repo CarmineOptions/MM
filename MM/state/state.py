@@ -2,6 +2,7 @@
 
 import asyncio
 from decimal import Decimal
+import logging
 from marketmaking.waccount import WAccount
 from oracles.data_sources.data_source import DataSource
 from state.account_state import AccountState
@@ -29,4 +30,8 @@ class State:
     def fair_price(self) -> Decimal:
         return self._fair_price
 
+    @fair_price.setter
+    def fair_price(self, new_fp: Decimal) -> None:
+        logging.info(f"Updating fair price from {self._fair_price} to {new_fp}")
+        self._fair_price = new_fp
 
