@@ -53,8 +53,15 @@ class BoundedReconciler(OrderReconciler):
                 asks_kept.append(order)
 
         # Order lists from deepest orders to best ones
-        bids_kept.sort(key=lambda x: x.price)
-        asks_kept.sort(key=lambda x: -x.price)
+        bids_kept.sort(key=lambda x: -x.price)
+        asks_kept.sort(key=lambda x: x.price)
+
+        # Remove the deepest orders that are redundant
+        reconciled.to_cancel += bids_kept[self._max_orders_per_side:]
+        reconciled.to_cancel += asks_kept[self._max_orders_per_side:]
+
+        bids_kept = bids_kept[:self._max_orders_per_side]
+        asks_kept = asks_kept[:self._max_orders_per_side]
 
         if self._new_orders_needed(state, bids_kept):
             reconciled.to_place += desired_orders.bids
