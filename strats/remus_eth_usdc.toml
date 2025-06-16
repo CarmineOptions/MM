@@ -20,16 +20,24 @@ market_id = 1
 
 price_source = 'binance'
 
-[marketmaker]
-
-# TODO: Once more strategies are available, indicate what class/strategy will be used
-
-target_relative_distance_from_FP = "0.001" # where best order is created 
-max_relative_distance_from_FP = "0.003" # too far from FP to be considered best (it is considered deep)
-min_relative_distance_from_FP = "0.0005" # too close to FP to exist -> if closer kill the order
-
-order_size = "100"   # in Quote asset (human-readable)
+[reconciler]
+name = 'bounded_reconciler'
+max_relative_distance_from_fp = "0.003" # too far from FP to be considered best (it is considered deep)
+min_relative_distance_from_fp = "0.0005" # too close to FP to exist -> if closer kill the order
 minimal_remaining_size = "0.05"  # in Base asset (human-readable)
 max_orders_per_side = 1
 
-# TODO: add fee related config values
+[[orderchain]]
+name = 'skew_fair_price_on_position'
+bias = '0.005'
+max_skew = '0.002'
+
+[[orderchain]]
+name = 'fixed_params'
+target_relative_distance_from_fp = "0.001" # where best order is created 
+order_size_quote = "100"   # in Quote asset (human-readable)
+
+
+
+
+
