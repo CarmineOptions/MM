@@ -123,7 +123,6 @@ async def main() -> None:
 
     reconciler = get_reconciler(cfg.reconciler)
 
-
     market_id = cfg.asset.market_id
     account = get_account(cfg.account)
     wrapped_account = WAccount(account=account)
@@ -149,7 +148,6 @@ async def main() -> None:
     if market_cfg is None:
         raise ValueError(f"Unable to fetch RemusMarketConfig for market_id={market_id}")
 
-
     market = Market(
         market_id=cfg.asset.market_id,
         remus_client=remus_client,
@@ -158,13 +156,12 @@ async def main() -> None:
         market_cfg=market_cfg,
     )
 
-    data_source = get_data_source(cfg.asset.price_source, cfg.asset.base_asset, cfg.asset.quote_asset)
-    state = State(
-        market = market,
-        account = wrapped_account,
-        fair_price_fetcher = data_source
+    data_source = get_data_source(
+        cfg.asset.price_source, cfg.asset.base_asset, cfg.asset.quote_asset
     )
-
+    state = State(
+        market=market, account=wrapped_account, fair_price_fetcher=data_source
+    )
 
     transaction_builder = TransactionBuilder(
         remus_client=remus_client,
@@ -173,12 +170,12 @@ async def main() -> None:
         max_fee=0,
     )
 
-    market_maker  = SimpleMarketMaker(
-        account = wrapped_account,
-        market = market, 
+    market_maker = SimpleMarketMaker(
+        account=wrapped_account,
+        market=market,
         order_reconciler=reconciler,
         order_chain=order_chain,
-        tx_builder=transaction_builder
+        tx_builder=transaction_builder,
     )
 
     await market_maker.initialize_trading()
@@ -197,14 +194,16 @@ async def main() -> None:
 
             metrics.track_position(state.account.position)
 
-            pretty_print_orders(state.account.open_orders.asks, state.account.open_orders.bids)
+            pretty_print_orders(
+                state.account.open_orders.asks, state.account.open_orders.bids
+            )
 
-            await market_maker.pulse(state = state)
+            await market_maker.pulse(state=state)
 
             logging.info("Pulsed market maker with fair price: %s", state.fair_price)
         except Exception as e:
             # Catching here and not as "except ClientError" because there can be many different ClientErrors
-            if isinstance(e, ClientError) and 'Account nonce' in e.message:
+            if isinstance(e, ClientError) and "Account nonce" in e.message:
                 logging.error("Account nonce error, trying to reinitialize account...")
                 await wrapped_account.reset_latest_nonce()
                 logging.info("Reinitialized account.")

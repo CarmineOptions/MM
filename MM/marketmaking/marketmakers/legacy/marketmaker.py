@@ -90,7 +90,7 @@ class MarketMaker:
 
     async def pulse(self, state: State) -> None:
         """
-        Main pulsing function that takes in updated State and then 
+        Main pulsing function that takes in updated State and then
         proceeds to claim tokens, calculate optimal orders and send them
         to the market.
         """
@@ -134,7 +134,7 @@ class MarketMaker:
         # Claim tokens for the market.
 
         logging.info("Claiming tokens for market_id: %s", self.market.market_id)
-        
+
         for token in [market.market_cfg.base_token, market.market_cfg.quote_token]:
             claimable = await market.remus_client.view.get_claimable(
                 token=token, user_address=account.address

@@ -1,4 +1,3 @@
-
 import logging
 
 from marketmaking.market import Market
@@ -10,10 +9,12 @@ from state.state import State
 
 MAX_UINT = 2**256 - 1
 
+
 class SimpleMarketMaker:
     """
     Simple MarketMaker that makes market on single pair using single account.
     """
+
     def __init__(
         self,
         account: WAccount,
@@ -101,7 +102,7 @@ class SimpleMarketMaker:
         # Claim tokens for the market.
 
         logging.info("Claiming tokens for market_id: %s", self.market.market_id)
-        
+
         for token in [market.market_cfg.base_token, market.market_cfg.quote_token]:
             claimable = await market.remus_client.view.get_claimable(
                 token=token, user_address=account.address
@@ -137,19 +138,16 @@ class SimpleMarketMaker:
             )
 
     async def pulse(self, state: State) -> None:
-
         desired_orders = self.order_chain.process(state)
 
         open_orders = state.account.open_orders
 
         reconciled = self.order_reconciler.reconcile(
-            existing_orders=open_orders, 
-            state = state,
-            desired_orders=desired_orders
+            existing_orders=open_orders, state=state, desired_orders=desired_orders
         )
 
         await self.tx_builder.build_transactions(
             wrapped_account=self.account,
             to_be_canceled=reconciled.to_cancel,
-            to_be_created=reconciled.to_place
+            to_be_created=reconciled.to_place,
         )

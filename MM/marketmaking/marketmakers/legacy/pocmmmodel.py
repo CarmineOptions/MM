@@ -7,6 +7,7 @@ from marketmaking.waccount import WAccount
 from marketmaking.order import BasicOrder, FutureOrder
 from state.state import State
 
+
 class POCMMModel:
     # POCMMModel contains the logic from the POC market maker. The goal is to test the SW and build the model later.
     # The POCMMModel also contains reconciliation.

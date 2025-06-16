@@ -1,7 +1,3 @@
-
-
-
-
 from typing import final
 
 from marketmaking.order import DesiredOrders, OpenOrders
@@ -14,8 +10,9 @@ class AlwaysReplaceOrderReconciler(OrderReconciler):
     def __init__(self) -> None:
         pass
 
-    def reconcile(self, _: State, existing_orders: OpenOrders, desired_orders: DesiredOrders) -> ReconciledOrders:
+    def reconcile(
+        self, _: State, existing_orders: OpenOrders, desired_orders: DesiredOrders
+    ) -> ReconciledOrders:
         return ReconciledOrders(
-            to_cancel = existing_orders.all_orders,
-            to_place = desired_orders.all_orders
+            to_cancel=existing_orders.all_orders, to_place=desired_orders.all_orders
         )

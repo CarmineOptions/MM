@@ -26,7 +26,7 @@ class PositionInfo:
     @property
     def total_quote(self) -> Decimal:
         return self.balance_quote + self.claimable_quote + self.in_orders_quote
-    
+
     @staticmethod
     def empty() -> "PositionInfo":
         return PositionInfo(
@@ -37,6 +37,8 @@ class PositionInfo:
             in_orders_base=Decimal(0),
             in_orders_quote=Decimal(0),
         )
+
+
 class Market:
     """
     Describes the market and it's parameters.
@@ -67,41 +69,50 @@ class Market:
         """
         # FIXME
         pass
-    
+
     async def get_total_position(self, address: int) -> PositionInfo:
         (
             orders,
             claimable_base,
             claimable_quote,
             balance_base,
-            balance_quote
+            balance_quote,
         ) = await asyncio.gather(
-            self.remus_client.view.get_all_user_orders_for_market_id(address, self.market_cfg.market_id),
-            self.remus_client.view.get_claimable_hr(self.market_cfg.base_token, address),
-            self.remus_client.view.get_claimable_hr(self.market_cfg.quote_token, address),
-            self.base_token_contract.functions['balanceOf'].call( account = address),
-            self.quote_token_contract.functions['balanceOf'].call( account = address),
+            self.remus_client.view.get_all_user_orders_for_market_id(
+                address, self.market_cfg.market_id
+            ),
+            self.remus_client.view.get_claimable_hr(
+                self.market_cfg.base_token, address
+            ),
+            self.remus_client.view.get_claimable_hr(
+                self.market_cfg.quote_token, address
+            ),
+            self.base_token_contract.functions["balanceOf"].call(account=address),
+            self.quote_token_contract.functions["balanceOf"].call(account=address),
         )
 
         orders_base, orders_quote = _get_base_quote_position_from_orders(orders)
-        
-        return PositionInfo(
-            balance_base = Decimal(balance_base[0]) / 10 **self.market_cfg.base_token.decimals,
-            balance_quote = Decimal(balance_quote[0]) / 10 **self.market_cfg.quote_token.decimals,
-            
-            claimable_base = claimable_base,
-            claimable_quote = claimable_quote,
 
+        return PositionInfo(
+            balance_base=Decimal(balance_base[0])
+            / 10**self.market_cfg.base_token.decimals,
+            balance_quote=Decimal(balance_quote[0])
+            / 10**self.market_cfg.quote_token.decimals,
+            claimable_base=claimable_base,
+            claimable_quote=claimable_quote,
             in_orders_base=orders_base,
-            in_orders_quote=orders_quote
+            in_orders_quote=orders_quote,
         )
 
-def _get_base_quote_position_from_orders(orders: list[BasicOrder]) -> tuple[Decimal, Decimal]:
+
+def _get_base_quote_position_from_orders(
+    orders: list[BasicOrder],
+) -> tuple[Decimal, Decimal]:
     base = Decimal(0)
     quote = Decimal(0)
 
     for o in orders:
-        if o.order_side.lower() == 'ask':
+        if o.order_side.lower() == "ask":
             base += o.amount_remaining
             continue
         # bid order

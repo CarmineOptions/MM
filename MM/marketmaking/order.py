@@ -25,7 +25,8 @@ class BasicOrder:
     # TODO: Add info regarding instruments here too, or use InstrumentAmount
 
     def is_bid(self) -> bool:
-        return self.order_side.lower() == 'bid'
+        return self.order_side.lower() == "bid"
+
 
 @dataclass
 class FutureOrder:
@@ -45,6 +46,7 @@ class OpenOrders:
     """
     Class that holds lists of bids and asks.
     """
+
     bids: list[BasicOrder]
     asks: list[BasicOrder]
 
@@ -56,8 +58,8 @@ class OpenOrders:
     def from_list(orders: list[BasicOrder]) -> "OpenOrders":
         """
         Constructs lists of OpenOrders from list of BasicOrder, separating
-        them into *sorted* bids and asks. 
-        
+        them into *sorted* bids and asks.
+
         Doesn't check if they are all from the same market/venue...
         """
 
@@ -65,7 +67,7 @@ class OpenOrders:
         asks = []
 
         for o in orders:
-            if o.order_side.lower() == 'bid':
+            if o.order_side.lower() == "bid":
                 bids.append(o)
                 continue
 
@@ -74,10 +76,8 @@ class OpenOrders:
         bids = sorted(bids, key=lambda x: -x.price)
         asks = sorted(asks, key=lambda x: -x.price)
 
-        return OpenOrders(
-            bids = bids,
-            asks = asks
-        )
+        return OpenOrders(bids=bids, asks=asks)
+
 
 @dataclass
 class DesiredOrders:

@@ -47,29 +47,24 @@ class OrderChainElementConfig(BaseModel):
 
     @staticmethod
     def from_dict(d: dict[str, int | Decimal]) -> "OrderChainElementConfig":
-        name = d['name']
-        del d['name']
-        return OrderChainElementConfig(
-            name = str(name),
-            args = d
-        )
+        name = d["name"]
+        del d["name"]
+        return OrderChainElementConfig(name=str(name), args=d)
+
 
 class ReconcilerConfig(BaseModel):
     name: str
     args: dict[str, Decimal | int]
-    
+
     @staticmethod
     def from_dict(d: dict[str, int | Decimal]) -> "ReconcilerConfig":
-        name = d['name']
-        del d['name']
-        return ReconcilerConfig(
-            name = str(name),
-            args = d
-        )
+        name = d["name"]
+        del d["name"]
+        return ReconcilerConfig(name=str(name), args=d)
+
 
 class StrategyConfig(BaseModel):
     account: AccountConfig
     asset: AssetConfig
     order_chain: list[OrderChainElementConfig]
     reconciler: ReconcilerConfig
-

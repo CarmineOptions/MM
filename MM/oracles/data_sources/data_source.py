@@ -13,6 +13,7 @@ class DataSource(ABC):
             Asynchronously retrieves the current price for the initialized (base, quote) pair.
             Must be implemented by subclasses.
     """
+
     @abstractmethod
     def __init__(self, base: str, quote: str):
         raise NotImplementedError
