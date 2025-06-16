@@ -44,6 +44,7 @@ def setup_logging(log_level: str) -> None:
     logging.basicConfig(
         filename="marketmaker.log", filemode="a", level=logging.INFO, format=log_format
     )
+    logging.getLogger("httpx").setLevel(logging.ERROR)
     console = logging.StreamHandler(sys.stdout)
     console.setLevel(logging.INFO)
     console.setFormatter(logging.Formatter(log_format))
@@ -187,6 +188,8 @@ async def main() -> None:
             loop_start_time = time.time()
 
             await state.update()
+
+            metrics.track_state_update_time(time.time() - loop_start_time)
 
             logging.info("My current orders: %s", state.account.open_orders)
             logging.info("Fair price queried: %s.", state.fair_price)
