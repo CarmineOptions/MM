@@ -39,14 +39,11 @@ class TransactionBuilder:
         to_be_canceled: list[BasicOrder],
         to_be_created: list[FutureOrder],
     ) -> None:
-        self._logger.info("Deleting quotes")
         await self.delete_quotes(
             wrapped_account=wrapped_account,
             remus_client=self.remus_client,
             to_be_canceled=to_be_canceled,
         )
-        self._logger.info("Done with deleting quotes")
-        self._logger.info("Creating quotes")
         await asyncio.sleep(1)  # Give some time for the deletion to be processed
         await self.create_quotes(
             wrapped_account,
@@ -54,7 +51,6 @@ class TransactionBuilder:
             remus_client=self.remus_client,
             to_be_created=to_be_created,
         )
-        self._logger.info("Done with creating quotes")
 
     async def delete_quotes(
         self,
@@ -63,7 +59,7 @@ class TransactionBuilder:
         to_be_canceled: list[BasicOrder],
     ) -> None:
         """Delete quotes based on the market maker's strategy."""
-        self._logger.info("Deleting quotes F")
+        self._logger.info(f"Deleting {len(to_be_canceled)} quotes")
         for order in to_be_canceled:
             nonce = await wrapped_account.get_nonce()
             await wrapped_account.increment_nonce()
@@ -79,6 +75,8 @@ class TransactionBuilder:
 
             self._logger.info("Canceling: %s, nonce: %s", order.order_id, nonce)
 
+        self._logger.info("Quotes deleted")
+
     async def create_quotes(
         self,
         wrapped_account: WAccount,
@@ -87,7 +85,7 @@ class TransactionBuilder:
         to_be_created: list[FutureOrder],
     ) -> None:
         """Create quotes based on the market maker's strategy."""
-
+        self._logger.info(f"Creating {len(to_be_created)} quotes")
         for order in to_be_created:
             if order.order_side.lower() == "ask":
                 target_token_address = market_cfg.base_token.address
@@ -137,4 +135,4 @@ class TransactionBuilder:
                 order_side,
                 nonce,
             )
-        self._logger.info("Done with order changes")
+        self._logger.info("Quotes created")
