@@ -13,7 +13,10 @@ class AccountState:
         self.market = market
         self.account = account
 
-        self._position = PositionInfo.empty()
+        self._position = PositionInfo.empty(
+            base_token=market.market_cfg.base_token,
+            quote_token=market.market_cfg.quote_token
+        )
         self._open_orders: OpenOrders = OpenOrders(bids=[], asks=[])
 
     @property

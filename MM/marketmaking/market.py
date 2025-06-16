@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from starknet_py.contract import Contract
 
+from instruments.instrument import Instrument, InstrumentAmount
 from marketmaking.order import BasicOrder
 from venues.remus.remus_market_configs import RemusMarketConfig
 from venues.remus.remus import RemusDexClient
@@ -13,27 +14,33 @@ class PositionInfo:
     balance_base: Decimal
     balance_quote: Decimal
 
-    claimable_base: Decimal
-    claimable_quote: Decimal
+    claimable_base: InstrumentAmount
+    claimable_quote: InstrumentAmount
 
     in_orders_base: Decimal
     in_orders_quote: Decimal
 
     @property
     def total_base(self) -> Decimal:
-        return self.balance_base + self.claimable_base + self.in_orders_base
+        return self.balance_base + self.claimable_base.amount_hr + self.in_orders_base
 
     @property
     def total_quote(self) -> Decimal:
-        return self.balance_quote + self.claimable_quote + self.in_orders_quote
+        return self.balance_quote + self.claimable_quote.amount_hr + self.in_orders_quote
 
     @staticmethod
-    def empty() -> "PositionInfo":
+    def empty(base_token: Instrument, quote_token: Instrument) -> "PositionInfo":
         return PositionInfo(
             balance_base=Decimal(0),
             balance_quote=Decimal(0),
-            claimable_base=Decimal(0),
-            claimable_quote=Decimal(0),
+            claimable_base=InstrumentAmount(
+                instrument = base_token, 
+                amount_raw=0
+            ),
+            claimable_quote=InstrumentAmount(
+                instrument=quote_token,
+                amount_raw=0
+            ),
             in_orders_base=Decimal(0),
             in_orders_quote=Decimal(0),
         )
@@ -81,10 +88,10 @@ class Market:
             self.remus_client.view.get_all_user_orders_for_market_id(
                 address, self.market_cfg.market_id
             ),
-            self.remus_client.view.get_claimable_hr(
+            self.remus_client.view.get_claimable(
                 self.market_cfg.base_token, address
             ),
-            self.remus_client.view.get_claimable_hr(
+            self.remus_client.view.get_claimable(
                 self.market_cfg.quote_token, address
             ),
             self.base_token_contract.functions["balanceOf"].call(account=address),

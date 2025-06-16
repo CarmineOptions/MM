@@ -11,7 +11,7 @@ class Instrument(ABC):
     address: int
 
 
-@dataclass
+@dataclass(frozen=True)
 class InstrumentAmount:
     instrument: Instrument
     amount_raw: int

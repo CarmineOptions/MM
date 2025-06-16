@@ -91,7 +91,7 @@ class SimpleMarketMaker:
         await account.set_latest_nonce(nonce)
         self._logger.info("Setting unlimited approvals is done.")
 
-    async def claim_tokens(self) -> None:
+    async def claim_tokens(self, state: State) -> None:
         """
         Initially it claims all the time. Later, it will claim only when needed.
         TODO: claim only when needed.
@@ -103,27 +103,22 @@ class SimpleMarketMaker:
 
         logging.info("Claiming tokens for market_id: %s", self.market.market_id)
 
-        for token in [market.market_cfg.base_token, market.market_cfg.quote_token]:
-            claimable = await market.remus_client.view.get_claimable(
-                token=token, user_address=account.address
-            )
-
+        for claimable_token in [state.account.position.claimable_base, state.account.position.claimable_quote]:
             self._logger.info(
                 "Claimable amount is %s for token %s, account %s.",
-                claimable,
-                hex(token.address),
+                claimable_token.amount_hr,
+                hex(claimable_token.instrument.address),
                 hex(account.address),
             )
 
-            if claimable:
+            if claimable_token.amount_raw:
                 self._logger.info("Claiming")
                 latest_nonce = await account.get_nonce()
                 # TODO: push this into the transaction builder.
                 # TODO: Use ResourceBound instead of auto_estimate when invoking
 
                 call = market.remus_client.prep_claim_call(
-                    token=token,
-                    amount=claimable,
+                    amount=claimable_token,
                 )
 
                 await call.invoke(auto_estimate=True, nonce=latest_nonce)
@@ -138,6 +133,9 @@ class SimpleMarketMaker:
             )
 
     async def pulse(self, state: State) -> None:
+
+        await self.claim_tokens(state=state)
+        
         desired_orders = self.order_chain.process(state)
 
         open_orders = state.account.open_orders

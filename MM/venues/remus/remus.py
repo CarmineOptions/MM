@@ -12,6 +12,7 @@ from venues.remus.remus_market_configs import (
 )
 from marketmaking.order import BasicOrder, FutureOrder
 from instruments.starknet import StarknetToken
+from instruments.instrument import InstrumentAmount
 
 REMUS_ADDRESS = "0x067e7555f9ff00f5c4e9b353ad1f400e2274964ea0942483fae97363fd5d7958"
 REMUS_IDENTIFIER = "REMUS"
@@ -109,17 +110,14 @@ class RemusDexView:
 
         return [o for o in orders if o.market_id == market_id]
 
-    async def get_claimable(self, token: StarknetToken, user_address: int) -> Decimal:
+    async def get_claimable(self, token: StarknetToken, user_address: int) -> InstrumentAmount:
         claimable = await self._contract.functions["get_claimable"].call(
             token_address=token.address, user_address=user_address
         )
-        return Decimal(claimable[0])
-
-    async def get_claimable_hr(
-        self, token: StarknetToken, user_address: int
-    ) -> Decimal:
-        claimable = await self.get_claimable(token, user_address)
-        return Decimal(claimable / 10**token.decimals)
+        return InstrumentAmount(
+            instrument=token,
+            amount_raw=int(claimable[0])
+        )
 
 
 class RemusDexClient:
@@ -142,12 +140,12 @@ class RemusDexClient:
         return RemusDexClient(contract=contract)
 
     def prep_claim_call(
-        self, token: StarknetToken, amount: Decimal
+        self, amount: InstrumentAmount
     ) -> PreparedFunctionInvokeV3:
         # TODO: Add fees
         return self._contract.functions["claim"].prepare_invoke_v3(
-            token_address=token.address,
-            amount=int(amount),
+            token_address=amount.instrument.address,
+            amount=amount.amount_raw,
         )
 
     def prep_submit_maker_order_call(
