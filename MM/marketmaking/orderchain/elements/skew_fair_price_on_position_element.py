@@ -1,7 +1,6 @@
 
 
 
-
 from decimal import Decimal
 import logging
 from typing import final
@@ -46,9 +45,9 @@ class SkewFairPriceOnPositionElement(OrderChainElement):
         if total_value == 0:
             return orders
 
-        # Multiplied by minus one - if base value is higher we want to sell more so 
+        # If base value is higher we want to sell more so 
         # we need to shift the price lower to make asks more aggressive
-        imbalance = ((base_value - quote_value ) / (base_value + quote_value)) * -1
+        imbalance = ((quote_value - base_value ) / (base_value + quote_value))
 
         logging.info(f"Current imbalance: {imbalance}")
         
