@@ -86,8 +86,8 @@ class Market:
         orders_base, orders_quote = _get_base_quote_position_from_orders(orders)
         
         return PositionInfo(
-            balance_base = balance_base[0] / 10 **self.market_cfg.base_token.decimals,
-            balance_quote = balance_quote[0] / 10 **self.market_cfg.quote_token.decimals,
+            balance_base = Decimal(balance_base[0]) / 10 **self.market_cfg.base_token.decimals,
+            balance_quote = Decimal(balance_quote[0]) / 10 **self.market_cfg.quote_token.decimals,
             
             claimable_base = claimable_base,
             claimable_quote = claimable_quote,
