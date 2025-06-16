@@ -17,6 +17,10 @@ loop_time = Gauge(
     "loop_time", "Time (in seconds) it took the bot to complete one single loop"
 )
 
+state_update_time = Gauge(
+    'state_update_time', 'Time (in seconds) it took to update the state'
+)
+
 total_orders_sent = Counter("total_orders_sent", "Total number of orders sent")
 
 total_orders_canceled = Counter(
@@ -39,6 +43,8 @@ class PrometheusMetricsErrorHandler(logging.Handler):
 def track_loop_time(interval: float) -> None:
     loop_time.set(interval)
 
+def track_state_update_time(interval: float) -> None:
+    state_update_time.set(interval)
 
 def track_orders_sent(val: int) -> None:
     total_orders_sent.inc(val)

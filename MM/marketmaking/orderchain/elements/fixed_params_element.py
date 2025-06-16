@@ -18,7 +18,7 @@ class FixedParamsElement(OrderChainElement):
         self._order_size = order_size_quote
 
 
-    def process(self, state: State, _: DesiredOrders) -> DesiredOrders:
+    def process(self, state: State, orders: DesiredOrders) -> DesiredOrders:
         
         new_orders = DesiredOrders(
             bids = [],
