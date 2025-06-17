@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+
+def felt_to_str(felt):
+    num_bytes = (felt.bit_length() + 7) // 8
+    bytes_ = felt.to_bytes(num_bytes, "big")
+    return bytes_.decode("utf-8")
+
+if __name__ == '__main__':
+    import sys
+    
+    felt = int(sys.argv[1])
+    print(felt_to_str(felt))

@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+
+def str_to_felt(text):
+    if text.upper() != text:
+        text = text.upper()
+    b_text = bytes(text, "utf-8")
+    return int.from_bytes(b_text, "big")
+
+if __name__ == '__main__':
+    import sys
+    
+    text = sys.argv[1]
+    print(str_to_felt(text))
