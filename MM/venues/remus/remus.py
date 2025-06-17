@@ -93,7 +93,6 @@ class RemusDexView:
                 order_side=order_side,
                 entry_time=entry_time,
                 market_id=market_id,
-                platform="Starknet",
                 venue=REMUS_IDENTIFIER,
             )
             normalized_orders.append(new_o)

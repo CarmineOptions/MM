@@ -19,7 +19,6 @@ class BasicOrder:
     order_side: str
     entry_time: int
 
-    platform: str
     venue: str
 
     # TODO: Add info regarding instruments here too, or use InstrumentAmount

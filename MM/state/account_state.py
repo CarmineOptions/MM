@@ -29,6 +29,8 @@ class AccountState:
 
     async def update(self) -> None:
         async with asyncio.TaskGroup() as tg:
+            # TODO: We're fetching position here which fetches orders for market,
+            #  but then we're doing it again below, we could just use the same orders
             position_task = tg.create_task(
                 self.market.get_total_position(self.account.address)
             )
