@@ -147,8 +147,8 @@ class RemusMarket(Market):
                 / 10**self._market_config.base_token.decimals,
             balance_quote=Decimal(balance_quote[0])
                 / 10**self._market_config.quote_token.decimals,
-            claimable_base=claimable_base,
-            claimable_quote=claimable_quote,
+            withdrawable_base=claimable_base,
+            withdrawable_quote=claimable_quote,
             in_orders_base=orders_base,
             in_orders_quote=orders_quote,
         )

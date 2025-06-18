@@ -14,30 +14,30 @@ class PositionInfo:
     balance_base: Decimal
     balance_quote: Decimal
 
-    claimable_base: InstrumentAmount
-    claimable_quote: InstrumentAmount
+    withdrawable_base: InstrumentAmount
+    withdrawable_quote: InstrumentAmount
 
     in_orders_base: Decimal
     in_orders_quote: Decimal
 
     @property
     def total_base(self) -> Decimal:
-        return self.balance_base + self.claimable_base.amount_hr + self.in_orders_base
+        return self.balance_base + self.withdrawable_base.amount_hr + self.in_orders_base
 
     @property
     def total_quote(self) -> Decimal:
-        return self.balance_quote + self.claimable_quote.amount_hr + self.in_orders_quote
+        return self.balance_quote + self.withdrawable_quote.amount_hr + self.in_orders_quote
 
     @staticmethod
     def empty(base_token: Instrument, quote_token: Instrument) -> "PositionInfo":
         return PositionInfo(
             balance_base=Decimal(0),
             balance_quote=Decimal(0),
-            claimable_base=InstrumentAmount(
+            withdrawable_base=InstrumentAmount(
                 instrument = base_token, 
                 amount_raw=0
             ),
-            claimable_quote=InstrumentAmount(
+            withdrawable_quote=InstrumentAmount(
                 instrument=quote_token,
                 amount_raw=0
             ),
@@ -105,8 +105,8 @@ class Market:
             / 10**self.market_cfg.base_token.decimals,
             balance_quote=Decimal(balance_quote[0])
             / 10**self.market_cfg.quote_token.decimals,
-            claimable_base=claimable_base,
-            claimable_quote=claimable_quote,
+            withdrawable_base=claimable_base,
+            withdrawable_quote=claimable_quote,
             in_orders_base=orders_base,
             in_orders_quote=orders_quote,
         )

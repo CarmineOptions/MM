@@ -4,7 +4,7 @@ from typing import final
 from starknet_py.net.client_models import Calls
 from starknet_py.contract import Contract
 
-from MM.marketmaking.market import PositionInfo
+from marketmaking.market import PositionInfo
 from marketmaking.order import BasicOrder, FutureOrder
 from marketmaking.waccount import WAccount
 from markets.market import Market
