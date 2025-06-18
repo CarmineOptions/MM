@@ -21,6 +21,7 @@ from starknet_py.net.signer.key_pair import KeyPair
 from marketmaking.orderchain.order_chain import OrderChain
 from marketmaking.reconciling import get_reconciler
 from oracles.data_sources import get_data_source
+from markets import get_market
 from marketmaking.order import BasicOrder
 from venues.remus.remus import RemusDexClient
 from instruments.starknet import get_sn_token_from_symbol
@@ -127,34 +128,10 @@ async def main() -> None:
     account = get_account(cfg.account)
     wrapped_account = WAccount(account=account)
 
-    base_token = get_sn_token_from_symbol(cfg.asset.base_asset)
-    if base_token is None:
-        raise ValueError(f"Token `{cfg.asset.base_asset}` is not supported")
 
-    quote_token = get_sn_token_from_symbol(cfg.asset.quote_asset)
-    if quote_token is None:
-        raise ValueError(f"Token `{cfg.asset.quote_asset}` is not supported")
-
-    quote_token_contract = await Contract.from_address(
-        address=quote_token.address, provider=account
-    )
-    base_token_contract = await Contract.from_address(
-        address=base_token.address, provider=account
-    )
-
-    remus_client = await RemusDexClient.from_account(account=account)
-    market_cfg = await remus_client.view.get_market_config(market_id)
-
-    if market_cfg is None:
-        raise ValueError(f"Unable to fetch RemusMarketConfig for market_id={market_id}")
-
-    market = Market(
-        market_id=cfg.asset.market_id,
-        remus_client=remus_client,
-        base_token_contract=base_token_contract,
-        quote_token_contract=quote_token_contract,
-        market_cfg=market_cfg,
-    )
+    market = await get_market('', account = wrapped_account, market_id = market_id)
+    if True:
+        1/0
 
     data_source = get_data_source(
         cfg.asset.price_source, cfg.asset.base_asset, cfg.asset.quote_asset

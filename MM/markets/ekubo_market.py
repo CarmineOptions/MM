@@ -7,7 +7,7 @@ from starknet_py.net.client_models import Calls
 from starknet_py.contract import Contract
 
 from instruments.instrument import InstrumentAmount
-from marketmaking.market import PositionInfo
+from markets.market import PositionInfo
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, TerminalOrders
 from marketmaking.waccount import WAccount
 from markets.market import Market
@@ -45,11 +45,11 @@ class EkuboMarket(Market):
             raise ValueError(f"No preloaded ekubo config found for id `{market_id}`")
         
         base_token = await Contract.from_address(
-            address = market_config.token0.address,
+            address = market_config.base_token.address,
             provider = account.account
         )
         quote_token = await Contract.from_address(
-            address = market_config.token1.address,
+            address = market_config.quote_token.address,
             provider = account.account
         )
         return EkuboMarket(
@@ -60,6 +60,10 @@ class EkuboMarket(Market):
             quote_token=quote_token,
             account=account
         )
+
+    @property
+    def market_cfg(self) -> EkuboMarketConfig:
+        return self._market_config
 
     async def setup(self, wrapped_account: WAccount) -> None:
         pass
@@ -103,8 +107,8 @@ class EkuboMarket(Market):
 
         base_in_orders, quote_in_orders = _get_base_quote_position_from_active_orders(orders.active)
 
-        balance_base = Decimal(_balance_base[0]) / 10**self._market_config.token0.decimals
-        balance_quote = Decimal(_balance_quote[0]) / 10**self._market_config.token1.decimals
+        balance_base = Decimal(_balance_base[0]) / 10**self._market_config.base_token.decimals
+        balance_quote = Decimal(_balance_quote[0]) / 10**self._market_config.quote_token.decimals
 
         return PositionInfo(
             balance_base = balance_base,
@@ -112,12 +116,12 @@ class EkuboMarket(Market):
             in_orders_base=base_in_orders,
             in_orders_quote=quote_in_orders,
             withdrawable_base=InstrumentAmount(
-                instrument = self._market_config.token0,
-                amount_raw = base_withdrawable * 10**self._market_config.token0.decimals
+                instrument = self._market_config.base_token,
+                amount_raw = base_withdrawable * 10**self._market_config.base_token.decimals
             ),
             withdrawable_quote=InstrumentAmount(
-                instrument = self._market_config.token1,
-                amount_raw = quote_withdrawable * 10**self._market_config.token1.decimals
+                instrument = self._market_config.quote_token,
+                amount_raw = quote_withdrawable * 10**self._market_config.quote_token.decimals
             ),
         )
 

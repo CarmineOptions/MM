@@ -6,7 +6,7 @@ from typing import final
 from starknet_py.contract import Contract
 from starknet_py.net.client_models import Calls
 
-from marketmaking.market import PositionInfo
+from markets.market import PositionInfo
 from marketmaking.waccount import WAccount
 from venues.remus.remus import RemusDexClient
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder
@@ -23,15 +23,15 @@ class RemusMarket(Market):
         market_id: int, 
         market_config: RemusMarketConfig,
         remus_client: RemusDexClient,
-        base_token: Contract,
-        quote_token: Contract,
+        base_token_contract: Contract,
+        quote_token_contract: Contract,
         account: WAccount
     ) -> None:
         self._market_id = market_id
         self._market_config = market_config
         self._client = remus_client
-        self._base_token = base_token
-        self._quote_token = quote_token
+        self._base_token = base_token_contract
+        self._quote_token = quote_token_contract
         self._account = account
 
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -57,10 +57,14 @@ class RemusMarket(Market):
             market_id = market_id,
             market_config=market_config,
             remus_client=client,
-            base_token=base_token,
-            quote_token=quote_token,
+            base_token_contract=base_token,
+            quote_token_contract=quote_token,
             account=account
         )
+
+    @property
+    def market_cfg(self) -> RemusMarketConfig:
+        return self._market_config
 
     async def get_current_orders(self) -> AllOrders:
         return await self._client.view.get_all_user_orders_for_market_id(

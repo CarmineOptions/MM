@@ -1,7 +1,8 @@
 import asyncio
 from marketmaking.order import AllOrders, OpenOrders, TerminalOrders
 from marketmaking.waccount import WAccount
-from marketmaking.market import Market, PositionInfo
+from markets import Market
+from markets.market import PositionInfo
 
 
 class AccountState:
@@ -27,8 +28,6 @@ class AccountState:
                 asks = []
             )
         )
-        
-        # OpenOrders(bids=[], asks=[])
 
     @property
     def orders(self) -> AllOrders:
@@ -43,12 +42,10 @@ class AccountState:
             # TODO: We're fetching position here which fetches orders for market,
             #  but then we're doing it again below, we could just use the same orders
             position_task = tg.create_task(
-                self.market.get_total_position(self.account.address)
+                self.market.get_total_position()
             )
             orders_task = tg.create_task(
-                self.market.remus_client.view.get_all_user_orders_for_market_id(
-                    address=self.account.address, market_id=self.market.market_id
-                )
+                self.market.get_current_orders()
             )
 
         position = position_task.result()
