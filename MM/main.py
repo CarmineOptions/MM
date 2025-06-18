@@ -11,7 +11,6 @@ import asyncio
 import logging
 import sys
 
-from starknet_py.contract import Contract
 from starknet_py.net.client_errors import ClientError
 from starknet_py.net.account.account import Account
 from starknet_py.net.full_node_client import FullNodeClient
@@ -23,10 +22,7 @@ from marketmaking.reconciling import get_reconciler
 from oracles.data_sources import get_data_source
 from markets import get_market
 from marketmaking.order import BasicOrder
-from venues.remus.remus import RemusDexClient
-from instruments.starknet import get_sn_token_from_symbol
 from cfg.cfg_classes import AccountConfig
-from marketmaking.market import Market
 from marketmaking.marketmakers.simple_marketmaker import SimpleMarketMaker
 from state.state import State
 from marketmaking.transaction_builder import TransactionBuilder
@@ -141,9 +137,7 @@ async def main() -> None:
     )
 
     transaction_builder = TransactionBuilder(
-        remus_client=remus_client,
-        market_id=cfg.asset.market_id,
-        market_cfg=market_cfg,
+        market = market,
         max_fee=0,
     )
 

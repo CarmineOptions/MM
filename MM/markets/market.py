@@ -66,11 +66,11 @@ class Market(ABC):
         raise NotImplementedError
     
     @abstractmethod
-    async def get_submit_order_call(self, order: FutureOrder) -> Calls:
+    def get_submit_order_call(self, order: FutureOrder) -> Calls:
         pass
 
     @abstractmethod
-    async def get_close_order_call(self, order: BasicOrder) -> Calls:
+    def get_close_order_call(self, order: BasicOrder) -> Calls:
         pass
 
     @abstractmethod
