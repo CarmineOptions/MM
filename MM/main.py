@@ -124,10 +124,7 @@ async def main() -> None:
     account = get_account(cfg.account)
     wrapped_account = WAccount(account=account)
 
-
     market = await get_market('', account = wrapped_account, market_id = market_id)
-    if True:
-        1/0
 
     data_source = get_data_source(
         cfg.asset.price_source, cfg.asset.base_asset, cfg.asset.quote_asset

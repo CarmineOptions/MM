@@ -53,7 +53,7 @@ class SimpleMarketMaker:
         account = self.account
         # Claim tokens for the market.
 
-        logging.info("Claiming tokens for market_id: %s", self.market.market_id)
+        logging.info("Claiming tokens for market_id: %s", self.market.market_cfg.market_id)
 
         for claimable_token in [state.account.position.withdrawable_base, state.account.position.withdrawable_base]:
             self._logger.info(
@@ -69,19 +69,27 @@ class SimpleMarketMaker:
                 # TODO: push this into the transaction builder.
                 # TODO: Use ResourceBound instead of auto_estimate when invoking
 
-                call = market.remus_client.prep_claim_call(
-                    amount=claimable_token,
+
+                call = market.get_withdraw_call(state=state, amount=claimable_token)
+
+                sent = await self.account.account.execute_v3(
+                    calls = call,
+                    auto_estimate=True,
+                    nonce = latest_nonce
                 )
 
-                await call.invoke(auto_estimate=True, nonce=latest_nonce)
+                await self.account.account.client.wait_for_tx(
+                    tx_hash = sent.transaction_hash,
+                    check_interval = 0.5
+                )
+
 
                 await account.increment_nonce()
 
             self._logger.info(
-                "Claim done for account %s, dex %s, market %s.",
+                "Claim done for account %s, market %s.",
                 hex(account.address),
-                hex(int(market.remus_client.address, 16)),
-                self.market.market_id,
+                self.market.market_cfg.market_id,
             )
 
     async def pulse(self, state: State) -> None:

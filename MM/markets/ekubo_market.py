@@ -6,6 +6,7 @@ from typing import final
 from starknet_py.net.client_models import Calls
 from starknet_py.contract import Contract
 
+from state.state import State
 from instruments.instrument import InstrumentAmount
 from markets.market import PositionInfo
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, TerminalOrders
@@ -87,6 +88,9 @@ class EkuboMarket(Market):
             order = order,
             cfg = self._market_config
         )
+
+    def get_withdraw_call(self, state: State, amount: InstrumentAmount) -> Calls:
+        raise NotImplementedError
 
     async def get_total_position(self) -> PositionInfo:
         (

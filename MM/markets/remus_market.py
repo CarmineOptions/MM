@@ -6,10 +6,12 @@ from typing import final
 from starknet_py.contract import Contract
 from starknet_py.net.client_models import Calls
 
+from instruments.instrument import InstrumentAmount
 from markets.market import PositionInfo
 from marketmaking.waccount import WAccount
 from venues.remus.remus import RemusDexClient
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder
+from state.state import State
 from .market import Market
 from venues.remus.remus_market_configs import RemusMarketConfig, get_preloaded_remus_market_config
 
@@ -81,6 +83,9 @@ class RemusMarket(Market):
         return self._client.prep_delete_maker_order_call(
             order = order
         )
+    
+    def get_withdraw_call(self, state: State, amount: InstrumentAmount) -> Calls:
+        return self._client.prep_claim_call(amount=amount)
 
     async def setup(self, account: WAccount) -> None:
 

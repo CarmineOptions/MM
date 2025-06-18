@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal
 
+from state.state import State
 from instruments.instrument import Instrument, InstrumentAmount
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder
 from starknet_py.net.client_models import Calls
@@ -67,12 +68,16 @@ class Market(ABC):
     
     @abstractmethod
     def get_submit_order_call(self, order: FutureOrder) -> Calls:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def get_close_order_call(self, order: BasicOrder) -> Calls:
-        pass
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_withdraw_call(self, state: State, amount: InstrumentAmount) -> Calls:
+        raise NotImplementedError
 
     @abstractmethod
     async def get_total_position(self) -> PositionInfo:
-        pass
+        raise NotImplementedError
