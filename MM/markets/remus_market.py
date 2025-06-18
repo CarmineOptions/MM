@@ -122,7 +122,6 @@ class RemusMarket(Market):
             hex(account.address),
             hex(self._market_config.quote_token.address),
         )
-        self._logger.info("Set unlimited approval for address")
 
         await account.set_latest_nonce(nonce)
         self._logger.info("Setting unlimited approvals is done.")

@@ -89,14 +89,14 @@ class TransactionBuilder:
             await wrapped_account.increment_nonce()
 
             self._logger.info(
-                "Soon to sumbit order: q: %s, p: %s, s: %s, nonce: %s",
+                "Soon to submit order: q: %s, p: %s, s: %s, nonce: %s",
                 order.amount,
                 order.price,
                 order.order_side,
                 nonce,
             )
             self._logger.debug(
-                "Soon to sumbit order: %s",
+                "Soon to submit order: %s",
                 dict(
                     market_id=self.market.market_cfg.market_id,
                     order_price=order.price,

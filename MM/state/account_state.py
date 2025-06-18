@@ -6,7 +6,7 @@ from markets.market import PositionInfo, Market
 
 class AccountState:
     """
-    Class that holds info about current state of the trading account - orders, ivnentory etc.
+    Class that holds info about current state of the trading account - orders, inventory etc.
     """
 
     def __init__(self, market: Market, account: WAccount) -> None:

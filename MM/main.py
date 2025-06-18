@@ -127,7 +127,7 @@ async def main() -> None:
     market = await get_market(cfg.market.venue, account = wrapped_account, market_id = cfg.market.market_id)
 
     data_source = get_data_source(
-        cfg.price.price_source, cfg.price.base_asset, cfg.price.quote_asset
+        cfg.price_source.price_source, cfg.price_source.base_asset, cfg.price_source.quote_asset
     )
     state = State(
         market=market, account=wrapped_account, fair_price_fetcher=data_source

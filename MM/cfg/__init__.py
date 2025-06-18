@@ -39,7 +39,7 @@ def load_config(path: str) -> StrategyConfig:
 
     cfg = StrategyConfig(
         account=account, 
-        price=price, 
+        price_source=price, 
         market = venue,
         order_chain=orderchain, 
         reconciler=reconciler

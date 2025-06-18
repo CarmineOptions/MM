@@ -68,6 +68,6 @@ class ReconcilerConfig(BaseModel):
 class StrategyConfig(BaseModel):
     account: AccountConfig
     market: VenueConfig
-    price: PriceSourceConfig
+    price_source: PriceSourceConfig
     order_chain: list[OrderChainElementConfig]
     reconciler: ReconcilerConfig

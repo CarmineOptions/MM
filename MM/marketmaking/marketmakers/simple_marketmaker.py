@@ -55,7 +55,7 @@ class SimpleMarketMaker:
 
         logging.info("Claiming tokens for market_id: %s", self.market.market_cfg.market_id)
 
-        for claimable_token in [state.account.position.withdrawable_base, state.account.position.withdrawable_base]:
+        for claimable_token in [state.account.position.withdrawable_base, state.account.position.withdrawable_quote]:
             self._logger.info(
                 "Claimable amount is %s for token %s, account %s.",
                 claimable_token.amount_hr,
