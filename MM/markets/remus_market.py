@@ -1,0 +1,117 @@
+import logging
+from typing import final
+
+from starknet_py.contract import Contract
+from starknet_py.net.client_models import Calls
+from starknet_py.net.account.account import Account
+
+from marketmaking.waccount import WAccount
+from venues.remus.remus import RemusDexClient
+from marketmaking.order import BasicOrder, FutureOrder
+from .market import Market
+from venues.remus.remus_market_configs import RemusMarketConfig, get_preloaded_remus_market_config
+
+MAX_UINT = 2**256 - 1
+
+@final
+class RemusMarket(Market):
+
+    def __init__(
+        self, 
+        market_id: int, 
+        market_config: RemusMarketConfig,
+        remus_client: RemusDexClient,
+        base_token: Contract,
+        quote_token: Contract,
+        account: Account
+    ) -> None:
+        self._market_id = market_id
+        self._market_config = market_config
+        self._client = remus_client
+        self._base_token = base_token
+        self._quote_token = quote_token
+        self._account = account
+
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+
+    @staticmethod
+    async def new(account: Account, market_id: int) -> "RemusMarket":
+        client = await RemusDexClient.from_account(account = account)
+        market_config = get_preloaded_remus_market_config(market_id)
+    
+        if market_config is None:
+            raise ValueError(f"No preloaded remus config found for id `{market_id}`")
+        
+        base_token = await Contract.from_address(
+            address = market_config.base_token.address,
+            provider = account
+        )
+        quote_token = await Contract.from_address(
+            address = market_config.quote_token.address,
+            provider = account
+        )
+
+        return RemusMarket(
+            market_id = market_id,
+            market_config=market_config,
+            remus_client=client,
+            base_token=base_token,
+            quote_token=quote_token,
+            account=account
+        )
+
+    async def get_current_orders(self) -> list[BasicOrder]:
+        return await self._client.view.get_all_user_orders_for_market_id(
+            address=self._account.address, market_id=self._market_id
+        )
+
+    async def get_submit_order_call(self, order: FutureOrder) -> Calls:
+        return self._client.prep_submit_maker_order_call(
+            order = order,
+            market_cfg = self._market_config
+        )
+
+    async def get_close_order_call(self, order: BasicOrder) -> Calls:
+        return self._client.prep_delete_maker_order_call(
+            order = order
+        )
+
+    async def setup(self, account: WAccount) -> None:
+
+        nonce = await account.get_nonce()
+
+        # Approve base token
+        await (
+            await self._base_token.functions["approve"].invoke_v3(
+                spender=int(self._client.address, 16),
+                amount=MAX_UINT,
+                nonce=nonce,
+                auto_estimate=True,
+            )
+        ).wait_for_acceptance()
+        nonce += 1
+        self._logger.info(
+            "Set unlimited approval for address: %s, base token: %s",
+            hex(account.address),
+            hex(self._market_config.base_token.address),
+        )
+
+        # Approve quote token
+        await (
+            await self._quote_token.functions["approve"].invoke_v3(
+                spender=int(self._client.address, 16),
+                amount=MAX_UINT,
+                nonce=nonce,
+                auto_estimate=True,
+            )
+        ).wait_for_acceptance()
+        nonce += 1
+        self._logger.info(
+            "Set unlimited approval for address: %s, quote token: %s",
+            hex(account.address),
+            hex(self._market_config.quote_token.address),
+        )
+        self._logger.info("Set unlimited approval for address")
+
+        await account.set_latest_nonce(nonce)
+        self._logger.info("Setting unlimited approvals is done.")
