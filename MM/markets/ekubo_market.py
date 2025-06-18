@@ -12,7 +12,7 @@ from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, T
 from marketmaking.waccount import WAccount
 from markets.market import Market
 from venues.ekubo.ekubo import EkuboClient
-from venues.ekubo.ekubo_market_configs import EkuboMarketConfig
+from venues.ekubo.ekubo_market_configs import EkuboMarketConfig, get_preloaded_ekubo_market_config
 
 @final
 class EkuboMarket(Market):
@@ -34,6 +34,32 @@ class EkuboMarket(Market):
         self._account = account
 
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+
+
+    @staticmethod
+    async def new(account: WAccount, market_id: int) -> "EkuboMarket":
+        client = await EkuboClient.from_account(account = account.account)
+        market_config = get_preloaded_ekubo_market_config(market_id)
+    
+        if market_config is None:
+            raise ValueError(f"No preloaded ekubo config found for id `{market_id}`")
+        
+        base_token = await Contract.from_address(
+            address = market_config.token0.address,
+            provider = account.account
+        )
+        quote_token = await Contract.from_address(
+            address = market_config.token1.address,
+            provider = account.account
+        )
+        return EkuboMarket(
+            market_id = market_id,
+            market_config=market_config,
+            ekubo_client=client,
+            base_token=base_token,
+            quote_token=quote_token,
+            account=account
+        )
 
     async def setup(self, wrapped_account: WAccount) -> None:
         pass
