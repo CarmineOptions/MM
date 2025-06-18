@@ -120,14 +120,14 @@ async def main() -> None:
 
     reconciler = get_reconciler(cfg.reconciler)
 
-    market_id = cfg.asset.market_id
+    # market_id = cfg.asset.market_id
     account = get_account(cfg.account)
     wrapped_account = WAccount(account=account)
 
-    market = await get_market('', account = wrapped_account, market_id = market_id)
+    market = await get_market(cfg.market.venue, account = wrapped_account, market_id = cfg.market.market_id)
 
     data_source = get_data_source(
-        cfg.asset.price_source, cfg.asset.base_asset, cfg.asset.quote_asset
+        cfg.price.price_source, cfg.price.base_asset, cfg.price.quote_asset
     )
     state = State(
         market=market, account=wrapped_account, fair_price_fetcher=data_source

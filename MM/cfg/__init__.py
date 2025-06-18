@@ -1,7 +1,8 @@
 import tomli
 from .cfg_classes import (
     AccountConfig,
-    AssetConfig,
+    PriceSourceConfig,
+    VenueConfig,
     OrderChainElementConfig,
     ReconcilerConfig,
     StrategyConfig,
@@ -20,9 +21,13 @@ def load_config(path: str) -> StrategyConfig:
         raise ConfigError("No `account` config found")
     account = AccountConfig(**raw["account"])
 
-    if "asset" not in raw:
+    if "price_source" not in raw:
         raise ConfigError("No `asset` config found")
-    asset = AssetConfig(**raw["asset"])
+    price = PriceSourceConfig(**raw["asset"])
+
+    if "market" not in raw:
+        raise ConfigError("No `market` config found")
+    venue = VenueConfig(**raw['market'])
 
     if "orderchain" not in raw:
         raise ConfigError("No `orderchain` config found")
@@ -33,6 +38,10 @@ def load_config(path: str) -> StrategyConfig:
     reconciler = ReconcilerConfig.from_dict(raw["reconciler"])
 
     cfg = StrategyConfig(
-        account=account, asset=asset, order_chain=orderchain, reconciler=reconciler
+        account=account, 
+        price=price, 
+        market = venue,
+        order_chain=orderchain, 
+        reconciler=reconciler
     )
     return cfg

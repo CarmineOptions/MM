@@ -33,11 +33,13 @@ class AccountConfig(BaseModel):
 
         return pwd
 
+class VenueConfig(BaseModel):
+    venue: str
+    market_id: int
 
-class AssetConfig(BaseModel):
+class PriceSourceConfig(BaseModel):
     base_asset: str
     quote_asset: str
-    market_id: int
     price_source: str
 
 
@@ -65,6 +67,7 @@ class ReconcilerConfig(BaseModel):
 
 class StrategyConfig(BaseModel):
     account: AccountConfig
-    asset: AssetConfig
+    market: VenueConfig
+    price: PriceSourceConfig
     order_chain: list[OrderChainElementConfig]
     reconciler: ReconcilerConfig
