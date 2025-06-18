@@ -1,12 +1,9 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Literal
 
-from instruments.instrument import InstrumentAmount
-from marketmaking.order import BasicOrder
+from marketmaking.order import BasicOrder, FutureOrder
 from starknet_py.net.client_models import Calls
 
-from MM.marketmaking.waccount import WAccount
+from marketmaking.waccount import WAccount
 
 
 # @dataclass
@@ -22,7 +19,7 @@ from MM.marketmaking.waccount import WAccount
 class Market(ABC):
 
     @abstractmethod
-    def setup(self, wrapped_account: WAccount) -> None:
+    async def setup(self, wrapped_account: WAccount) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -30,7 +27,7 @@ class Market(ABC):
         raise NotImplementedError
     
     @abstractmethod
-    async def get_submit_order_call(self) -> Calls:
+    async def get_submit_order_call(self, order: FutureOrder) -> Calls:
         pass
 
     @abstractmethod

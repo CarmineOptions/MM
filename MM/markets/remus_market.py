@@ -3,7 +3,6 @@ from typing import final
 
 from starknet_py.contract import Contract
 from starknet_py.net.client_models import Calls
-from starknet_py.net.account.account import Account
 
 from marketmaking.waccount import WAccount
 from venues.remus.remus import RemusDexClient
@@ -23,7 +22,7 @@ class RemusMarket(Market):
         remus_client: RemusDexClient,
         base_token: Contract,
         quote_token: Contract,
-        account: Account
+        account: WAccount
     ) -> None:
         self._market_id = market_id
         self._market_config = market_config
@@ -35,8 +34,8 @@ class RemusMarket(Market):
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @staticmethod
-    async def new(account: Account, market_id: int) -> "RemusMarket":
-        client = await RemusDexClient.from_account(account = account)
+    async def new(account: WAccount, market_id: int) -> "RemusMarket":
+        client = await RemusDexClient.from_account(account = account.account)
         market_config = get_preloaded_remus_market_config(market_id)
     
         if market_config is None:
@@ -44,11 +43,11 @@ class RemusMarket(Market):
         
         base_token = await Contract.from_address(
             address = market_config.base_token.address,
-            provider = account
+            provider = account.account
         )
         quote_token = await Contract.from_address(
             address = market_config.quote_token.address,
-            provider = account
+            provider = account.account
         )
 
         return RemusMarket(

@@ -67,7 +67,7 @@ class EkuboView:
             orders = orders,
             onchain_orders=onchain_orders[0],
             market_cfg = market_cfg
-        )   
+        )
 
         return basic_orders
 
