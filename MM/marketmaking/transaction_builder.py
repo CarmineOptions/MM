@@ -67,7 +67,8 @@ class TransactionBuilder:
             )
 
             await wrapped_account.account.client.wait_for_tx(
-                tx_hash=sent.transaction_hash
+                tx_hash=sent.transaction_hash,
+                check_interval = 0.5
             )
 
 
@@ -119,7 +120,8 @@ class TransactionBuilder:
             )
 
             await wrapped_account.account.client.wait_for_tx(
-                tx_hash=sent.transaction_hash
+                tx_hash=sent.transaction_hash,
+                check_interval = 0.5
             )
 
             metrics.track_orders_sent(1)
