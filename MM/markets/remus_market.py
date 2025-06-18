@@ -127,9 +127,7 @@ class RemusMarket(Market):
             balance_base,
             balance_quote,
         ) = await asyncio.gather(
-            self._client.view.get_all_user_orders_for_market_id(
-                self._account.address, self._market_config.market_id
-            ),
+            self.get_current_orders(),
             self._client.view.get_claimable(
                 self._market_config.base_token, self._account.address
             ),
@@ -140,6 +138,7 @@ class RemusMarket(Market):
             self._quote_token.functions["balanceOf"].call(account=self._account.account),
         )
 
+        # Remus has no terminal orders so we only account the active ones
         orders_base, orders_quote = _get_base_quote_position_from_active_orders(orders.active.all_orders)
 
         return PositionInfo(

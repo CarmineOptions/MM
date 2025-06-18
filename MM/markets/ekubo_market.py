@@ -1,16 +1,18 @@
+import asyncio
+from decimal import Decimal
 import logging
 from typing import final
 
 from starknet_py.net.client_models import Calls
 from starknet_py.contract import Contract
 
+from instruments.instrument import InstrumentAmount
 from marketmaking.market import PositionInfo
-from marketmaking.order import AllOrders, BasicOrder, FutureOrder
+from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, TerminalOrders
 from marketmaking.waccount import WAccount
 from markets.market import Market
 from venues.ekubo.ekubo import EkuboClient
 from venues.ekubo.ekubo_market_configs import EkuboMarketConfig
-
 
 @final
 class EkuboMarket(Market):
@@ -57,7 +59,84 @@ class EkuboMarket(Market):
         )
 
     async def get_total_position(self) -> PositionInfo:
-        raise NotImplementedError
+        (
+            orders,
+            _balance_base,
+            _balance_quote
+        ) = await asyncio.gather(
+            self.get_current_orders(),
+            self._base_token.functions['balanceOf'].call(
+                account = self._account.address
+            ),
+            self._quote_token.functions['balanceOf'].call(
+                account = self._account.address
+            )
+        )
 
-    
+        base_withdrawable, quote_withdrawable = _get_base_quote_withdrawable_from_terminal_orders(orders.terminal)
+
+        base_in_orders, quote_in_orders = _get_base_quote_position_from_active_orders(orders.active)
+
+        balance_base = Decimal(_balance_base[0]) / 10**self._market_config.token0.decimals
+        balance_quote = Decimal(_balance_quote[0]) / 10**self._market_config.token1.decimals
+
+        return PositionInfo(
+            balance_base = balance_base,
+            balance_quote=balance_quote,
+            in_orders_base=base_in_orders,
+            in_orders_quote=quote_in_orders,
+            withdrawable_base=InstrumentAmount(
+                instrument = self._market_config.token0,
+                amount_raw = base_withdrawable * 10**self._market_config.token0.decimals
+            ),
+            withdrawable_quote=InstrumentAmount(
+                instrument = self._market_config.token1,
+                amount_raw = quote_withdrawable * 10**self._market_config.token1.decimals
+            ),
+        )
+
+def _get_base_quote_withdrawable_from_terminal_orders(
+    orders: TerminalOrders
+) -> tuple[Decimal, Decimal]:
+
+    base = Decimal(0)   
+    for o in orders.bids:
+        # bids buy the base token 
+        # so if they are executed
+        # then position is in base
+        # same as the amount in orders
+        base += o.amount
+
+    quote = Decimal(0)
+    for o in orders.asks:
+        # asks sell base for quote
+        # so calculate quote that 
+        # is resting in the order
+        quote += o.amount_remaining * o.price
+
+    return base, quote
+
+def _get_base_quote_position_from_active_orders(
+    orders: OpenOrders
+) -> tuple[Decimal, Decimal]:
+    base = Decimal(0)   
+    quote = Decimal(0)
+
+    # Orders might have sth matched
+    # but we can't withdraw just a part of it
+    # so just calculate how much matched we have
+    # and add it to the corresponding var for now
+    for o in orders.bids:
+        matched = o.amount - o.amount_remaining
+        base += matched
+
+        quote += o.amount_remaining * o.price
+
+    for o in orders.asks:
+        matched = o.amount - o.amount_remaining
+        quote += matched * o.price
+        base += o.amount_remaining
+
+    return base, quote
+
     
