@@ -74,7 +74,7 @@ class EkuboMarket(Market):
             market_cfg = self._market_config
         )
 
-    async def get_submit_order_call(self, order: FutureOrder) -> Calls:
+    def get_submit_order_call(self, order: FutureOrder) -> Calls:
         return self._client.prep_submit_maker_order_call(
             order=order,
             market_cfg=self._market_config,
@@ -82,7 +82,7 @@ class EkuboMarket(Market):
             quote_token_contract=self._quote_token
         )
         
-    async def get_close_order_call(self, order: BasicOrder) -> Calls:
+    def get_close_order_call(self, order: BasicOrder) -> Calls:
         return self._client.prep_delete_maker_order_call(
             order = order,
             cfg = self._market_config

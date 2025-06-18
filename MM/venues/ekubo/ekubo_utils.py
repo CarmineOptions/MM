@@ -23,8 +23,8 @@ def get_order_key(order: FutureOrder | BasicOrder, cfg: EkuboMarketConfig) -> Or
     tick_spacing = 256 if order.order_side.lower() == 'ask' else 128
     tick = price_to_tick(
         price = order.price,
-        token_a_decimals = cfg.token0.decimals,
-        token_b_decimals = cfg.token1.decimals
+        token_a_decimals = cfg.base_token.decimals,
+        token_b_decimals = cfg.quote_token.decimals
     )
     tick = get_nearest_usable_tick(tick, tick_spacing)
 
@@ -32,8 +32,8 @@ def get_order_key(order: FutureOrder | BasicOrder, cfg: EkuboMarketConfig) -> Or
         tick = tick - 128
 
     return {
-        'token0': cfg.token0.address,
-        'token1': cfg.token1.address,
+        'token0': cfg.base_token.address,
+        'token1': cfg.quote_token.address,
         'tick': {
             'mag': abs(tick),
             'sign': tick < 0
@@ -47,8 +47,8 @@ def _get_basic_orders(
         market_cfg: EkuboMarketConfig
     ) -> list[BasicOrder]:
     
-    token_a_decimals = market_cfg.token0.decimals
-    token_b_decimals = market_cfg.token1.decimals
+    token_a_decimals = market_cfg.base_token.decimals
+    token_b_decimals = market_cfg.quote_token.decimals
         
     basic_orders = []
 

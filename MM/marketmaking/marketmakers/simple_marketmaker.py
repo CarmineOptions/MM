@@ -1,6 +1,6 @@
 import logging
 
-from marketmaking.market import Market
+from markets.market import Market
 from marketmaking.orderchain.order_chain import OrderChain
 from marketmaking.reconciling.order_reconciler import OrderReconciler
 from marketmaking.transaction_builder import TransactionBuilder
@@ -41,55 +41,7 @@ class SimpleMarketMaker:
         - Sets unlimited approve to given self.markets for given self.accounts.
         """
         self._logger.info("Initializing trading...")
-        await self._setup_unlimited_approvals()
-
-    async def _setup_unlimited_approvals(self) -> None:
-        """Set up unlimited approvals for base and quote tokens."""
-        self._logger.info("Setting up unlimited approvals for tokens...")
-
-        # TODO: Use ResourceBound instead of auto_estimate when invoking
-        account = self.account
-        market = self.market
-
-        nonce = await account.get_nonce()
-
-        # NOTE: Currently remus-specific, will change once ekubo and other venues are added
-
-        # Approve base token
-        await (
-            await market.base_token_contract.functions["approve"].invoke_v3(
-                spender=int(market.remus_client.address, 16),
-                amount=MAX_UINT,
-                nonce=nonce,
-                auto_estimate=True,
-            )
-        ).wait_for_acceptance()
-        nonce += 1
-        self._logger.info(
-            "Set unlimited approval for address: %s, base token: %s",
-            hex(account.address),
-            hex(market.market_cfg.base_token.address),
-        )
-
-        # Approve quote token
-        await (
-            await market.quote_token_contract.functions["approve"].invoke_v3(
-                spender=int(market.remus_client.address, 16),
-                amount=MAX_UINT,
-                nonce=nonce,
-                auto_estimate=True,
-            )
-        ).wait_for_acceptance()
-        nonce += 1
-        self._logger.info(
-            "Set unlimited approval for address: %s, quote token: %s",
-            hex(account.address),
-            hex(market.market_cfg.quote_token.address),
-        )
-        self._logger.info("Set unlimited approval for address")
-
-        await account.set_latest_nonce(nonce)
-        self._logger.info("Setting unlimited approvals is done.")
+        await self.market.setup(self.account)
 
     async def claim_tokens(self, state: State) -> None:
         """

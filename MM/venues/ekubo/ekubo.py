@@ -36,9 +36,9 @@ class EkuboView:
         
         orders = [
             o for o in orders
-            if int(o['orders'][0]['key']['token0'], 0) == market_cfg.token0.address
+            if int(o['orders'][0]['key']['token0'], 0) == market_cfg.base_token.address
             and
-            int(o['orders'][0]['key']['token1'], 0) == market_cfg.token1.address
+            int(o['orders'][0]['key']['token1'], 0) == market_cfg.quote_token.address
         ]
 
         onchain_calldata = [
@@ -106,12 +106,12 @@ class EkuboClient:
         order_key = get_order_key(order, market_cfg)
         print(order_key)
         if order.order_side.lower() == 'ask':
-            amount = order.amount * 10 ** market_cfg.token0.decimals
-            clearing_token = market_cfg.token0.address
+            amount = order.amount * 10 ** market_cfg.base_token.decimals
+            clearing_token = market_cfg.quote_token.address
             transfer_token = base_token_contract
         else:
-            amount = order.amount * order.price * 10**market_cfg.token1.decimals
-            clearing_token = market_cfg.token1.address
+            amount = order.amount * order.price * 10**market_cfg.base_token.decimals
+            clearing_token = market_cfg.quote_token.address
             transfer_token = quote_token_contract
         
         transfer_invoke = transfer_token.functions['transfer'].prepare_invoke_v3(

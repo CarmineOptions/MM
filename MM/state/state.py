@@ -4,7 +4,7 @@ import logging
 from marketmaking.waccount import WAccount
 from oracles.data_sources.data_source import DataSource
 from state.account_state import AccountState
-from markets import Market
+from markets.market import Market
 
 
 class State:

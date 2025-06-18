@@ -1,8 +1,7 @@
 import asyncio
 from marketmaking.order import AllOrders, OpenOrders, TerminalOrders
 from marketmaking.waccount import WAccount
-from markets import Market
-from markets.market import PositionInfo
+from markets.market import PositionInfo, Market
 
 
 class AccountState:
