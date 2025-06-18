@@ -1,9 +1,7 @@
 import asyncio
-from dataclasses import dataclass
 from decimal import Decimal
 from starknet_py.contract import Contract
 
-from instruments.instrument import Instrument, InstrumentAmount
 from marketmaking.order import BasicOrder
 from venues.remus.remus_market_configs import RemusMarketConfig
 from venues.remus.remus import RemusDexClient

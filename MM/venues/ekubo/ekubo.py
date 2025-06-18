@@ -3,7 +3,7 @@ import httpx
 from starknet_py.contract import Contract
 from starknet_py.net.account.account import Account
 from starknet_py.net.full_node_client import FullNodeClient
-from starknet_py.net.client_models import Calls
+from starknet_py.net.client_models import Calls, Call
 
 from venues.ekubo.ekubo_utils import _get_basic_orders, get_order_key
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, TerminalOrders
@@ -136,7 +136,7 @@ class EkuboClient:
             clear_invoke
         ]
     
-    def prep_delete_maker_order_call(self, order: BasicOrder, cfg: EkuboMarketConfig) -> Calls:
+    def prep_delete_maker_order_call(self, order: BasicOrder, cfg: EkuboMarketConfig) -> Call:
         order_key = get_order_key(order, cfg)
         return self._positions.functions['close_limit_order'].prepare_invoke_v3(
             id = order.order_id,

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from instruments.starknet import SN_ETH, SN_STRK, SN_USDC, SN_WBTC, StarknetToken
+from instruments.starknet import SN_ETH, SN_STRK, SN_USDC, SN_WBTC
 from markets.market import MarketConfig
 
 EKUBO_LIMIT_ORDER_TICK_SPACING = 128

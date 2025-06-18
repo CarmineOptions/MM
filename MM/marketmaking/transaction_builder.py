@@ -2,8 +2,6 @@ import asyncio
 import logging
 
 from markets.market import Market
-from venues.remus.remus import RemusDexClient
-from venues.remus.remus_market_configs import RemusMarketConfig
 from marketmaking.order import BasicOrder, FutureOrder
 from marketmaking.waccount import WAccount
 from monitoring import metrics

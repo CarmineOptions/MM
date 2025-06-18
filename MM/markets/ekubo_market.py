@@ -90,7 +90,26 @@ class EkuboMarket(Market):
         )
 
     def get_withdraw_call(self, state: State, amount: InstrumentAmount) -> Calls:
-        raise NotImplementedError
+        # Withdrawing in ekubo is basically closing executed orders
+        if amount.instrument.address == self._base_token.address:
+            # We want to withdraw base token, so we need to close 
+            # matched bid orders since those are the ones 
+            # where we sold quote in exchange for base 
+            # so base is pending there
+            to_close = state.account.orders.terminal.bids
+        else: 
+            # vice versa
+            to_close = state.account.orders.terminal.asks
+
+        calls = [
+            self._client.prep_delete_maker_order_call(
+                order = o,
+                cfg = self._market_config
+            )
+            for o in to_close
+        ]
+        # FIXME: this could be a lot of calls so we need to split it somehow
+        return calls
 
     async def get_total_position(self) -> PositionInfo:
         (
