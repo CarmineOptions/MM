@@ -6,7 +6,7 @@ from starknet_py.net.full_node_client import FullNodeClient
 from starknet_py.net.client_models import Calls
 
 from venues.ekubo.ekubo_utils import _get_basic_orders, get_order_key
-from marketmaking.order import BasicOrder, FutureOrder
+from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, TerminalOrders
 from venues.ekubo.ekubo_market_configs import EkuboMarketConfig
 
 EKUBO_POSITIONS_ADDRESS=0x02e0af29598b407c8716b17f6d2795eca1b471413fa03fb145a5e33722184067
@@ -20,11 +20,11 @@ class EkuboView:
         positions = await Contract.from_address(address=EKUBO_POSITIONS_ADDRESS, provider=provider)
         return EkuboView(ekubo_positions=positions)
     
-    async def get_active_orders(
+    async def get_all_orders(
             self,
             wallet: int,
             market_cfg: EkuboMarketConfig
-        ) -> list[BasicOrder]:
+        ) -> AllOrders:
         url = f'https://starknet-mainnet-api.ekubo.org/limit-orders/orders/{hex(wallet)}?showClosed=false'
         
         async with httpx.AsyncClient() as client:
@@ -69,7 +69,20 @@ class EkuboView:
             market_cfg = market_cfg
         )
 
-        return basic_orders
+        active_orders = []
+        terminal_orders = []
+
+        for order in basic_orders:
+            if order.amount_remaining == 0:
+                terminal_orders.append(order)
+                continue
+
+            active_orders.append(order)
+
+        return AllOrders(
+            active = OpenOrders.from_list(active_orders),
+            terminal = TerminalOrders.from_list(terminal_orders)
+        )
 
 
 class EkuboClient:

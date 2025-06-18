@@ -138,7 +138,7 @@ class SimpleMarketMaker:
         
         desired_orders = self.order_chain.process(state)
 
-        open_orders = state.account.open_orders
+        open_orders = state.account.orders.active
 
         reconciled = self.order_reconciler.reconcile(
             existing_orders=open_orders, state=state, desired_orders=desired_orders

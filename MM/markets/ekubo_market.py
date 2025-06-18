@@ -5,7 +5,7 @@ from starknet_py.net.client_models import Calls
 from starknet_py.contract import Contract
 
 from marketmaking.market import PositionInfo
-from marketmaking.order import BasicOrder, FutureOrder
+from marketmaking.order import AllOrders, BasicOrder, FutureOrder
 from marketmaking.waccount import WAccount
 from markets.market import Market
 from venues.ekubo.ekubo import EkuboClient
@@ -36,8 +36,8 @@ class EkuboMarket(Market):
     async def setup(self, wrapped_account: WAccount) -> None:
         pass
 
-    async def get_current_orders(self) -> list[BasicOrder]:
-        return await self._client.view.get_active_orders(
+    async def get_current_orders(self) -> AllOrders:
+        return await self._client.view.get_all_orders(
             wallet = self._account.address,
             market_cfg = self._market_config
         )

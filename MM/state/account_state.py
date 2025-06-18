@@ -1,5 +1,5 @@
 import asyncio
-from marketmaking.order import OpenOrders
+from marketmaking.order import AllOrders, OpenOrders, TerminalOrders
 from marketmaking.waccount import WAccount
 from marketmaking.market import Market, PositionInfo
 
@@ -17,11 +17,22 @@ class AccountState:
             base_token=market.market_cfg.base_token,
             quote_token=market.market_cfg.quote_token
         )
-        self._open_orders: OpenOrders = OpenOrders(bids=[], asks=[])
+        self._orders: AllOrders = AllOrders(
+            active = OpenOrders(
+                bids = [],
+                asks = []
+            ),
+            terminal = TerminalOrders(
+                bids = [],
+                asks = []
+            )
+        )
+        
+        # OpenOrders(bids=[], asks=[])
 
     @property
-    def open_orders(self) -> OpenOrders:
-        return self._open_orders
+    def orders(self) -> AllOrders:
+        return self._orders
 
     @property
     def position(self) -> PositionInfo:
@@ -44,4 +55,4 @@ class AccountState:
         orders = orders_task.result()
 
         self._position = position
-        self._open_orders = OpenOrders.from_list(orders)
+        self._orders = orders

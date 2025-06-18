@@ -9,7 +9,7 @@ from starknet_py.net.client_models import Calls
 from marketmaking.market import PositionInfo
 from marketmaking.waccount import WAccount
 from venues.remus.remus import RemusDexClient
-from marketmaking.order import BasicOrder, FutureOrder
+from marketmaking.order import AllOrders, BasicOrder, FutureOrder
 from .market import Market
 from venues.remus.remus_market_configs import RemusMarketConfig, get_preloaded_remus_market_config
 
@@ -62,7 +62,7 @@ class RemusMarket(Market):
             account=account
         )
 
-    async def get_current_orders(self) -> list[BasicOrder]:
+    async def get_current_orders(self) -> AllOrders:
         return await self._client.view.get_all_user_orders_for_market_id(
             address=self._account.address, market_id=self._market_id
         )
@@ -140,7 +140,7 @@ class RemusMarket(Market):
             self._quote_token.functions["balanceOf"].call(account=self._account.account),
         )
 
-        orders_base, orders_quote = _get_base_quote_position_from_orders(orders)
+        orders_base, orders_quote = _get_base_quote_position_from_active_orders(orders.active.all_orders)
 
         return PositionInfo(
             balance_base=Decimal(balance_base[0])
@@ -154,7 +154,7 @@ class RemusMarket(Market):
         )
 
 
-def _get_base_quote_position_from_orders(
+def _get_base_quote_position_from_active_orders(
     orders: list[BasicOrder],
 ) -> tuple[Decimal, Decimal]:
     base = Decimal(0)

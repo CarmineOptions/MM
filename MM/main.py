@@ -188,14 +188,14 @@ async def main() -> None:
 
             metrics.track_state_update_time(time.time() - loop_start_time)
 
-            logging.info("My current orders: %s", state.account.open_orders)
+            logging.info("My current orders: %s", state.account.orders)
             logging.info("Fair price queried: %s.", state.fair_price)
             logging.info("Current position: %s", state.account.position)
 
             metrics.track_position(state.account.position)
 
             pretty_print_orders(
-                state.account.open_orders.asks, state.account.open_orders.bids
+                state.account.orders.active.asks, state.account.orders.active.bids
             )
 
             await market_maker.pulse(state=state)

@@ -98,7 +98,7 @@ class Market:
             self.quote_token_contract.functions["balanceOf"].call(account=address),
         )
 
-        orders_base, orders_quote = _get_base_quote_position_from_orders(orders)
+        orders_base, orders_quote = _get_base_quote_position_from_active_orders(orders.active.all_orders)
 
         return PositionInfo(
             balance_base=Decimal(balance_base[0])
@@ -112,7 +112,7 @@ class Market:
         )
 
 
-def _get_base_quote_position_from_orders(
+def _get_base_quote_position_from_active_orders(
     orders: list[BasicOrder],
 ) -> tuple[Decimal, Decimal]:
     base = Decimal(0)

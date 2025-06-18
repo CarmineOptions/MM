@@ -47,6 +47,7 @@ class FutureOrder:
 class OpenOrders:
     """
     Class that holds lists of bids and asks.
+    These orders are active and not expired or fully matched.
     """
 
     bids: list[BasicOrder]
@@ -79,6 +80,50 @@ class OpenOrders:
         asks = sorted(asks, key=lambda x: -x.price)
 
         return OpenOrders(bids=bids, asks=asks)
+
+@dataclass(frozen=True)
+class TerminalOrders:
+    '''
+    Class that  holds lists of bids and asks.
+    These orders are either fully matched or expired or just 
+    inactive in some other way
+    '''
+
+    bids: list[BasicOrder]
+    asks: list[BasicOrder]
+
+    @property
+    def all_orders(self) -> list[BasicOrder]:
+        return self.bids + self.asks
+    
+    @staticmethod
+    def from_list(orders: list[BasicOrder]) -> "TerminalOrders":
+        """
+        Constructs lists of OpenOrders from list of BasicOrder, separating
+        them into *sorted* bids and asks.
+
+        Doesn't check if they are all from the same market/venue...
+        """
+
+        bids = []
+        asks = []
+
+        for o in orders:
+            if o.order_side.lower() == "bid":
+                bids.append(o)
+                continue
+
+            asks.append(o)
+
+        bids = sorted(bids, key=lambda x: -x.price)
+        asks = sorted(asks, key=lambda x: -x.price)
+
+        return TerminalOrders(bids=bids, asks=asks)
+
+@dataclass
+class AllOrders:
+    active: OpenOrders
+    terminal: TerminalOrders
 
 
 @dataclass

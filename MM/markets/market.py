@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from marketmaking.market import PositionInfo
-from marketmaking.order import BasicOrder, FutureOrder
+from marketmaking.order import AllOrders, BasicOrder, FutureOrder
 from starknet_py.net.client_models import Calls
 
 from marketmaking.waccount import WAccount
@@ -24,7 +24,7 @@ class Market(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_current_orders(self) -> list[BasicOrder]:
+    async def get_current_orders(self) -> AllOrders:
         raise NotImplementedError
     
     @abstractmethod
