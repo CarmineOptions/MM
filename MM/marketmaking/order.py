@@ -38,6 +38,9 @@ class FutureOrder:
     price: Decimal
     platform: str
     venue: str
+    
+    def is_bid(self) -> bool:
+        return self.order_side.lower() == "bid"
 
 
 @dataclass(frozen=True)
