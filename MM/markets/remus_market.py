@@ -1,9 +1,12 @@
+import asyncio
+from decimal import Decimal
 import logging
 from typing import final
 
 from starknet_py.contract import Contract
 from starknet_py.net.client_models import Calls
 
+from marketmaking.market import PositionInfo
 from marketmaking.waccount import WAccount
 from venues.remus.remus import RemusDexClient
 from marketmaking.order import BasicOrder, FutureOrder
@@ -114,3 +117,54 @@ class RemusMarket(Market):
 
         await account.set_latest_nonce(nonce)
         self._logger.info("Setting unlimited approvals is done.")
+
+    async def get_total_position(self) -> PositionInfo:
+
+        (
+            orders,
+            claimable_base,
+            claimable_quote,
+            balance_base,
+            balance_quote,
+        ) = await asyncio.gather(
+            self._client.view.get_all_user_orders_for_market_id(
+                self._account.address, self._market_config.market_id
+            ),
+            self._client.view.get_claimable(
+                self._market_config.base_token, self._account.address
+            ),
+            self._client.view.get_claimable(
+                self._market_config.quote_token, self._account.address
+            ),
+            self._base_token.functions["balanceOf"].call(account=self._account.account),
+            self._quote_token.functions["balanceOf"].call(account=self._account.account),
+        )
+
+        orders_base, orders_quote = _get_base_quote_position_from_orders(orders)
+
+        return PositionInfo(
+            balance_base=Decimal(balance_base[0])
+                / 10**self._market_config.base_token.decimals,
+            balance_quote=Decimal(balance_quote[0])
+                / 10**self._market_config.quote_token.decimals,
+            claimable_base=claimable_base,
+            claimable_quote=claimable_quote,
+            in_orders_base=orders_base,
+            in_orders_quote=orders_quote,
+        )
+
+
+def _get_base_quote_position_from_orders(
+    orders: list[BasicOrder],
+) -> tuple[Decimal, Decimal]:
+    base = Decimal(0)
+    quote = Decimal(0)
+
+    for o in orders:
+        if o.order_side.lower() == "ask":
+            base += o.amount_remaining
+            continue
+        # bid order
+        quote += o.amount_remaining * o.price
+
+    return base, quote

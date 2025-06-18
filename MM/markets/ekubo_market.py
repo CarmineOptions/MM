@@ -4,6 +4,7 @@ from typing import final
 from starknet_py.net.client_models import Calls
 from starknet_py.contract import Contract
 
+from MM.marketmaking.market import PositionInfo
 from marketmaking.order import BasicOrder, FutureOrder
 from marketmaking.waccount import WAccount
 from markets.market import Market
@@ -54,3 +55,9 @@ class EkuboMarket(Market):
             order = order,
             cfg = self._market_config
         )
+
+    async def get_total_position(self) -> PositionInfo:
+        raise NotImplementedError
+
+    
+    

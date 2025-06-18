@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from marketmaking.market import PositionInfo
 from marketmaking.order import BasicOrder, FutureOrder
 from starknet_py.net.client_models import Calls
 
@@ -32,6 +33,10 @@ class Market(ABC):
 
     @abstractmethod
     async def get_close_order_call(self, order: BasicOrder) -> Calls:
+        pass
+
+    @abstractmethod
+    async def get_total_position(self) -> PositionInfo:
         pass
 
     # @abstractmethod
