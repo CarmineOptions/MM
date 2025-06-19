@@ -22,8 +22,8 @@ def load_config(path: str) -> StrategyConfig:
     account = AccountConfig(**raw["account"])
 
     if "price_source" not in raw:
-        raise ConfigError("No `asset` config found")
-    price = PriceSourceConfig(**raw["asset"])
+        raise ConfigError("No `price_source` config found")
+    price = PriceSourceConfig(**raw["price_source"])
 
     if "market" not in raw:
         raise ConfigError("No `market` config found")

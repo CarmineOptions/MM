@@ -1,13 +1,16 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
-from state.state import State
 from instruments.instrument import Instrument, InstrumentAmount
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder
 from starknet_py.net.client_models import Calls
 
 from marketmaking.waccount import WAccount
+
+if TYPE_CHECKING:
+    from state.state import State
 
 @dataclass
 class PositionInfo:
@@ -75,7 +78,7 @@ class Market(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_withdraw_call(self, state: State, amount: InstrumentAmount) -> Calls:
+    def get_withdraw_call(self, state: "State", amount: InstrumentAmount) -> Calls:
         raise NotImplementedError
 
     @abstractmethod

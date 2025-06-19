@@ -104,7 +104,6 @@ class EkuboClient:
             quote_token_contract: Contract,
     ) -> Calls:
         order_key = get_order_key(order, market_cfg)
-        print(order_key)
         if order.order_side.lower() == 'ask':
             amount = order.amount * 10 ** market_cfg.base_token.decimals
             clearing_token = market_cfg.quote_token.address

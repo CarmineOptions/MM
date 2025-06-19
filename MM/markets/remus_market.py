@@ -1,7 +1,7 @@
 import asyncio
 from decimal import Decimal
 import logging
-from typing import final
+from typing import final, TYPE_CHECKING
 
 from starknet_py.contract import Contract
 from starknet_py.net.client_models import Calls
@@ -11,9 +11,11 @@ from markets.market import PositionInfo
 from marketmaking.waccount import WAccount
 from venues.remus.remus import RemusDexClient
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder
-from state.state import State
 from .market import Market
 from venues.remus.remus_market_configs import RemusMarketConfig, get_preloaded_remus_market_config
+
+if TYPE_CHECKING:
+    from state.state import State
 
 MAX_UINT = 2**256 - 1
 
@@ -84,7 +86,7 @@ class RemusMarket(Market):
             order = order
         )
     
-    def get_withdraw_call(self, state: State, amount: InstrumentAmount) -> Calls:
+    def get_withdraw_call(self, state: "State", amount: InstrumentAmount) -> Calls:
         return self._client.prep_claim_call(amount=amount)
 
     async def setup(self, account: WAccount) -> None:
@@ -142,8 +144,8 @@ class RemusMarket(Market):
             self._client.view.get_claimable(
                 self._market_config.quote_token, self._account.address
             ),
-            self._base_token.functions["balanceOf"].call(account=self._account.account),
-            self._quote_token.functions["balanceOf"].call(account=self._account.account),
+            self._base_token.functions["balanceOf"].call(account=self._account.account.address),
+            self._quote_token.functions["balanceOf"].call(account=self._account.account.address),
         )
 
         # Remus has no terminal orders so we only account the active ones

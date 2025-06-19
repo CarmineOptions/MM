@@ -1,12 +1,11 @@
 import asyncio
 from decimal import Decimal
 import logging
-from typing import final
+from typing import final, TYPE_CHECKING
 
 from starknet_py.net.client_models import Calls
 from starknet_py.contract import Contract
 
-from state.state import State
 from instruments.instrument import InstrumentAmount
 from markets.market import PositionInfo
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, TerminalOrders
@@ -15,6 +14,8 @@ from markets.market import Market
 from venues.ekubo.ekubo import EkuboClient
 from venues.ekubo.ekubo_market_configs import EkuboMarketConfig, get_preloaded_ekubo_market_config
 
+if TYPE_CHECKING:
+    from state.state import State
 @final
 class EkuboMarket(Market):
 
@@ -89,7 +90,7 @@ class EkuboMarket(Market):
             cfg = self._market_config
         )
 
-    def get_withdraw_call(self, state: State, amount: InstrumentAmount) -> Calls:
+    def get_withdraw_call(self, state: "State", amount: InstrumentAmount) -> Calls:
         # Withdrawing in ekubo is basically closing executed orders
         if amount.instrument.address == self._base_token.address:
             # We want to withdraw base token, so we need to close 
