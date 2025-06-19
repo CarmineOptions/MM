@@ -106,14 +106,14 @@ class EkuboClient:
         order_key = get_order_key(order, market_cfg)
         if order.order_side.lower() == 'ask':
             amount = order.amount * 10 ** market_cfg.base_token.decimals
-            clearing_token = market_cfg.quote_token.address
-            transfer_token = base_token_contract
+            clearing_token = market_cfg.base_token.address
+            transfer_token_contract = base_token_contract
         else:
-            amount = order.amount * order.price * 10**market_cfg.base_token.decimals
+            amount = order.amount * order.price * 10**market_cfg.quote_token.decimals
             clearing_token = market_cfg.quote_token.address
-            transfer_token = quote_token_contract
+            transfer_token_contract = quote_token_contract
         
-        transfer_invoke = transfer_token.functions['transfer'].prepare_invoke_v3(
+        transfer_invoke = transfer_token_contract.functions['transfer'].prepare_invoke_v3(
             amount = int(amount),
             recipient = self.view._positions.address
         )
