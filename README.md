@@ -19,6 +19,7 @@ Missing features:
 - Json logging + log more info.
 - Handle "out of liquidity" situations.
 - Implement max_fee (or rather ResourceBounds in case of invoke_v3)
+- claim/withdraw only when needed
 
 - Create new reconciliation logic. Current version doesn't account for inflight orders.
 - Consider to connect to wss, rather than API.

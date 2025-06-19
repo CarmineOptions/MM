@@ -23,7 +23,7 @@ dev = [
 
 [tool.ruff]
 # TODO: Once there's time, do a proper ruff setup
-extend-exclude = ['test.py']
+extend-exclude = ['test.py', "*/legacy/*"]
 
 [tool.mypy]
 python_version = "3.12"

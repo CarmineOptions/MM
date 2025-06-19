@@ -2,7 +2,7 @@ from prometheus_client import Counter, Gauge, start_http_server
 import logging
 import time
 
-from marketmaking.market import PositionInfo
+from markets.market import PositionInfo
 
 
 def start_metrics_server(port: int = 8000) -> None:

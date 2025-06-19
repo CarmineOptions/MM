@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import logging
 from typing import Any
 
+from markets.market import MarketConfig
 from instruments.starknet import (
     SN_ETH,
     SN_STRK,
@@ -26,7 +27,7 @@ class RemusFeesConfig:
 
 
 @dataclass
-class RemusMarketConfig:
+class RemusMarketConfig(MarketConfig):
     market_id: int
     base_token: StarknetToken
     quote_token: StarknetToken

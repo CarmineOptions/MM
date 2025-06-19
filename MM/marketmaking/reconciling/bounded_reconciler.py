@@ -16,7 +16,7 @@ class BoundedReconciler(OrderReconciler):
         max_orders_per_side: int,
     ) -> None:
         self._max_relative_distance = max_relative_distance_from_fp
-        self._min_relative_distnace = min_relative_distnace_from_fp
+        self._min_relative_distance = min_relative_distnace_from_fp
         self._minimal_remaining_size = minimal_remaining_size
         self._max_orders_per_side = max_orders_per_side
 
@@ -73,7 +73,7 @@ class BoundedReconciler(OrderReconciler):
 
     def _is_order_too_close(self, order: BasicOrder, state: State) -> bool:
         rel_dist = abs(order.price - state.fair_price) / state.fair_price
-        return rel_dist < self._min_relative_distnace
+        return rel_dist < self._min_relative_distance
 
     def _new_orders_needed(self, state: State, orders: list[BasicOrder]) -> bool:
         # New order is needed if there aren't any orders or they're too far

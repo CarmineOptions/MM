@@ -11,7 +11,6 @@ import asyncio
 import logging
 import sys
 
-from starknet_py.contract import Contract
 from starknet_py.net.client_errors import ClientError
 from starknet_py.net.account.account import Account
 from starknet_py.net.full_node_client import FullNodeClient
@@ -21,11 +20,9 @@ from starknet_py.net.signer.key_pair import KeyPair
 from marketmaking.orderchain.order_chain import OrderChain
 from marketmaking.reconciling import get_reconciler
 from oracles.data_sources import get_data_source
+from markets import get_market
 from marketmaking.order import BasicOrder
-from venues.remus.remus import RemusDexClient
-from instruments.starknet import get_sn_token_from_symbol
 from cfg.cfg_classes import AccountConfig
-from marketmaking.market import Market
 from marketmaking.marketmakers.simple_marketmaker import SimpleMarketMaker
 from state.state import State
 from marketmaking.transaction_builder import TransactionBuilder
@@ -123,50 +120,21 @@ async def main() -> None:
 
     reconciler = get_reconciler(cfg.reconciler)
 
-    market_id = cfg.asset.market_id
+    # market_id = cfg.asset.market_id
     account = get_account(cfg.account)
     wrapped_account = WAccount(account=account)
 
-    base_token = get_sn_token_from_symbol(cfg.asset.base_asset)
-    if base_token is None:
-        raise ValueError(f"Token `{cfg.asset.base_asset}` is not supported")
-
-    quote_token = get_sn_token_from_symbol(cfg.asset.quote_asset)
-    if quote_token is None:
-        raise ValueError(f"Token `{cfg.asset.quote_asset}` is not supported")
-
-    quote_token_contract = await Contract.from_address(
-        address=quote_token.address, provider=account
-    )
-    base_token_contract = await Contract.from_address(
-        address=base_token.address, provider=account
-    )
-
-    remus_client = await RemusDexClient.from_account(account=account)
-    market_cfg = await remus_client.view.get_market_config(market_id)
-
-    if market_cfg is None:
-        raise ValueError(f"Unable to fetch RemusMarketConfig for market_id={market_id}")
-
-    market = Market(
-        market_id=cfg.asset.market_id,
-        remus_client=remus_client,
-        base_token_contract=base_token_contract,
-        quote_token_contract=quote_token_contract,
-        market_cfg=market_cfg,
-    )
+    market = await get_market(cfg.market.venue, account = wrapped_account, market_id = cfg.market.market_id)
 
     data_source = get_data_source(
-        cfg.asset.price_source, cfg.asset.base_asset, cfg.asset.quote_asset
+        cfg.price_source.price_source, cfg.price_source.base_asset, cfg.price_source.quote_asset
     )
     state = State(
         market=market, account=wrapped_account, fair_price_fetcher=data_source
     )
 
     transaction_builder = TransactionBuilder(
-        remus_client=remus_client,
-        market_id=cfg.asset.market_id,
-        market_cfg=market_cfg,
+        market = market,
         max_fee=0,
     )
 
@@ -188,14 +156,14 @@ async def main() -> None:
 
             metrics.track_state_update_time(time.time() - loop_start_time)
 
-            logging.info("My current orders: %s", state.account.open_orders)
+            logging.info("My current orders: %s", state.account.orders)
             logging.info("Fair price queried: %s.", state.fair_price)
             logging.info("Current position: %s", state.account.position)
 
             metrics.track_position(state.account.position)
 
             pretty_print_orders(
-                state.account.open_orders.asks, state.account.open_orders.bids
+                state.account.orders.active.asks, state.account.orders.active.bids
             )
 
             await market_maker.pulse(state=state)

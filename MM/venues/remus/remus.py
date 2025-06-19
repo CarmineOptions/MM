@@ -10,7 +10,7 @@ from venues.remus.remus_market_configs import (
     RemusMarketConfig,
     get_preloaded_remus_market_config,
 )
-from marketmaking.order import BasicOrder, FutureOrder
+from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, TerminalOrders
 from instruments.starknet import StarknetToken
 from instruments.instrument import InstrumentAmount
 
@@ -93,7 +93,6 @@ class RemusDexView:
                 order_side=order_side,
                 entry_time=entry_time,
                 market_id=market_id,
-                platform="Starknet",
                 venue=REMUS_IDENTIFIER,
             )
             normalized_orders.append(new_o)
@@ -102,13 +101,20 @@ class RemusDexView:
 
     async def get_all_user_orders_for_market_id(
         self, address: int, market_id: int
-    ) -> list[BasicOrder]:
+    ) -> AllOrders:
         """
         Returns all user orders that are present on market given by market_id
         """
         orders = await self.get_all_user_orders(address)
+        orders = [o for o in orders if o.market_id == market_id] 
 
-        return [o for o in orders if o.market_id == market_id]
+        # In remus there are currently no "terminal" orders
+        # since anything matched becomes claimable immediately and 
+        # doesn't "rest" in some order that needs to be withdrawn/settled
+        return AllOrders(
+            active = OpenOrders.from_list(orders),
+            terminal = TerminalOrders(bids=[], asks=[])
+        )
 
     async def get_claimable(self, token: StarknetToken, user_address: int) -> InstrumentAmount:
         claimable = await self._contract.functions["get_claimable"].call(

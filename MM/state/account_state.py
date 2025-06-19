@@ -1,12 +1,12 @@
 import asyncio
-from marketmaking.order import OpenOrders
+from marketmaking.order import AllOrders, OpenOrders, TerminalOrders
 from marketmaking.waccount import WAccount
-from marketmaking.market import Market, PositionInfo
+from markets.market import PositionInfo, Market
 
 
 class AccountState:
     """
-    Class that holds info about current state of the trading account - orders, ivnentory etc.
+    Class that holds info about current state of the trading account - orders, inventory etc.
     """
 
     def __init__(self, market: Market, account: WAccount) -> None:
@@ -17,11 +17,20 @@ class AccountState:
             base_token=market.market_cfg.base_token,
             quote_token=market.market_cfg.quote_token
         )
-        self._open_orders: OpenOrders = OpenOrders(bids=[], asks=[])
+        self._orders: AllOrders = AllOrders(
+            active = OpenOrders(
+                bids = [],
+                asks = []
+            ),
+            terminal = TerminalOrders(
+                bids = [],
+                asks = []
+            )
+        )
 
     @property
-    def open_orders(self) -> OpenOrders:
-        return self._open_orders
+    def orders(self) -> AllOrders:
+        return self._orders
 
     @property
     def position(self) -> PositionInfo:
@@ -29,17 +38,17 @@ class AccountState:
 
     async def update(self) -> None:
         async with asyncio.TaskGroup() as tg:
+            # TODO: We're fetching position here which fetches orders for market,
+            #  but then we're doing it again below, we could just use the same orders
             position_task = tg.create_task(
-                self.market.get_total_position(self.account.address)
+                self.market.get_total_position()
             )
             orders_task = tg.create_task(
-                self.market.remus_client.view.get_all_user_orders_for_market_id(
-                    address=self.account.address, market_id=self.market.market_id
-                )
+                self.market.get_current_orders()
             )
 
         position = position_task.result()
         orders = orders_task.result()
 
         self._position = position
-        self._open_orders = OpenOrders.from_list(orders)
+        self._orders = orders

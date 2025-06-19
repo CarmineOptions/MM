@@ -1,49 +1,12 @@
 import asyncio
-from dataclasses import dataclass
 from decimal import Decimal
 from starknet_py.contract import Contract
 
-from instruments.instrument import Instrument, InstrumentAmount
 from marketmaking.order import BasicOrder
 from venues.remus.remus_market_configs import RemusMarketConfig
 from venues.remus.remus import RemusDexClient
 
 
-@dataclass
-class PositionInfo:
-    balance_base: Decimal
-    balance_quote: Decimal
-
-    claimable_base: InstrumentAmount
-    claimable_quote: InstrumentAmount
-
-    in_orders_base: Decimal
-    in_orders_quote: Decimal
-
-    @property
-    def total_base(self) -> Decimal:
-        return self.balance_base + self.claimable_base.amount_hr + self.in_orders_base
-
-    @property
-    def total_quote(self) -> Decimal:
-        return self.balance_quote + self.claimable_quote.amount_hr + self.in_orders_quote
-
-    @staticmethod
-    def empty(base_token: Instrument, quote_token: Instrument) -> "PositionInfo":
-        return PositionInfo(
-            balance_base=Decimal(0),
-            balance_quote=Decimal(0),
-            claimable_base=InstrumentAmount(
-                instrument = base_token, 
-                amount_raw=0
-            ),
-            claimable_quote=InstrumentAmount(
-                instrument=quote_token,
-                amount_raw=0
-            ),
-            in_orders_base=Decimal(0),
-            in_orders_quote=Decimal(0),
-        )
 
 
 class Market:
@@ -98,21 +61,21 @@ class Market:
             self.quote_token_contract.functions["balanceOf"].call(account=address),
         )
 
-        orders_base, orders_quote = _get_base_quote_position_from_orders(orders)
+        orders_base, orders_quote = _get_base_quote_position_from_active_orders(orders.active.all_orders)
 
         return PositionInfo(
             balance_base=Decimal(balance_base[0])
             / 10**self.market_cfg.base_token.decimals,
             balance_quote=Decimal(balance_quote[0])
             / 10**self.market_cfg.quote_token.decimals,
-            claimable_base=claimable_base,
-            claimable_quote=claimable_quote,
+            withdrawable_base=claimable_base,
+            withdrawable_quote=claimable_quote,
             in_orders_base=orders_base,
             in_orders_quote=orders_quote,
         )
 
 
-def _get_base_quote_position_from_orders(
+def _get_base_quote_position_from_active_orders(
     orders: list[BasicOrder],
 ) -> tuple[Decimal, Decimal]:
     base = Decimal(0)
