@@ -6,18 +6,13 @@ wallet_address_env = "WALLET_ADDRESS"
 password_path_env = "KEYSTORE_PWD_PATH"
 keystore_path_env = "KEYSTORE_PATH"
 
-
-[asset]
-# Market configuration goes here - what and where are we trading
-
-# TODO: add `net` (where are we trading) here  
-# TODO: add `venue` (on what venue are we trading) here 
-base_asset = "WBTC"
-quote_asset = "USDC"
-
-# TODO: This is currently remus specific
+[market]
+venue = 'remus'
 market_id = 3
 
+[price_source]
+base_asset = "WBTC"
+quote_asset = "USDC"
 price_source = 'binance'
 
 [reconciler]
