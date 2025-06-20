@@ -1,46 +1,44 @@
 import asyncio
 import logging
+from typing import final
 
+from marketmaking.reconciling.order_reconciler import ReconciledOrders
 from markets.market import Market
 from marketmaking.order import BasicOrder, FutureOrder
 from marketmaking.waccount import WAccount
 from monitoring import metrics
+from .tx_builder import TxBuilder
 
-
-class TransactionBuilder:
+@final
+class SequentialTransactionBuilder(TxBuilder):
     """Class to build transactions for the market maker.
-    This class is responsible for creating and managing transactions
+    This class is responsible for creating and executing transactions
     that will be sent to the blockchain for execution.
-    It handles the logic for updating and deleting quotes, as well as
-    submitting new orders based on the market maker's strategy.
+
+    This is a simple TxBuilder that executes all 
     """
 
     def __init__(
         self,
         market: Market,
-        max_fee: int,
     ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self._logger.info("Initializing TransactionBuilder")
 
-        # FIXME: This will have to be replaced with multiple contracts(DEXes).
         self.market = market
 
-        self.max_fee = max_fee
-
-    async def build_transactions(
+    async def build_and_execute_transactions(
         self,
         wrapped_account: WAccount,
-        to_be_canceled: list[BasicOrder],
-        to_be_created: list[FutureOrder],
+        reconciled_orders: ReconciledOrders,
     ) -> None:
         await self.delete_quotes(
-            to_be_canceled=to_be_canceled,
+            to_be_canceled=reconciled_orders.to_cancel,
             wrapped_account=wrapped_account
         )
         await asyncio.sleep(1)  # Give some time for the deletion to be processed
         await self.create_quotes(
-            to_be_created=to_be_created,
+            to_be_created=reconciled_orders.to_place,
             wrapped_account=wrapped_account,
         )
 
