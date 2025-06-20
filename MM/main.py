@@ -25,7 +25,7 @@ from marketmaking.order import BasicOrder
 from cfg.cfg_classes import AccountConfig
 from marketmaking.marketmakers.simple_marketmaker import SimpleMarketMaker
 from state.state import State
-from tx_builders.transaction_builder import SequentialTransactionBuilder
+from tx_builders.sequential_tx_builder import SequentialTransactionBuilder
 from marketmaking.waccount import WAccount
 from cfg import load_config
 from args import parse_args

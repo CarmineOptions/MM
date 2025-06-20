@@ -22,7 +22,7 @@ class TxBuilder(ABC):
     @abstractmethod
     async def build_and_execute_transactions(
         self, 
-        account: WAccount, 
+        wrapped_account: WAccount, 
         reconciled_orders: ReconciledOrders
     ) -> None:
         '''       
