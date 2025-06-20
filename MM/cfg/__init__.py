@@ -34,7 +34,7 @@ def load_config(path: str) -> StrategyConfig:
     venue = VenueConfig(**raw['market'])
 
     if 'tx_builder' not in raw: 
-        raise ConfigError('No `tx_builder` config foudn')
+        raise ConfigError('No `tx_builder` config found')
     tx_builder = TxBuilderConfig(**raw['tx_builder'])
 
     if "orderchain" not in raw:
