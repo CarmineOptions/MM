@@ -52,6 +52,12 @@ class PriceSourceConfig(BaseModel):
     price_source: str
 
 
+class TxBuilderConfig(BaseModel):
+    '''
+    Holds the configuration for the tx builder.
+    '''
+    name: str
+
 class OrderChainElementConfig(BaseModel):
     '''
     Holds the configuration for an element in the order chain.
@@ -89,3 +95,4 @@ class StrategyConfig(BaseModel):
     price_source: PriceSourceConfig
     order_chain: list[OrderChainElementConfig]
     reconciler: ReconcilerConfig
+    tx_builder: TxBuilderConfig

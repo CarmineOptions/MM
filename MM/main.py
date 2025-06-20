@@ -25,7 +25,7 @@ from marketmaking.order import BasicOrder
 from cfg.cfg_classes import AccountConfig
 from marketmaking.marketmakers.simple_marketmaker import SimpleMarketMaker
 from state.state import State
-from marketmaking.transaction_builder import TransactionBuilder
+from tx_builders import get_tx_builder
 from marketmaking.waccount import WAccount
 from cfg import load_config
 from args import parse_args
@@ -133,10 +133,7 @@ async def main() -> None:
         market=market, account=wrapped_account, fair_price_fetcher=data_source
     )
 
-    transaction_builder = TransactionBuilder(
-        market = market,
-        max_fee=0,
-    )
+    transaction_builder = get_tx_builder(name = cfg.tx_builder.name, market=market)
 
     market_maker = SimpleMarketMaker(
         account=wrapped_account,

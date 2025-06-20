@@ -6,6 +6,7 @@ from .cfg_classes import (
     OrderChainElementConfig,
     ReconcilerConfig,
     StrategyConfig,
+    TxBuilderConfig
 )
 
 
@@ -32,6 +33,10 @@ def load_config(path: str) -> StrategyConfig:
         raise ConfigError("No `market` config found")
     venue = VenueConfig(**raw['market'])
 
+    if 'tx_builder' not in raw: 
+        raise ConfigError('No `tx_builder` config found')
+    tx_builder = TxBuilderConfig(**raw['tx_builder'])
+
     if "orderchain" not in raw:
         raise ConfigError("No `orderchain` config found")
     orderchain = [OrderChainElementConfig.from_dict(i) for i in raw["orderchain"]]
@@ -45,6 +50,7 @@ def load_config(path: str) -> StrategyConfig:
         price_source=price, 
         market = venue,
         order_chain=orderchain, 
-        reconciler=reconciler
+        reconciler=reconciler,
+        tx_builder=tx_builder
     )
     return cfg
