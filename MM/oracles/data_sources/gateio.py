@@ -14,6 +14,9 @@ def build_trade_url(base: str, quote: str) -> str:
 
 
 async def fetch_price(base: str, quote: str) -> Decimal:
+    """Fetches the latest price of `base/quote` trading pair from Binance.
+    The price is fetched using the latest aggregated trade data.
+    """
     url = build_trade_url(base, quote)
     async with httpx.AsyncClient() as client:
         resp = await client.get(url)
@@ -23,6 +26,11 @@ async def fetch_price(base: str, quote: str) -> Decimal:
 
 
 async def fetch_cross_price(base: str, quote: str, via: str = "USDT") -> Decimal:
+    """
+    Fetches the price of `base/quote` via a third currency `via`.
+    For example, to get the price of `ETH/USDC`, it fetches `ETH/USDT` and `USDC/USDT`
+    and calculates the price as `ETH/USDT / USDC/USDT`.
+    """
     base_price, quote_price = await asyncio.gather(
         fetch_price(base, via), fetch_price(quote, via)
     )
@@ -31,6 +39,11 @@ async def fetch_cross_price(base: str, quote: str, via: str = "USDT") -> Decimal
 
 @final
 class GateIoDataSource(DataSource):
+    '''
+    GateIoDataSource provides price information for trading pairs on Gate.io.
+    It supports fetching prices for specific pairs like WBTC/DOG.
+    If a pair is not supported, it raises a ValueError.
+    '''
     def __init__(self, base: str, quote: str) -> None:
         self.base = base.upper()
         self.quote = quote.upper()

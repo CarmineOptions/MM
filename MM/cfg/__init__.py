@@ -14,6 +14,9 @@ class ConfigError(Exception):
 
 
 def load_config(path: str) -> StrategyConfig:
+    '''
+    Loads the strategy configuration from a TOML file.
+    '''
     with open(path, "rb") as f:
         raw = tomli.load(f)
 

@@ -7,6 +7,9 @@ from state.state import State
 
 @final
 class AlwaysReplaceOrderReconciler(OrderReconciler):
+    '''
+    A reconciler that always replaces existing orders with desired orders.
+    '''
     def __init__(self) -> None:
         pass
 

@@ -5,6 +5,9 @@ from pydantic import BaseModel
 
 
 class AccountConfig(BaseModel):
+    '''
+    Holds the configuration for the trading account.
+    '''
     rpc_url_env: str
     wallet_address_env: str
     password_path_env: str
@@ -34,16 +37,25 @@ class AccountConfig(BaseModel):
         return pwd
 
 class VenueConfig(BaseModel):
+    '''
+    Holds the configuration for the trading venue.
+    '''
     venue: str
     market_id: int
 
 class PriceSourceConfig(BaseModel):
+    '''
+    Holds the configuration for the price source.
+    '''
     base_asset: str
     quote_asset: str
     price_source: str
 
 
 class OrderChainElementConfig(BaseModel):
+    '''
+    Holds the configuration for an element in the order chain.
+    '''
     name: str
     args: dict[str, Decimal | int]
 
@@ -55,6 +67,9 @@ class OrderChainElementConfig(BaseModel):
 
 
 class ReconcilerConfig(BaseModel):
+    '''
+    Holds the configuration for the Reconciler.
+    '''
     name: str
     args: dict[str, Decimal | int]
 
@@ -66,6 +81,9 @@ class ReconcilerConfig(BaseModel):
 
 
 class StrategyConfig(BaseModel):
+    '''
+    Holds the configuration for the trading strategy.
+    '''
     account: AccountConfig
     market: VenueConfig
     price_source: PriceSourceConfig

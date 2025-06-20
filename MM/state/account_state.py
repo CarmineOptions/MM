@@ -30,13 +30,23 @@ class AccountState:
 
     @property
     def orders(self) -> AllOrders:
+        '''
+        Returns all orders in the account, both active and terminal.
+        Terminal orders are orders that were filled, expired or just 
+        inactive in some way.
+        '''
         return self._orders
 
     @property
     def position(self) -> PositionInfo:
+        """ Returns the current position of the account."""
         return self._position
 
     async def update(self) -> None:
+        '''
+        Updates the account state by fetching the current position and orders
+        from the market. 
+        '''
         async with asyncio.TaskGroup() as tg:
             # TODO: We're fetching position here which fetches orders for market,
             #  but then we're doing it again below, we could just use the same orders

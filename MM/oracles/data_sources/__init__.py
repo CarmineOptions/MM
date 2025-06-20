@@ -4,6 +4,9 @@ from .gateio import GateIoDataSource
 
 
 def get_data_source(source: str, base: str, quote: str) -> DataSource:
+    '''
+    Returns a DataSource instance based on the provided source name.
+    '''
     if source.lower() == "binance":
         return BinanceDataSource(base=base, quote=quote)
     elif source.lower() == "gateio":

@@ -1,3 +1,7 @@
+'''
+This module provides Prometheus metrics for monitoring the bot's performance and state.
+'''
+
 from prometheus_client import Counter, Gauge, start_http_server
 import logging
 import time
@@ -6,6 +10,9 @@ from markets.market import PositionInfo
 
 
 def start_metrics_server(port: int = 8000) -> None:
+    '''
+    Starts a Prometheus metrics server on the specified port.
+    '''
     start_http_server(port)
 
 

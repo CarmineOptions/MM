@@ -8,6 +8,10 @@ from markets.market import Market
 
 
 class State:
+    '''
+    State class that holds the current state for the trading strategy.
+    It contains the account state and the fair price fetcher.
+    '''
     def __init__(
         self, market: Market, account: WAccount, fair_price_fetcher: DataSource
     ) -> None:

@@ -4,6 +4,9 @@ from instruments.instrument import Instrument
 
 @dataclass
 class StarknetToken(Instrument):
+    '''
+    Represents a token on Starknet
+    '''
     platform: str
     symbol: str
     name: str
@@ -11,7 +14,6 @@ class StarknetToken(Instrument):
     address: int
 
 
-# TODO: Once needed, add testnet capabilities
 SN_ETH = StarknetToken(
     platform="Starknet",
     symbol="ETH",
@@ -64,10 +66,15 @@ SN_ADDRESS_TO_TOKEN: dict[int, StarknetToken] = {
     value.address: value for value in SN_SYMBOL_TO_TOKEN.values()
 }
 
-
 def get_sn_token_from_symbol(symbol: str) -> StarknetToken | None:
+    '''
+    Get a StarknetToken by its symbol.
+    '''
     return SN_SYMBOL_TO_TOKEN.get(symbol)
 
 
 def get_sn_token_from_address(address: int) -> StarknetToken | None:
+    '''
+    Get a StarknetToken by its address.
+    '''
     return SN_ADDRESS_TO_TOKEN.get(address)

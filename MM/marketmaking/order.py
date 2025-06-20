@@ -33,7 +33,7 @@ class FutureOrder:
     Class representing an order that will be sent to the chain. Should always be in human-readable form
     """
 
-    order_side: str  # TODO: use Literal or enum here
+    order_side: str 
     amount: Decimal
     price: Decimal
     platform: str
@@ -122,12 +122,20 @@ class TerminalOrders:
 
 @dataclass
 class AllOrders:
+    '''
+    Class that holds all orders, both active and terminal.
+    This is used to represent the state of all orders in the market.
+    '''
     active: OpenOrders
     terminal: TerminalOrders
 
 
 @dataclass
 class DesiredOrders:
+    '''
+    Class that holds lists of future orders that should be sent to the chain.
+    These orders are not yet on-chain, but are desired to be sent.
+    '''
     bids: list[FutureOrder]
     asks: list[FutureOrder]
 

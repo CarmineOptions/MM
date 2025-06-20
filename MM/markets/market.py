@@ -14,6 +14,10 @@ if TYPE_CHECKING:
 
 @dataclass
 class PositionInfo:
+    '''
+    Represents the position information for a market, including balances, withdrawable amounts, and amounts in orders.
+    This class provides properties to calculate the total base and quote amounts of position.
+    '''
     balance_base: Decimal
     balance_quote: Decimal
 
@@ -50,37 +54,78 @@ class PositionInfo:
 
 @dataclass 
 class MarketConfig:
+    """ 
+    Represents the configuration for a market, including its ID, base token, and quote token.
+    The `market_id` doesn't neccessarily matches the ID of the market on the exchange,
+    or isn't necessarily unique in the context of the strategy but it is used to identify
+    the market of some venue in the context of the strategy. 
+    (So basically the ids are unique per venue)
+    """
     market_id: int
     base_token: Instrument
     quote_token: Instrument
 
 
 class Market(ABC):
+    '''
+    Abstract base class for a market in the market making strategy.
+    This class defines the interface for interacting with a market, including methods for
+    setting up the market, retrieving current orders, submitting and closing orders,
+    withdrawing funds, and getting total position information.
+    '''
     @property
     @abstractmethod
     def market_cfg(self) -> MarketConfig:
+        '''
+        Returns the configuration of the market.
+        '''
         pass
 
     @abstractmethod
     async def setup(self, wrapped_account: WAccount) -> None:
+        '''
+        Sets up trading on the market.
+        This method is called to initialize the market with necessary configurations and account details.
+        Eg. in case of Remus, it approves the tokens for trading.
+
+        This should be run before the actual trading starts.
+        '''
         raise NotImplementedError
 
     @abstractmethod
     async def get_current_orders(self) -> AllOrders:
+        '''
+        Retrieves the current orders on the market.
+        '''
         raise NotImplementedError
     
     @abstractmethod
     def get_submit_order_call(self, order: FutureOrder) -> Calls:
+        '''
+        Returns the call to submit an order to the market. The call
+        itself is then executed outside of the market class.
+        '''
         raise NotImplementedError
 
     @abstractmethod
     def get_close_order_call(self, order: BasicOrder) -> Calls:
+        '''
+        Returns the call to cancel an order. The call
+        itself is then executed outside of the market class.
+        '''
         raise NotImplementedError
 
     @abstractmethod
     def get_withdraw_call(self, state: "State", amount: InstrumentAmount) -> Calls:
+        '''
+        Returns the call to withdraw any pending/matched funds. The call
+        itself is then executed outside of the market class.
+        '''
         raise NotImplementedError
 
     @abstractmethod
     async def get_total_position(self) -> PositionInfo:
+        '''
+        Returns the total position for the market.
+        '''
         raise NotImplementedError

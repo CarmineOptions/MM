@@ -8,6 +8,10 @@ from marketmaking.reconciling.order_reconciler import OrderReconciler, Reconcile
 
 @final
 class BoundedReconciler(OrderReconciler):
+    '''
+    A reconciler that limits the number of orders per side and ensures that
+    orders are within a certain relative distance from the fair price.
+    '''
     def __init__(
         self,
         max_relative_distance_from_fp: Decimal,

@@ -6,10 +6,20 @@ from state.state import State
 
 
 class OrderChain:
+    '''
+    Represents a chain of order processing elements that can be applied sequentially
+    to generate desired orders based on the current state.
+    Each element in the chain processes the state and modifies the desired orders
+    according to its specific logic.
+    '''
     def __init__(self, elements: list[OrderChainElement]) -> None:
         self.elements = elements
 
     def process(self, state: State) -> DesiredOrders:
+        '''
+        Processes the given state through all elements in the order chain,
+        generating a final set of desired orders.
+        '''
         orders: DesiredOrders = DesiredOrders(bids=[], asks=[])
 
         for element in self.elements:

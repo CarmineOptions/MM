@@ -4,6 +4,9 @@ from decimal import Decimal
 
 
 class Instrument(ABC):
+    '''
+    Base class for all instruments (e.g., tokens, coins).
+    '''
     platform: str
     symbol: str
     name: str
@@ -13,6 +16,9 @@ class Instrument(ABC):
 
 @dataclass(frozen=True)
 class InstrumentAmount:
+    '''
+    Represents an amount of an Instrument, with raw and human-readable values.
+    '''
     instrument: Instrument
     amount_raw: int
 

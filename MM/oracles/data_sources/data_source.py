@@ -5,13 +5,6 @@ from decimal import Decimal
 class DataSource(ABC):
     """
     Abstract base class for data sources providing price information for trading pairs.
-    Methods:
-        __init__(base: str, quote: str):
-            Initializes the data source for a specific (base, quote) currency pair.
-            Must be implemented by subclasses.
-        get_price() -> Decimal:
-            Asynchronously retrieves the current price for the initialized (base, quote) pair.
-            Must be implemented by subclasses.
     """
 
     @abstractmethod
