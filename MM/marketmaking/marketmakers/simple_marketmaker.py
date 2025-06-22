@@ -3,7 +3,7 @@ import logging
 from markets.market import Market
 from marketmaking.orderchain.order_chain import OrderChain
 from marketmaking.reconciling.order_reconciler import OrderReconciler
-from marketmaking.transaction_builder import TransactionBuilder
+from tx_builders.tx_builder import TxBuilder
 from marketmaking.waccount import WAccount
 from state.state import State
 
@@ -21,7 +21,7 @@ class SimpleMarketMaker:
         market: Market,
         order_reconciler: OrderReconciler,
         order_chain: OrderChain,
-        tx_builder: TransactionBuilder,
+        tx_builder: TxBuilder,
     ):
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self._logger.info("Initializing MarketMaker")
@@ -104,8 +104,7 @@ class SimpleMarketMaker:
             existing_orders=open_orders, state=state, desired_orders=desired_orders
         )
 
-        await self.tx_builder.build_transactions(
+        await self.tx_builder.build_and_execute_transactions(
             wrapped_account=self.account,
-            to_be_canceled=reconciled.to_cancel,
-            to_be_created=reconciled.to_place,
+            reconciled_orders=reconciled
         )
