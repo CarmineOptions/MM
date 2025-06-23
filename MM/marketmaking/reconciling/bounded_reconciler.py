@@ -78,10 +78,10 @@ class BoundedReconciler(OrderReconciler):
     def _is_order_too_close(self, order: BasicOrder, state: State) -> bool:
         if order.is_bid():
             treshold = (1 - self._min_relative_distance) * state.fair_price
-            return treshold > order.price
+            return treshold < order.price
 
         treshold = (1 + self._min_relative_distance) * state.fair_price
-        return treshold < order.price
+        return treshold > order.price
 
     def _is_order_too_far(self, order: BasicOrder, state: State) -> bool:
         if order.is_bid():
