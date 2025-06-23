@@ -76,8 +76,20 @@ class BoundedReconciler(OrderReconciler):
         return reconciled
 
     def _is_order_too_close(self, order: BasicOrder, state: State) -> bool:
-        rel_dist = abs(order.price - state.fair_price) / state.fair_price
-        return rel_dist < self._min_relative_distance
+        if order.is_bid():
+            treshold = (1 - self._min_relative_distance) * state.fair_price
+            return treshold > order.price
+
+        treshold = (1 + self._min_relative_distance) * state.fair_price
+        return treshold < order.price
+
+    def _is_order_too_far(self, order: BasicOrder, state: State) -> bool:
+        if order.is_bid():
+            treshold = (1 - self._max_relative_distance) * state.fair_price
+            return treshold > order.price
+
+        treshold = (1 + self._max_relative_distance) * state.fair_price
+        return treshold < order.price
 
     def _new_orders_needed(self, state: State, orders: list[BasicOrder]) -> bool:
         # New order is needed if there aren't any orders or they're too far
@@ -85,6 +97,4 @@ class BoundedReconciler(OrderReconciler):
             return True
 
         order = orders[0]
-        rel_dist = abs(order.price - state.fair_price) / state.fair_price
-
-        return rel_dist > self._max_relative_distance
+        return self._is_order_too_far(order, state)
