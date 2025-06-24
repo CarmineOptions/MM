@@ -72,13 +72,13 @@ class BundlingTransactionBuilder(TxBuilder):
         # Execute the tx
         nonce = await wrapped_account.get_nonce()
 
+        self._logger.info("Executing bundled transaction.")
         sent = await wrapped_account.account.execute_v3(
             calls=bundled_call,
             auto_estimate=True,
             nonce = nonce
         )
-
-        self._logger.info(f"Executing bundled transaction: {hex(sent.transaction_hash)}")
+        self._logger.info(f"Bundled transaction `{hex(sent.transaction_hash)}` sent.")
 
         await wrapped_account.increment_nonce()
         await wrapped_account.account.client.wait_for_tx(
