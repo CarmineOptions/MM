@@ -1,6 +1,6 @@
 services:
   remus-eth-usdc:
-   image: market-maker:0.5.4
+   image: market-maker:0.5.5
    env_file:
      - ${HOME}/.keystores/.env-eth-usdc
    secrets:
@@ -14,7 +14,7 @@ services:
    command: ["--cfg", "./strats/remus_eth_usdc.toml"]
 
   remus-strk-usdc:
-   image: market-maker:0.5.4
+   image: market-maker:0.5.5
    env_file:
      - ${HOME}/.keystores/.env-strk-usdc
    secrets:
@@ -28,7 +28,7 @@ services:
    command: ["--cfg", "./strats/remus_strk_usdc.toml"]
 
   remus-wbtc-usdc:
-   image: market-maker:0.5.4
+   image: market-maker:0.5.5
    env_file:
      - ${HOME}/.keystores/.env-wbtc-usdc
    secrets:
@@ -42,7 +42,7 @@ services:
    command: ["--cfg", "./strats/remus_wbtc_usdc.toml"]
 
   remus-wbtc-dog:
-    image: market-maker:0.5.4
+    image: market-maker:0.5.5
     env_file:
       - ${HOME}/.keystores/.env-dog-wbtc
     secrets:
