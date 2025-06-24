@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from marketmaking.waccount import WAccount
 from markets.market import Market
 from marketmaking.reconciling.order_reconciler import ReconciledOrders
+from starknet_py.net.client_models import Calls
 
 # TODO: Not only builds the txs but also executes them
 #       so consider some other name 
@@ -23,7 +24,8 @@ class TxBuilder(ABC):
     async def build_and_execute_transactions(
         self, 
         wrapped_account: WAccount, 
-        reconciled_orders: ReconciledOrders
+        reconciled_orders: ReconciledOrders,
+        prologue: list[Calls],
     ) -> None:
         '''       
         Build and execute transactions based on the reconciled orders.
