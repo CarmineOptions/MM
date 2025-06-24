@@ -8,6 +8,7 @@ from marketmaking.order import BasicOrder, FutureOrder
 from marketmaking.waccount import WAccount
 from monitoring import metrics
 from .tx_builder import TxBuilder
+from starknet_py.net.client_models import Calls
 
 @final
 class SequentialTransactionBuilder(TxBuilder):
@@ -31,7 +32,13 @@ class SequentialTransactionBuilder(TxBuilder):
         self,
         wrapped_account: WAccount,
         reconciled_orders: ReconciledOrders,
+        prologue: list[Calls]
     ) -> None:
+        await self.execute_prologue(
+            calls = prologue,
+            wrapped_account = wrapped_account
+        )       
+
         await self.delete_quotes(
             to_be_canceled=reconciled_orders.to_cancel,
             wrapped_account=wrapped_account
@@ -41,6 +48,31 @@ class SequentialTransactionBuilder(TxBuilder):
             to_be_created=reconciled_orders.to_place,
             wrapped_account=wrapped_account,
         )
+
+    async def execute_prologue(
+        self, 
+        calls: list[Calls],
+        wrapped_account: WAccount
+    ) -> None:
+        self._logger.info(f"Executing prologue consisting of {len(calls)} calls")
+
+        for call in calls:
+
+            nonce = await wrapped_account.get_nonce()
+            await wrapped_account.increment_nonce()
+
+            sent = await wrapped_account.account.execute_v3(
+                calls = call,
+                auto_estimate=True,
+                nonce = nonce
+            )
+
+            await wrapped_account.account.client.wait_for_tx(
+                tx_hash=sent.transaction_hash,
+                check_interval = 0.5
+            )
+
+            self._logger.info("Prologue call executed.")
 
     async def delete_quotes(
         self,

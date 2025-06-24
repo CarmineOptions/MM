@@ -3,7 +3,7 @@ from decimal import Decimal
 import logging
 from typing import final, TYPE_CHECKING
 
-from starknet_py.net.client_models import Calls
+from starknet_py.net.client_models import Calls, Call
 from starknet_py.contract import Contract
 
 from instruments.instrument import InstrumentAmount
@@ -90,7 +90,7 @@ class EkuboMarket(Market):
             cfg = self._market_config
         )
 
-    def get_withdraw_call(self, state: "State", amount: InstrumentAmount) -> Calls:
+    def get_withdraw_call(self, state: "State", amount: InstrumentAmount) -> list[Call]:
         # Withdrawing in ekubo is basically closing executed orders
         if amount.instrument.address == self._base_token.address:
             # We want to withdraw base token, so we need to close 

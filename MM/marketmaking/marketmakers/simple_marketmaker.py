@@ -6,6 +6,7 @@ from marketmaking.reconciling.order_reconciler import OrderReconciler
 from tx_builders.tx_builder import TxBuilder
 from marketmaking.waccount import WAccount
 from state.state import State
+from starknet_py.net.client_models import Calls
 
 MAX_UINT = 2**256 - 1
 
@@ -43,7 +44,7 @@ class SimpleMarketMaker:
         self._logger.info("Initializing trading...")
         await self.market.setup(self.account)
 
-    async def claim_tokens(self, state: State) -> None:
+    def get_claim_tokens_call(self, state: State) -> list[Calls]:
         """
         Initially it claims all the time. Later, it will claim only when needed.
         TODO: claim only when needed.
@@ -55,6 +56,8 @@ class SimpleMarketMaker:
 
         logging.info("Claiming tokens for market_id: %s", self.market.market_cfg.market_id)
 
+        calls = []
+
         for claimable_token in [state.account.position.withdrawable_base, state.account.position.withdrawable_quote]:
             self._logger.info(
                 "Claimable amount is %s for token %s, account %s.",
@@ -64,37 +67,24 @@ class SimpleMarketMaker:
             )
 
             if claimable_token.amount_raw:
-                self._logger.info("Claiming")
-                latest_nonce = await account.get_nonce()
-                # TODO: push this into the transaction builder.
-                # TODO: Use ResourceBound instead of auto_estimate when invoking
-
+                self._logger.info("Preparing claim call")
 
                 call = market.get_withdraw_call(state=state, amount=claimable_token)
 
-                sent = await self.account.account.execute_v3(
-                    calls = call,
-                    auto_estimate=True,
-                    nonce = latest_nonce
-                )
+                calls.append(call)
 
-                await self.account.account.client.wait_for_tx(
-                    tx_hash = sent.transaction_hash,
-                    check_interval = 0.5
-                )
-
-
-                await account.increment_nonce()
 
             self._logger.info(
-                "Claim done for account %s, market %s.",
+                "Claim prepared for account %s, market %s.",
                 hex(account.address),
                 self.market.market_cfg.market_id,
             )
 
+        return calls
+
     async def pulse(self, state: State) -> None:
 
-        await self.claim_tokens(state=state)
+        claim_call = self.get_claim_tokens_call(state=state)
         
         desired_orders = self.order_chain.process(state)
 
@@ -106,5 +96,6 @@ class SimpleMarketMaker:
 
         await self.tx_builder.build_and_execute_transactions(
             wrapped_account=self.account,
-            reconciled_orders=reconciled
+            reconciled_orders=reconciled,
+            prologue=claim_call,
         )

@@ -38,6 +38,7 @@ class BundlingTransactionBuilder(TxBuilder):
         self,
         wrapped_account: WAccount,
         reconciled_orders: ReconciledOrders,
+        prologue: list[Calls],
     ) -> None:
         '''
         Build and execute one big transaction that cancels and places all 
@@ -45,10 +46,12 @@ class BundlingTransactionBuilder(TxBuilder):
         '''
         n_cancels = len(reconciled_orders.to_cancel)
         n_places = len(reconciled_orders.to_place)
+        n_prologues = len(prologue)
 
         self._logger.info(
             f"Canceling {n_cancels} orders, "
-            f"placing {n_places} orders."
+            f"placing {n_places} orders, "
+            f"executing {n_prologues} prologues."
         )
         self._logger.info(f"Canceling orders: {reconciled_orders.to_cancel}")
         self._logger.info(f"Placing orders: {reconciled_orders.to_place}")
@@ -69,12 +72,15 @@ class BundlingTransactionBuilder(TxBuilder):
 
         bundled_call = single_cancel_call + single_place_call
         
+        # Bundle the call with prologue
+        complete_tx = _get_single_call_list(prologue) + bundled_call
+
         # Execute the tx
         nonce = await wrapped_account.get_nonce()
 
         self._logger.info("Executing bundled transaction.")
         sent = await wrapped_account.account.execute_v3(
-            calls=bundled_call,
+            calls=complete_tx,
             auto_estimate=True,
             nonce = nonce
         )
