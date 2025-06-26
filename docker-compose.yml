@@ -62,7 +62,7 @@ services:
      - ${HOME}/.keystores/.env-ekubo-eth-usdc
    secrets:
      - keystore-ekubo-eth-usdc
-     - pwd-wkubo-eth-usdc
+     - pwd-ekubo-eth-usdc
    environment:
      - KEYSTORE_PATH=/run/secrets/keystore-ekubo-eth-usdc
      - KEYSTORE_PWD_PATH=/run/secrets/pwd-ekubo-eth-usdc
