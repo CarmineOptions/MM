@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from instruments.starknet import SN_ETH, SN_STRK, SN_USDC, SN_WBTC
+from instruments.starknet import SN_ETH, SN_STRK, SN_USDC, SN_WBTC, SN_DOG
 from markets.market import MarketConfig
 
 EKUBO_LIMIT_ORDER_TICK_SPACING = 128
@@ -32,11 +32,19 @@ WBTC_USDC_LIMIT_MC = EkuboMarketConfig(
     tick_spacing=EKUBO_LIMIT_ORDER_TICK_SPACING
 )
 
+WBTC_DOG_LIMIT_MC = EkuboMarketConfig(
+    market_id = 11,
+    base_token = SN_WBTC,
+    quote_token = SN_DOG,
+    tick_spacing=EKUBO_LIMIT_ORDER_TICK_SPACING
+)
+
 
 MARKET_ID_TO_CONFIG: dict[int, EkuboMarketConfig] = {
     1: ETH_USDC_LIMIT_MC,
     2: STRK_USDC_LIMIT_MC,
     3: WBTC_USDC_LIMIT_MC,
+    11: WBTC_DOG_LIMIT_MC
 }
 
 def get_preloaded_ekubo_market_config(market_id: int) -> EkuboMarketConfig | None:
