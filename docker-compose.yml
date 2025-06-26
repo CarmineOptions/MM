@@ -1,6 +1,6 @@
 services:
   remus-eth-usdc:
-   image: market-maker:0.5.5
+   image: market-maker:0.6.0
    env_file:
      - ${HOME}/.keystores/.env-eth-usdc
    secrets:
@@ -14,7 +14,7 @@ services:
    command: ["--cfg", "./strats/remus_eth_usdc.toml"]
 
   remus-strk-usdc:
-   image: market-maker:0.5.5
+   image: market-maker:0.6.0
    env_file:
      - ${HOME}/.keystores/.env-strk-usdc
    secrets:
@@ -28,7 +28,7 @@ services:
    command: ["--cfg", "./strats/remus_strk_usdc.toml"]
 
   remus-wbtc-usdc:
-   image: market-maker:0.5.5
+   image: market-maker:0.6.0
    env_file:
      - ${HOME}/.keystores/.env-wbtc-usdc
    secrets:
@@ -42,7 +42,7 @@ services:
    command: ["--cfg", "./strats/remus_wbtc_usdc.toml"]
 
   remus-wbtc-dog:
-    image: market-maker:0.5.5
+    image: market-maker:0.6.0
     env_file:
       - ${HOME}/.keystores/.env-dog-wbtc
     secrets:
@@ -57,7 +57,7 @@ services:
 
 
   ekubo-eth-usdc:
-   image: market-maker:0.5.5
+   image: market-maker:0.6.0
    env_file:
      - ${HOME}/.keystores/.env-ekubo-eth-usdc
    secrets:
@@ -71,7 +71,7 @@ services:
    command: ["--cfg", "./strats/ekubo_eth_usdc.toml"]
 
   ekubo-strk-usdc:
-   image: market-maker:0.5.5
+   image: market-maker:0.6.0
    env_file:
      - ${HOME}/.keystores/.env-ekubo-strk-usdc
    secrets:
@@ -85,7 +85,7 @@ services:
    command: ["--cfg", "./strats/ekubo_strk_usdc.toml"]
 
   ekubo-wbtc-usdc:
-   image: market-maker:0.5.5
+   image: market-maker:0.6.0
    env_file:
      - ${HOME}/.keystores/.env-ekubo-wbtc-usdc
    secrets:
@@ -99,7 +99,7 @@ services:
    command: ["--cfg", "./strats/ekubo_wbtc_usdc.toml"]
 
   ekubo-wbtc-dog:
-    image: market-maker:0.5.5
+    image: market-maker:0.6.0
     env_file:
       - ${HOME}/.keystores/.env-ekubo-dog-wbtc
     secrets:
