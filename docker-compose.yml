@@ -56,6 +56,62 @@ services:
     command: ["--cfg", "./strats/remus_wbtc_dog.toml"]
 
 
+  ekubo-eth-usdc:
+   image: market-maker:0.5.5
+   env_file:
+     - ${HOME}/.keystores/.env-ekubo-eth-usdc
+   secrets:
+     - keystore-ekubo-eth-usdc
+     - pwd-wkubo-eth-usdc
+   environment:
+     - KEYSTORE_PATH=/run/secrets/keystore-ekubo-eth-usdc
+     - KEYSTORE_PWD_PATH=/run/secrets/pwd-ekubo-eth-usdc
+   ports:
+     - 8005:8000
+   command: ["--cfg", "./strats/ekubo_eth_usdc.toml"]
+
+  ekubo-strk-usdc:
+   image: market-maker:0.5.5
+   env_file:
+     - ${HOME}/.keystores/.env-ekubo-strk-usdc
+   secrets:
+     - keystore-ekubo-strk-usdc
+     - pwd-ekubo-strk-usdc
+   environment:
+     - KEYSTORE_PATH=/run/secrets/keystore-ekubo-strk-usdc
+     - KEYSTORE_PWD_PATH=/run/secrets/pwd-ekubo-strk-usdc
+   ports:
+     - 8006:8000
+   command: ["--cfg", "./strats/ekubo_strk_usdc.toml"]
+
+  ekubo-wbtc-usdc:
+   image: market-maker:0.5.5
+   env_file:
+     - ${HOME}/.keystores/.env-ekubo-wbtc-usdc
+   secrets:
+     - keystore-ekubo-wbtc-usdc
+     - pwd-ekubo-wbtc-usdc
+   environment:
+     - KEYSTORE_PATH=/run/secrets/keystore-ekubo-wbtc-usdc
+     - KEYSTORE_PWD_PATH=/run/secrets/pwd-ekubo-wbtc-usdc
+   ports:
+     - 8007:8000
+   command: ["--cfg", "./strats/ekubo_wbtc_usdc.toml"]
+
+  ekubo-wbtc-dog:
+    image: market-maker:0.5.5
+    env_file:
+      - ${HOME}/.keystores/.env-ekubo-dog-wbtc
+    secrets:
+      - keystore-ekubo-wbtc-dog
+      - pwd-ekubo-wbtc-dog
+    environment:
+      - KEYSTORE_PATH=/run/secrets/keystore-ekubo-wbtc-dog
+      - KEYSTORE_PWD_PATH=/run/secrets/pwd-ekubo-wbtc-dog
+    ports:
+      - 8008:8000
+    command: ["--cfg", "./strats/ekubo_wbtc_dog.toml"]
+
 secrets:
   keystore-remus-wbtc-dog:
     external: true
@@ -72,4 +128,21 @@ secrets:
   keystore-remus-wbtc-usdc:
     external: true
   pwd-remus-wbtc-usdc:
+    external: true
+
+  keystore-ekubo-wbtc-dog:
+    external: true
+  pwd-ekubo-wbtc-dog:
+    external: true
+  keystore-ekubo-eth-usdc:
+    external: true
+  pwd-ekubo-eth-usdc:
+    external: true
+  keystore-ekubo-strk-usdc:
+    external: true
+  pwd-ekubo-strk-usdc:
+    external: true
+  keystore-ekubo-wbtc-usdc:
+    external: true
+  pwd-ekubo-wbtc-usdc:
     external: true
