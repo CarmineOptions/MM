@@ -34,8 +34,3 @@ max_skew = '0.002'
 name = 'fixed_params'
 target_relative_distance_from_fp = "0.001" # where best order is created 
 order_size_quote = "100"   # in Quote asset (human-readable)
-
-
-
-
-
