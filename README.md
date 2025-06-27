@@ -84,13 +84,8 @@ order_size_quote = "10"  # In Quote asset (human-readable)
 
 ### Run
 
-After config is set up you can run the MM bot with docker
-
-```
-sudo docker compose up -d
-```
-
-or in a local environment
+After config is set up you can run the MM bot in a local environemnt
 ```
 KEYSTORE_PWD_PATH=$KEYSTORE_PWD_PATH KEYSTORE_PATH=$KEYSTORE_PATH WALLET_ADDRESS=$WALLET_ADDRESS RPC_URL=$RPC_URL PYTHONPATH=. python3 ./MM/main.py --cfg ./cfg/example_cfg.toml
 ```
+or you can have a look at the Dockerfile.
