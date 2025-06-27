@@ -8,7 +8,7 @@ keystore_path_env = "KEYSTORE_PATH"
 
 [market]
 venue = 'remus'
-market_id = 2  # market_id has to be queried from Remus DEX smart contract.
+market_id = 2  # market_id is an internal identifier of a market.
 
 [price_source]
 base_asset = "STRK"
