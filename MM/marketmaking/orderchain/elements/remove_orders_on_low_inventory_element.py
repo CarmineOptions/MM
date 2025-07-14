@@ -1,3 +1,4 @@
+from decimal import Decimal
 import logging
 from typing import final
 from marketmaking.orderchain.elements.element import OrderChainElement
@@ -14,7 +15,7 @@ class RemoveOrdersOnLowInventoryElement(OrderChainElement):
     Element that checks current balances and available inventory and if there isn't enough
     balance to send an order, it removes it.
     '''
-    def __init__(self):
+    def __init__(self) -> None:
         self._logger = logging.getLogger(self.__class__.__name__)
 
     def process(self, state: State, orders: DesiredOrders) -> DesiredOrders:
@@ -33,7 +34,7 @@ class RemoveOrdersOnLowInventoryElement(OrderChainElement):
         portfolio = state.account.position
         removed_orders = []
 
-        total_quote_needed = 0
+        total_quote_needed = Decimal(0)
         for bid_order in orders.bids:
             order_quote_amount = bid_order.price * bid_order.amount
             if total_quote_needed + order_quote_amount <= portfolio.total_quote:
@@ -42,7 +43,7 @@ class RemoveOrdersOnLowInventoryElement(OrderChainElement):
             else: 
                 removed_orders.append(bid_order)
         
-        total_base_needed = 0
+        total_base_needed = Decimal(0)
         for ask_order in orders.asks:
             order_base_amount = ask_order.amount
             if total_base_needed + order_base_amount <= portfolio.total_base:
