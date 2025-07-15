@@ -20,7 +20,7 @@ class EkuboView:
         positions = await Contract.from_address(address=EKUBO_POSITIONS_ADDRESS, provider=provider)
         return EkuboView(ekubo_positions=positions)
     
-    async def get_all_orders(
+    async def get_all_limit_orders(
             self,
             wallet: int,
             market_cfg: EkuboMarketConfig
