@@ -7,15 +7,14 @@ from typing import final, TYPE_CHECKING
 from starknet_py.net.client_models import Calls, Call
 from starknet_py.contract import Contract
 
-from MM.markets.market import MarketConfig
-from MM.state.state import State
+from state.state import State
 from instruments.instrument import InstrumentAmount
 from markets.market import PositionInfo
-from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, TerminalOrders
+from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders
 from marketmaking.waccount import WAccount
 from markets.market import Market
 from venues.ekubo.ekubo import EkuboClient
-from venues.ekubo.ekubo_market_configs import EkuboMarketConfig
+from venues.ekubo.ekubo_market_configs import EkuboMarketConfig, get_preloaded_ekubo_clmm_market_config
 
 if TYPE_CHECKING:
     from state.state import State
@@ -23,7 +22,7 @@ if TYPE_CHECKING:
 @final
 class EkuboCLMMMarket(Market):
 
-    def init(
+    def __init__(
         self,
         market_id: int, 
         market_config: EkuboMarketConfig,
@@ -42,6 +41,32 @@ class EkuboCLMMMarket(Market):
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         pass
 
+
+    @staticmethod
+    async def new(account: WAccount, market_id: int) -> "EkuboCLMMMarket":
+        client = await EkuboClient.from_account(account = account.account)
+        market_config = get_preloaded_ekubo_clmm_market_config(market_id)
+    
+        if market_config is None:
+            raise ValueError(f"No preloaded ekubo clmm config found for id `{market_id}`")
+        
+        base_token = await Contract.from_address(
+            address = market_config.base_token.address,
+            provider = account.account
+        )
+        quote_token = await Contract.from_address(
+            address = market_config.quote_token.address,
+            provider = account.account
+        )
+        return EkuboCLMMMarket(
+            market_id = market_id,
+            market_config=market_config,
+            ekubo_client=client,
+            base_token=base_token,
+            quote_token=quote_token,
+            account=account
+        )
+
     @property
     def market_cfg(self) -> EkuboMarketConfig:
         return self._market_config
@@ -55,11 +80,19 @@ class EkuboCLMMMarket(Market):
             market_cfg=self._market_config
         )
 
-    def get_submit_order_call(self, order: FutureOrder) -> list[Call]:
-        raise NotImplementedError
+    def get_submit_order_call(self, order: FutureOrder) -> Calls:
+        return self._client.prep_submit_position_call(
+            order = order,
+            market_cfg = self._market_config,
+            base_token_contract= self._base_token,
+            quote_token_contract = self._quote_token,
+        )
 
-    def get_close_order_call(self, order: BasicOrder) -> list[Call]:
-        raise NotImplementedError
+    def get_close_order_call(self, order: BasicOrder) -> Calls:
+        return self._client.prep_remove_position_call(
+            order = order,
+            cfg = self._market_config
+        )
 
     def get_withdraw_call(self, state: State, amount: InstrumentAmount) -> list[Call]:
         # No withdraws here since positions are never "filled" - they stay in the market
@@ -100,7 +133,6 @@ class EkuboCLMMMarket(Market):
                 amount_raw = 0 
             ),
         )
-
 
     
 

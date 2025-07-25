@@ -91,7 +91,7 @@ def _positions_to_basic_orders(api_orders: list[dict], onchain_orders: list[dict
 
     for order, onchain_order in zip(api_orders, onchain_orders):
         if isinstance(onchain_order, BaseException):
-            logging.error(f"")
+            logging.error("")
             continue
         
         onchain_order = onchain_order[0]

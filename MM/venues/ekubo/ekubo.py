@@ -1,11 +1,12 @@
-
 import asyncio
+from decimal import Decimal
 import httpx
 from starknet_py.contract import Contract
 from starknet_py.net.account.account import Account
 from starknet_py.net.full_node_client import FullNodeClient
 from starknet_py.net.client_models import Calls, Call
 
+from venues.ekubo.ekubo_math import get_nearest_usable_tick, price_to_tick, tick_to_price
 from venues.ekubo.ekubo_utils import _get_basic_orders, _positions_to_basic_orders, get_order_key
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, TerminalOrders
 from venues.ekubo.ekubo_market_configs import EkuboMarketConfig
@@ -15,6 +16,7 @@ EKUBO_POSITIONS_ADDRESS=0x02e0af29598b407c8716b17f6d2795eca1b471413fa03fb145a5e3
 class EkuboView:
     def __init__(self, ekubo_positions: Contract) -> None:
         self._positions = ekubo_positions
+        self._order_liquidities: dict[int, int] = {}
 
     @staticmethod
     async def from_provider(provider: Account | FullNodeClient) -> "EkuboView":
@@ -135,8 +137,13 @@ class EkuboView:
 
         fetched_positions = await asyncio.gather(*tasks, return_exceptions=True)
 
+        for order, pos in zip(relevant_positions, fetched_positions):
+            if not isinstance(pos, BaseException):
+                self._order_liquidities[order['id']] = pos[0]['liquidity']
+
+
         if len(relevant_positions) != len(fetched_positions):
-            raise ValueError(f"EkuboCLMM didn't receive same amount of onchain orders.")
+            raise ValueError("EkuboCLMM didn't receive same amount of onchain orders.")
 
         basic_orders = _positions_to_basic_orders(
             relevant_positions,
@@ -148,6 +155,14 @@ class EkuboView:
             active = OpenOrders.from_list(basic_orders),
             terminal = TerminalOrders.from_list([])
         )
+    
+    def get_cached_order_liquidity(self, order_id: int) -> int | None:
+        liquidity = self._order_liquidities.get(order_id)
+
+        if liquidity is not None:
+            del self._order_liquidities[order_id]
+
+        return liquidity
 
 class EkuboClient:
     def __init__(self, ekubo_positions: Contract) -> None:
@@ -198,6 +213,139 @@ class EkuboClient:
             swap_invoke,
             clear_invoke
         ]
+    
+    def prep_submit_position_call(
+        self,
+        order: FutureOrder,
+        market_cfg: EkuboMarketConfig,
+        base_token_contract: Contract,
+        quote_token_contract: Contract,
+    ) -> Calls:
+        if order.order_side.lower() == 'ask':
+            amount = order.amount * 10 ** market_cfg.base_token.decimals
+            clearing_token = market_cfg.base_token.address
+            transfer_token_contract = base_token_contract
+        else:
+            amount = order.amount * order.price * 10**market_cfg.quote_token.decimals
+            clearing_token = market_cfg.quote_token.address
+            transfer_token_contract = quote_token_contract
+        
+
+        transfer_call = transfer_token_contract.functions['transfer'].prepare_invoke_v3(
+            recipient = self._positions.address,
+            amount = int(amount)
+        )
+
+        
+        lower_bound = price_to_tick(order.price, market_cfg.base_token.decimals, market_cfg.quote_token.decimals)
+        lower_bound = get_nearest_usable_tick(lower_bound, market_cfg.tick_spacing)
+        upper_bound = lower_bound + market_cfg.tick_spacing
+
+        if upper_bound < lower_bound:
+            bounds = {
+                'upper': {
+                    'mag': abs(upper_bound),
+                    'sign': upper_bound < 0
+                },
+                'lower': {
+                    'mag': abs(lower_bound),
+                    'sign': lower_bound < 0
+                }
+            }
+        else: 
+            bounds = {
+                'lower': {
+                    'mag': abs(upper_bound),
+                    'sign': upper_bound < 0
+                },
+                'upper': {
+                    'mag': abs(lower_bound),
+                    'sign': lower_bound < 0
+                }
+            }
+
+        deposit_call = self._positions.functions['mint_and_deposit'].prepare_invoke_v3(
+            pool_key = {
+                'token0': market_cfg.base_token.address,
+                'token1': market_cfg.quote_token.address,
+                'fee': market_cfg.fee,
+                'tick_spacing': market_cfg.tick_spacing,
+                'extension': 0
+            },
+            bounds = bounds,
+            min_liquidity = 0
+        )
+
+        clear_call = self._positions.functions['clear'].prepare_invoke_v3(
+            token = {
+                'contract_address': clearing_token
+            }
+        )
+
+        return [
+            transfer_call,
+            deposit_call,
+            clear_call
+        ]
+    
+    def prep_remove_position_call(self, order: BasicOrder, cfg: EkuboMarketConfig) -> Call:
+        liquidity = self.view.get_cached_order_liquidity(order.order_id)
+
+        if liquidity is None: 
+            raise ValueError(f"No liquidity found for EkuboCLMM order: {order}")
+            
+        return self._prep_remove_position_call_with_liquidity(
+            order = order,
+            cfg = cfg,
+            liquidity = liquidity
+        )
+    
+    def _prep_remove_position_call_with_liquidity(self, order: BasicOrder, cfg: EkuboMarketConfig, liquidity: int) -> Call:
+        pool_key = pool_key = {
+            'token0': cfg.base_token.address,
+            'token1': cfg.quote_token.address,
+            'fee': cfg.fee,
+            'tick_spacing': cfg.tick_spacing,
+            'extension': 0
+        }
+
+
+        lower_bound = price_to_tick(order.price, 18, 6)
+        upper_bound = lower_bound + cfg.tick_spacing
+        upper_bound_price = tick_to_price(Decimal(upper_bound), 18, 6)
+
+        if upper_bound_price > order.price:
+            bounds = {
+                'lower': {
+                    'mag': abs(lower_bound),
+                    'sign': lower_bound < 0
+                },
+                'upper': {
+                    'mag': abs(upper_bound),
+                    'sign': upper_bound < 0
+                }
+            }
+        else:
+            bounds = {
+                'upper': {
+                    'mag': abs(lower_bound),
+                    'sign': lower_bound < 0
+                },
+                'lower': {
+                    'mag': abs(upper_bound),
+                    'sign': upper_bound < 0
+                }
+            }
+        return self._positions.functions['withdraw'].prepare_invoke_v3(
+            id = order.order_id,
+            pool_key = pool_key,
+            bounds = bounds,
+            liquidity = liquidity,
+            min_token0 = 0,
+            min_token1 = 0,
+            collect_fees = True
+        )
+
     
     def prep_delete_maker_order_call(self, order: BasicOrder, cfg: EkuboMarketConfig) -> Call:
         order_key = get_order_key(order, cfg)
