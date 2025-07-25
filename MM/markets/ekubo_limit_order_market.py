@@ -12,7 +12,7 @@ from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, T
 from marketmaking.waccount import WAccount
 from markets.market import Market
 from venues.ekubo.ekubo import EkuboClient
-from venues.ekubo.ekubo_market_configs import EkuboMarketConfig, get_preloaded_ekubo_market_config
+from venues.ekubo.ekubo_market_configs import EkuboMarketConfig, get_preloaded_ekubo_limit_order_market_config
 
 if TYPE_CHECKING:
     from state.state import State
@@ -41,7 +41,7 @@ class EkuboLimitOrderMarket(Market):
     @staticmethod
     async def new(account: WAccount, market_id: int) -> "EkuboLimitOrderMarket":
         client = await EkuboClient.from_account(account = account.account)
-        market_config = get_preloaded_ekubo_market_config(market_id)
+        market_config = get_preloaded_ekubo_limit_order_market_config(market_id)
     
         if market_config is None:
             raise ValueError(f"No preloaded ekubo config found for id `{market_id}`")

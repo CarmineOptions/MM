@@ -1,11 +1,12 @@
 
+import asyncio
 import httpx
 from starknet_py.contract import Contract
 from starknet_py.net.account.account import Account
 from starknet_py.net.full_node_client import FullNodeClient
 from starknet_py.net.client_models import Calls, Call
 
-from venues.ekubo.ekubo_utils import _get_basic_orders, get_order_key
+from venues.ekubo.ekubo_utils import _get_basic_orders, _positions_to_basic_orders, get_order_key
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, TerminalOrders
 from venues.ekubo.ekubo_market_configs import EkuboMarketConfig
 
@@ -83,7 +84,70 @@ class EkuboView:
             active = OpenOrders.from_list(active_orders),
             terminal = TerminalOrders.from_list(terminal_orders)
         )
+    
+    
+    async def get_all_clmm_positions_as_limit_orders(
+            self,
+            wallet: int,
+            market_cfg: EkuboMarketConfig
+        ) -> AllOrders:
 
+        url = f'https://mainnet-api.ekubo.org/positions/{hex(wallet)}?showClosed=false'
+
+        async with httpx.AsyncClient() as client:
+            positions_resp = await client.get(url)
+
+        positions_resp.raise_for_status()
+        positions = positions_resp.json()['data']
+        
+        relevant_positions = [
+            p for p in positions
+            if int(p['pool_key']['token0'], 0) == market_cfg.base_token.address
+            and
+            int(p['pool_key']['token1'], 0) == market_cfg.quote_token.address
+        ]
+
+        tasks = []
+
+        for onchain_p in relevant_positions:
+            lower_tick = onchain_p['bounds']['lower']
+            upper_tick = onchain_p['bounds']['upper']
+
+            bounds = {
+                'lower' : {
+                    'mag': abs(lower_tick),
+                    'sign': lower_tick < 0
+                },
+                'upper' : {
+                    'mag': abs(upper_tick),
+                    'sign': upper_tick < 0
+                }
+            }
+            tasks.append(
+                self._positions.functions['get_token_info'].call(
+                    id = onchain_p['id'],
+                    pool_key = {
+                        k: int(v, 0) for k, v in onchain_p['pool_key'].items()
+                    },
+                    bounds = bounds
+                )
+            )
+
+        fetched_positions = await asyncio.gather(*tasks, return_exceptions=True)
+
+        if len(relevant_positions) != len(fetched_positions):
+            raise ValueError(f"EkuboCLMM didn't receive same amount of onchain orders.")
+
+        basic_orders = _positions_to_basic_orders(
+            relevant_positions,
+            fetched_positions,
+            market_cfg
+        )
+
+        return AllOrders(
+            active = OpenOrders.from_list(basic_orders),
+            terminal = TerminalOrders.from_list([])
+        )
 
 class EkuboClient:
     def __init__(self, ekubo_positions: Contract) -> None:

@@ -1,4 +1,4 @@
-
+import logging
 
 from decimal import Decimal
 from typing import Any, OrderedDict, TypedDict
@@ -77,7 +77,61 @@ def _get_basic_orders(
             order_side = side,
             entry_time=0,
             market_id = 0,
-            venue='Ekubo'
+            venue='EkuboLO'
         ))
+
+    return basic_orders
+
+
+def _positions_to_basic_orders(api_orders: list[dict], onchain_orders: list[dict | BaseException], market_cfg: EkuboMarketConfig) -> list[BasicOrder]:
+    token_a_decimals = market_cfg.base_token.decimals
+    token_b_decimals = market_cfg.quote_token.decimals
+        
+    basic_orders = []
+
+    for order, onchain_order in zip(api_orders, onchain_orders):
+        if isinstance(onchain_order, BaseException):
+            logging.error(f"")
+            continue
+        
+        onchain_order = onchain_order[0]
+        
+        order_id = order['id']
+        pool_price_tick = onchain_order['pool_price']['tick']
+        pool_price = -pool_price_tick['mag'] if pool_price_tick['sign'] else pool_price_tick['mag']
+        pool_price = tick_to_price(pool_price, token_a_decimals, token_b_decimals)
+
+        order_bounds = order['bounds']
+        # Order price is kinda wrong, but good enough for very low tick sizes
+        order_price = tick_to_price(
+            min(order_bounds['lower'], order_bounds['upper']), market_cfg.base_token.decimals, market_cfg.quote_token.decimals
+        )
+
+        base_amount = Decimal(onchain_order['amount0']) / 10 ** token_a_decimals
+        quote_amount = Decimal(onchain_order['amount1']) / 10 ** token_b_decimals
+        total_base_amount = base_amount + quote_amount / order_price
+
+        base_fees = Decimal(onchain_order['fees0']) / 10 ** token_a_decimals
+        quote_fees = Decimal(onchain_order['fees1']) / 10 ** token_b_decimals
+        total_base_fees = base_fees + quote_fees
+
+        total_base_position = total_base_amount + total_base_fees
+
+        is_bid = pool_price > order_price
+
+        basic_orders.append(
+            BasicOrder(
+                price = order_price,
+                amount = total_base_position,
+                amount_remaining = total_base_position,
+                order_id = order_id,
+
+                order_side = 'Bid' if is_bid else 'Ask',
+                entry_time=0,
+                market_id=market_cfg.market_id,
+                venue = 'EkuboCLMM'
+            )
+        )
+
 
     return basic_orders
