@@ -241,7 +241,7 @@ class EkuboClient:
         lower_bound = get_nearest_usable_tick(lower_bound, market_cfg.tick_spacing)
         upper_bound = lower_bound + market_cfg.tick_spacing
 
-        if upper_bound < lower_bound:
+        if upper_bound > lower_bound:
             bounds = {
                 'upper': {
                     'mag': abs(upper_bound),

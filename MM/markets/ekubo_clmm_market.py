@@ -7,7 +7,6 @@ from typing import final, TYPE_CHECKING
 from starknet_py.net.client_models import Calls, Call
 from starknet_py.contract import Contract
 
-from state.state import State
 from instruments.instrument import InstrumentAmount
 from markets.market import PositionInfo
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders
@@ -94,7 +93,7 @@ class EkuboCLMMMarket(Market):
             cfg = self._market_config
         )
 
-    def get_withdraw_call(self, state: State, amount: InstrumentAmount) -> list[Call]:
+    def get_withdraw_call(self, state: "State", amount: InstrumentAmount) -> list[Call]:
         # No withdraws here since positions are never "filled" - they stay in the market
         return []
 

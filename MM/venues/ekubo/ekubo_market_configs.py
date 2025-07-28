@@ -70,7 +70,8 @@ STRK_USDC_CLMM_MC = EkuboMarketConfig(
 
 
 MARKET_ID_TO_CLMM_CONFIG: dict[int, EkuboMarketConfig] = {
-    1: ETH_USDC_CLMM_MC
+    1: ETH_USDC_CLMM_MC,
+    2: STRK_USDC_CLMM_MC
 }
 
 
