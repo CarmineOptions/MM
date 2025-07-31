@@ -146,7 +146,7 @@ def _get_base_quote_from_orders(orders: OpenOrders) -> tuple[Decimal, Decimal]:
 
     base_amt = Decimal(0)
     for ask in orders.asks:
-        base_amt += ask.amount_remaining * ask.price
+        base_amt += ask.amount_remaining
         pass
 
     return base_amt, quote_amt
