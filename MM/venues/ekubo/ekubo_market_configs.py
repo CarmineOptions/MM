@@ -56,8 +56,8 @@ ETH_USDC_CLMM_MC = EkuboMarketConfig(
     market_id = 1,
     base_token = SN_ETH,
     quote_token = SN_USDC,
-    tick_spacing = 0x3e8,
-    fee = 0x20c49ba5e353f80000000000000000
+    tick_spacing = 1,
+    fee = 0
 ) 
 
 STRK_USDC_CLMM_MC = EkuboMarketConfig(
