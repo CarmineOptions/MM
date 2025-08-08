@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import asyncio
 from decimal import Decimal
 import httpx
@@ -13,10 +14,18 @@ from venues.ekubo.ekubo_market_configs import EkuboMarketConfig
 
 EKUBO_POSITIONS_ADDRESS=0x02e0af29598b407c8716b17f6d2795eca1b471413fa03fb145a5e33722184067
 
+@dataclass
+class EkuboPositionMetadata:
+    liquidity: int
+    lower_bound: int
+    upper_bound: int
+    tick_spacing: int
+    fee: int
+
 class EkuboView:
     def __init__(self, ekubo_positions: Contract) -> None:
         self._positions = ekubo_positions
-        self._order_liquidities: dict[int, int] = {}
+        self._position_metadata: dict[int, EkuboPositionMetadata] = {}
 
     @staticmethod
     async def from_provider(provider: Account | FullNodeClient) -> "EkuboView":
@@ -139,7 +148,14 @@ class EkuboView:
 
         for order, pos in zip(relevant_positions, fetched_positions):
             if not isinstance(pos, BaseException):
-                self._order_liquidities[order['id']] = pos[0]['liquidity']
+                position_metadata = EkuboPositionMetadata(
+                    liquidity = pos[0]['liquidity'],
+                    lower_bound = order['bounds']['lower'],
+                    upper_bound = order['bounds']['upper'],
+                    tick_spacing= int(order['pool_key']['tick_spacing'], 0),
+                    fee= int(order['pool_key']['fee'], 0),
+                )
+                self._position_metadata[order['id']] = position_metadata
 
 
         if len(relevant_positions) != len(fetched_positions):
@@ -151,16 +167,16 @@ class EkuboView:
             market_cfg
         )
 
-        return AllOrders(
+        return AllOrders( 
             active = OpenOrders.from_list(basic_orders),
             terminal = TerminalOrders.from_list([])
         )
     
-    def get_cached_order_liquidity(self, order_id: int) -> int | None:
-        liquidity = self._order_liquidities.get(order_id)
+    def get_cached_position_metadata(self, order_id: int) -> EkuboPositionMetadata | None:
+        liquidity = self._position_metadata.get(order_id)
 
         if liquidity is not None:
-            del self._order_liquidities[order_id]
+            del self._position_metadata[order_id]
 
         return liquidity
 
@@ -289,58 +305,70 @@ class EkuboClient:
         ]
     
     def prep_remove_position_call(self, order: BasicOrder, cfg: EkuboMarketConfig) -> Call:
-        liquidity = self.view.get_cached_order_liquidity(order.order_id)
+        metadata = self.view.get_cached_position_metadata(order.order_id)
 
-        if liquidity is None: 
+        if metadata is None: 
             raise ValueError(f"No liquidity found for EkuboCLMM order: {order}")
             
-        return self._prep_remove_position_call_with_liquidity(
+        return self._prep_remove_position_call_with_metadata(
             order = order,
             cfg = cfg,
-            liquidity = liquidity
+            metadata = metadata
         )
     
-    def _prep_remove_position_call_with_liquidity(self, order: BasicOrder, cfg: EkuboMarketConfig, liquidity: int) -> Call:
+    def _prep_remove_position_call_with_metadata(self, order: BasicOrder, cfg: EkuboMarketConfig, metadata: EkuboPositionMetadata) -> Call:
         pool_key = pool_key = {
             'token0': cfg.base_token.address,
             'token1': cfg.quote_token.address,
-            'fee': cfg.fee,
-            'tick_spacing': cfg.tick_spacing,
+            'fee': metadata.fee,
+            'tick_spacing': metadata.tick_spacing,
             'extension': 0
         }
 
 
-        lower_bound = price_to_tick(order.price, 18, 6)
-        upper_bound = lower_bound + cfg.tick_spacing
-        upper_bound_price = tick_to_price(Decimal(upper_bound), 18, 6)
+        # lower_bound = price_to_tick(order.price, 18, 6)
+        # upper_bound = lower_bound + cfg.tick_spacing
+        # upper_bound_price = tick_to_price(Decimal(upper_bound), 18, 6)
 
-        if upper_bound_price > order.price:
-            bounds = {
-                'lower': {
-                    'mag': abs(lower_bound),
-                    'sign': lower_bound < 0
-                },
-                'upper': {
-                    'mag': abs(upper_bound),
-                    'sign': upper_bound < 0
-                }
+        # if upper_bound_price > order.price:
+        #     bounds = {
+        #         'lower': {
+        #             'mag': abs(lower_bound),
+        #             'sign': lower_bound < 0
+        #         },
+        #         'upper': {
+        #             'mag': abs(upper_bound),
+        #             'sign': upper_bound < 0
+        #         }
+        #     }
+        # else:
+        #     bounds = {
+        #         'upper': {
+        #             'mag': abs(lower_bound),
+        #             'sign': lower_bound < 0
+        #         },
+        #         'lower': {
+        #             'mag': abs(upper_bound),
+        #             'sign': upper_bound < 0
+        #         }
+        #     }
+
+        bounds = {
+            'upper': {
+                'mag': abs(metadata.upper_bound),
+                'sign': metadata.upper_bound < 0
+            },
+            'lower': {
+                'mag': abs(metadata.lower_bound),
+                'sign': metadata.lower_bound < 0
             }
-        else:
-            bounds = {
-                'upper': {
-                    'mag': abs(lower_bound),
-                    'sign': lower_bound < 0
-                },
-                'lower': {
-                    'mag': abs(upper_bound),
-                    'sign': upper_bound < 0
-                }
-            }
+        }
+
         return self._positions.functions['withdraw'].prepare_invoke_v3(
             id = order.order_id,
             pool_key = pool_key,
             bounds = bounds,
-            liquidity = liquidity,
+            liquidity = metadata.liquidity,
             min_token0 = 0,
             min_token1 = 0,
             collect_fees = True
