@@ -27,7 +27,7 @@ class BasicOrder:
         return self.order_side.lower() == "bid"
 
 
-@dataclass
+@dataclass(frozen=True)
 class FutureOrder:
     """
     Class representing an order that will be sent to the chain. Should always be in human-readable form

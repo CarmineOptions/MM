@@ -1,8 +1,9 @@
+from dataclasses import replace
 
 from decimal import Decimal
 from typing import final
 from marketmaking.orderchain.elements.element import OrderChainElement
-from marketmaking.order import BasicOrder, DesiredOrders, FutureOrder
+from marketmaking.order import DesiredOrders
 from state.state import State
 
 
@@ -19,8 +20,14 @@ class MinMaxRelativeDistanceElement(OrderChainElement):
             max_relative_distance_from_fp: Decimal,
             min_relative_distance_from_fp: Decimal,
     ) -> None:
+        #  TODO: Add `strategy` param eg with values "clip", "remove" that dicstates
         self._max_relative_distance = max_relative_distance_from_fp
         self._min_relative_distance = min_relative_distance_from_fp
+
+        if not (0 <= min_relative_distance_from_fp <= max_relative_distance_from_fp):
+            raise ValueError(
+                f"Invalid params: {min_relative_distance_from_fp=} {max_relative_distance_from_fp=}"
+            )
 
     def process(self, state: State, orders: DesiredOrders) -> DesiredOrders:
         
@@ -29,64 +36,51 @@ class MinMaxRelativeDistanceElement(OrderChainElement):
             asks = []
         )
 
+        min_bid_threshold = (1 - self._min_relative_distance) * state.fair_price
+        max_bid_threshold = (1 - self._max_relative_distance) * state.fair_price
         for bid in orders.bids:
-            min_threshold = (1 - self._min_relative_distance) * state.fair_price
-            if min_threshold < bid.price:
+            if min_bid_threshold < bid.price:
                 new_orders.bids.append(
-                    FutureOrder(
-                        order_side=bid.order_side,
-                        amount = bid.amount,
-                        price = min_threshold,
-                        platform = bid.platform,
-                        venue = bid.venue
+                    replace(
+                        bid,
+                        price = min_bid_threshold
                     )
                 )
                 continue
 
-            max_threshold = (1 - self._max_relative_distance) * state.fair_price
-            if max_threshold > bid.price:
+            if max_bid_threshold > bid.price:
                 new_orders.bids.append(
-                    FutureOrder(
-                        order_side=bid.order_side,
-                        amount = bid.amount,
-                        price = max_threshold,
-                        platform = bid.platform,
-                        venue = bid.venue
+                    replace(
+                        bid,
+                        price = max_bid_threshold
                     )
                 )
                 continue
             
             new_orders.bids.append(bid)
             
+        min_ask_threshold = (1 + self._min_relative_distance) * state.fair_price
+        max_ask_threshold = (1 + self._max_relative_distance) * state.fair_price
         for ask in orders.asks:
-            min_threshold = (1 + self._min_relative_distance) * state.fair_price
-            if min_threshold > ask.price:
+            if min_ask_threshold > ask.price:
                 new_orders.asks.append(
-                    FutureOrder(
-                        order_side=ask.order_side,
-                        amount=ask.amount,
-                        price=min_threshold,
-                        platform=ask.platform,
-                        venue=ask.venue
+                    replace(
+                        ask,
+                        price = min_ask_threshold
                     )
                 )
                 continue
 
-            max_threshold = (1 + self._max_relative_distance) * state.fair_price
-            if max_threshold < ask.price:
+            if max_ask_threshold < ask.price:
                 new_orders.asks.append(
-                    FutureOrder(
-                        order_side=ask.order_side,
-                        amount = ask.amount,
-                        price = max_threshold,
-                        platform = ask.platform,
-                        venue = ask.venue
+                    replace(
+                        ask,
+                        price = max_ask_threshold
                     )
                 )
                 continue
 
             new_orders.asks.append(ask)
-
 
         return new_orders
     
