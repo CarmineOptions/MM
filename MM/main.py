@@ -10,6 +10,7 @@ import time
 import asyncio
 import logging
 import sys
+import pprint
 
 from starknet_py.net.client_errors import ClientError
 from starknet_py.net.account.account import Account
@@ -115,6 +116,8 @@ async def main() -> None:
     args = parse_args()
 
     cfg = load_config(args.cfg_path)
+
+    logging.info(f"Loaded config:\n {pprint.pformat(dict(cfg))}")
 
     order_chain = OrderChain.from_config(cfg.order_chain)
 
