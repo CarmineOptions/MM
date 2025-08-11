@@ -29,7 +29,7 @@ class ToleranceOrderReconciler(OrderReconciler):
         self.relative_quantity_tolerance = relative_quantity_tolerance
 
     def reconcile(self, state: State, existing_orders: OpenOrders, desired_orders: DesiredOrders) -> ReconciledOrders:
-        remaining_existing_orders = list(existing_orders.all_orders)
+        remaining_existing_orders = list(existing_orders.all_orders) # to make a (shallow) copy
         
         to_place = []
 
@@ -39,10 +39,10 @@ class ToleranceOrderReconciler(OrderReconciler):
         for desired in desired_orders.all_orders:
             acceptable = self._get_acceptable_order(desired, remaining_existing_orders)
             if acceptable is None:
-                to_place += [desired]
+                to_place.append(desired)
             else:
-                to_keep += [acceptable]
-                to_ignore += [desired]
+                to_keep.append(acceptable)
+                to_ignore.append(desired)
                 remaining_existing_orders.remove(acceptable)
 
         # By this point we have removed all acceptable existing orders, so those that remain
@@ -51,6 +51,8 @@ class ToleranceOrderReconciler(OrderReconciler):
 
         self._logger.info(f"Ignoring desired orders: {to_ignore}")
         self._logger.info(f"Keeping resting orders: {to_keep}")
+        self._logger.info(f"Canceling orders: {to_cancel}")
+        self._logger.info(f"Placing orders: {to_place}")
 
         return ReconciledOrders(
             to_place=to_place,
@@ -60,6 +62,7 @@ class ToleranceOrderReconciler(OrderReconciler):
 
     def _get_acceptable_order(self, desired_order: FutureOrder, current_orders: list[BasicOrder]) -> BasicOrder | None:
         for existing in current_orders:
+            # FIXME: Will take first acceptable order, but there might be a better one down the line
             if self.is_within_tolerance( existing=existing, desired=desired_order):
                 return existing
         return None
@@ -80,6 +83,9 @@ class ToleranceOrderReconciler(OrderReconciler):
         # Check amt tolerance 
         quantity_tolerance = existing.amount * self.relative_quantity_tolerance
         if desired.amount < (existing.amount - quantity_tolerance):
+            return False
+
+        if desired.amount > (existing.amount + quantity_tolerance):
             return False
 
         return True
