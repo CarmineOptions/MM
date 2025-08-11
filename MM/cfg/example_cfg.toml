@@ -16,11 +16,9 @@ quote_asset = "USDC"
 price_source = 'binance'
 
 [reconciler]
-name = 'bounded_reconciler'
-max_relative_distance_from_fp = "0.075" # Threshold for an order to be considered too far from FP to be best order (it is considered deep order).
-min_relative_distance_from_fp = "0.0005" # Threshold for an order to be considered too close to FP to exist -> if closer kill the order.
-minimal_remaining_size = "0"  # in Base asset
-max_orders_per_side = 1  # Number of orders allowed on bid and on ask sides.
+name = "tolerance_reconciler"
+relative_price_tolerance = "0.0002"
+relative_quantity_tolerance = "0.01"
 
 [tx_builder]
 name = 'bundling_tx_builder'  # Transaction builder. For example "bundling_tx_builder" bundles transactions into a multicall.
@@ -33,7 +31,11 @@ max_skew = '0.002'
 [[orderchain]]
 name = 'fixed_params'
 target_relative_distance_from_fp = "0.005"  # Where best order is created
-order_size_quote = "10"  # In Quote asset (human-readable)
+order_size_quote = "1"  # In Quote asset (human-readable)
+
+[[min_max_relative_distance]]
+max_relative_distance_from_fp = "0.075" # Threshold for an order to be considered too far from FP to be best order
+min_relative_distance_from_fp = "0.0005" # Threshold for an order to be considered too close to FP to exist
 
 [[orderchain]]
 name = 'remove_orders_on_low_inventory'
