@@ -123,7 +123,6 @@ async def main() -> None:
 
     reconciler = get_reconciler(cfg.reconciler)
 
-    # market_id = cfg.asset.market_id
     account = get_account(cfg.account)
     wrapped_account = WAccount(account=account)
 
