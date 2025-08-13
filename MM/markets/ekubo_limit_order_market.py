@@ -12,12 +12,12 @@ from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, T
 from marketmaking.waccount import WAccount
 from markets.market import Market
 from venues.ekubo.ekubo import EkuboClient
-from venues.ekubo.ekubo_market_configs import EkuboMarketConfig, get_preloaded_ekubo_market_config
+from venues.ekubo.ekubo_market_configs import EkuboMarketConfig, get_preloaded_ekubo_limit_order_market_config
 
 if TYPE_CHECKING:
     from state.state import State
 @final
-class EkuboMarket(Market):
+class EkuboLimitOrderMarket(Market):
 
     def __init__(
         self,
@@ -39,9 +39,9 @@ class EkuboMarket(Market):
 
 
     @staticmethod
-    async def new(account: WAccount, market_id: int) -> "EkuboMarket":
+    async def new(account: WAccount, market_id: int) -> "EkuboLimitOrderMarket":
         client = await EkuboClient.from_account(account = account.account)
-        market_config = get_preloaded_ekubo_market_config(market_id)
+        market_config = get_preloaded_ekubo_limit_order_market_config(market_id)
     
         if market_config is None:
             raise ValueError(f"No preloaded ekubo config found for id `{market_id}`")
@@ -54,7 +54,7 @@ class EkuboMarket(Market):
             address = market_config.quote_token.address,
             provider = account.account
         )
-        return EkuboMarket(
+        return EkuboLimitOrderMarket(
             market_id = market_id,
             market_config=market_config,
             ekubo_client=client,
@@ -71,7 +71,7 @@ class EkuboMarket(Market):
         pass
 
     async def get_current_orders(self) -> AllOrders:
-        return await self._client.view.get_all_orders(
+        return await self._client.view.get_all_limit_orders(
             wallet = self._account.address,
             market_cfg = self._market_config
         )
