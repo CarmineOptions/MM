@@ -12,6 +12,8 @@ class ReconciledOrders:
     '''
     to_cancel: list[BasicOrder]
     to_place: list[FutureOrder]
+    to_keep: list[BasicOrder]
+    to_ignore: list[FutureOrder]
 
 
 class OrderReconciler(ABC):

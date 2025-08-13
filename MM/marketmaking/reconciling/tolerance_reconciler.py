@@ -56,7 +56,9 @@ class ToleranceOrderReconciler(OrderReconciler):
 
         return ReconciledOrders(
             to_place=to_place,
-            to_cancel=to_cancel
+            to_cancel=to_cancel,
+            to_keep=to_keep,
+            to_ignore=to_ignore
         )
 
 

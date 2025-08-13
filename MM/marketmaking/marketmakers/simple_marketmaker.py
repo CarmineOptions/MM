@@ -1,5 +1,6 @@
 import logging
 
+from monitoring import metrics
 from markets.market import Market
 from marketmaking.orderchain.order_chain import OrderChain
 from marketmaking.reconciling.order_reconciler import OrderReconciler
@@ -98,4 +99,9 @@ class SimpleMarketMaker:
             wrapped_account=self.account,
             reconciled_orders=reconciled,
             prologue=claim_call,
+        )
+
+        metrics.track_quoted_info(
+            orders = reconciled,
+            fair_price = state.fair_price
         )
