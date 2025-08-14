@@ -7,10 +7,11 @@ from typing import final, TYPE_CHECKING
 from starknet_py.net.client_models import Calls, Call
 from starknet_py.contract import Contract
 
+from state.state import State
+from platforms.starknet.starknet_account import WAccount
 from instruments.instrument import InstrumentAmount
 from markets.market import PositionInfo
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders
-from marketmaking.waccount import WAccount
 from markets.market import Market
 from venues.ekubo.ekubo import EkuboClient
 from venues.ekubo.ekubo_market_configs import EkuboMarketConfig, get_preloaded_ekubo_clmm_market_config
@@ -133,6 +134,8 @@ class EkuboCLMMMarket(Market):
             ),
         )
 
+    def seek_additional_liquidity(self, state: "State") -> list[Calls]:
+        return []
     
 
 def _get_base_quote_from_orders(orders: OpenOrders) -> tuple[Decimal, Decimal]:

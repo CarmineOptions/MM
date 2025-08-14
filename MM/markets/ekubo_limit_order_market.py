@@ -6,10 +6,10 @@ from typing import final, TYPE_CHECKING
 from starknet_py.net.client_models import Calls, Call
 from starknet_py.contract import Contract
 
+from platforms.starknet.starknet_account import WAccount
 from instruments.instrument import InstrumentAmount
 from markets.market import PositionInfo
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, TerminalOrders
-from marketmaking.waccount import WAccount
 from markets.market import Market
 from venues.ekubo.ekubo import EkuboClient
 from venues.ekubo.ekubo_market_configs import EkuboMarketConfig, get_preloaded_ekubo_limit_order_market_config
@@ -89,6 +89,10 @@ class EkuboLimitOrderMarket(Market):
             order = order,
             cfg = self._market_config
         )
+    
+    def seek_additional_liquidity(self, state: "State") -> list[Calls]:
+        # No locked liquidity in ekubo
+        return []
 
     def get_withdraw_call(self, state: "State", amount: InstrumentAmount) -> list[Call]:
         # Withdrawing in ekubo is basically closing executed orders

@@ -7,9 +7,9 @@ from typing import final
 from typing import Iterable
 from starknet_py.net.client_models import Calls, Call
 
+from platforms.starknet.starknet_account import WAccount
 from marketmaking.reconciling.order_reconciler import ReconciledOrders
 from markets.market import Market
-from marketmaking.waccount import WAccount
 from monitoring import metrics
 from .tx_builder import TxBuilder
 
