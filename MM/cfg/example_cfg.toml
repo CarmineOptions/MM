@@ -1,10 +1,16 @@
-[account]
-# Configuration of account and connection
 
+[platform]
+name = "starknet"
+
+[platform.args.account]
 rpc_url_env = "RPC_URL"
 wallet_address_env = "WALLET_ADDRESS"
 password_path_env = "KEYSTORE_PWD_PATH"
 keystore_path_env = "KEYSTORE_PATH"
+
+[platform.args.tx_builder]
+name = 'bundling_tx_builder'  # Transaction builder. For example "bundling_tx_builder" bundles transactions into a multicall.
+
 
 [market]
 venue = 'remus'
@@ -19,9 +25,6 @@ price_source = 'binance'
 name = "tolerance_reconciler"
 relative_price_tolerance = "0.0002"
 relative_quantity_tolerance = "0.01"
-
-[tx_builder]
-name = 'bundling_tx_builder'  # Transaction builder. For example "bundling_tx_builder" bundles transactions into a multicall.
 
 [[orderchain]]
 name = 'skew_fair_price_on_position'

@@ -161,9 +161,9 @@ class EkuboView:
         if len(relevant_positions) != len(fetched_positions):
             raise ValueError("EkuboCLMM didn't receive same amount of onchain orders.")
 
-        basic_orders = _positions_to_basic_orders(
+        basic_orders = _positions_to_basic_orders( 
             relevant_positions,
-            fetched_positions,
+            fetched_positions,# type: ignore
             market_cfg
         )
 

@@ -1,8 +1,18 @@
-from typing import Optional
-import datetime
 import logging
+import datetime
 
 from starknet_py.net.account.account import Account
+from starknet_py.net.full_node_client import FullNodeClient
+from starknet_py.net.models.chains import StarknetChainId
+from starknet_py.net.signer.key_pair import KeyPair
+
+from cfg.starknet_platform_cfg import StarknetAccountConfig
+
+NETWORK = "MAINNET"
+
+
+
+
 
 
 class WAccount:
@@ -21,10 +31,10 @@ class WAccount:
 
         # There will be inflights transactions for this account.
         # This is used to find the latest nonce for this account.
-        self._latest_transaction_timestamp: Optional[int] = None
+        self._latest_transaction_timestamp: int | None = None
         # The latest transaction nonce for this account. It might not be the actual latest nonce,
         # since the latest transaction might have failed.
-        self._latest_transaction_nonce: Optional[int] = None
+        self._latest_transaction_nonce: int | None = None
 
     async def get_nonce(self) -> int:
         """
@@ -92,3 +102,52 @@ class WAccount:
         )
         self._latest_transaction_nonce = None
         self._latest_transaction_timestamp = None
+
+
+def _get_native_account(account_cfg: StarknetAccountConfig) -> Account:
+    """
+    Get a market makers account.
+
+    Raises ValueError if any of needed environment variables is not defined.
+    """
+
+    rpc_url = account_cfg.rpc_url
+    if rpc_url is None:
+        raise ValueError(
+            f"No rpc url found from env variable `{account_cfg.rpc_url_env}`"
+        )
+
+    wallet_address = account_cfg.wallet_address
+    if wallet_address is None:
+        raise ValueError(
+            f"No wallet address found from env variable `{account_cfg.wallet_address_env}`"
+        )
+
+    keystore_path = account_cfg.keystore_path
+    if keystore_path is None:
+        raise ValueError(
+            f"No keystore path found from env variable `{account_cfg.keystore_path_env}`"
+        )
+
+    account_password = account_cfg.password
+    if account_password is None:
+        raise ValueError(
+            f"No account password found from env variable `{account_cfg.password_path_env}`"
+        )
+
+    client = FullNodeClient(node_url=rpc_url)
+    account = Account(
+        client=client,
+        address=wallet_address,
+        key_pair=KeyPair.from_keystore(
+            keystore_path,
+            account_password.encode(),  # type: ignore
+        ),
+        chain=StarknetChainId[NETWORK],
+    )
+    logging.info("Succesfully loaded account.")
+    return account
+
+def get_wrapped_account(account_cfg: StarknetAccountConfig) -> WAccount:
+    account = _get_native_account(account_cfg)
+    return WAccount(account=account)

@@ -1,7 +1,7 @@
 
 from abc import ABC, abstractmethod
 
-from marketmaking.waccount import WAccount
+from platforms.starknet.starknet_account import WAccount
 from markets.market import Market
 from marketmaking.reconciling.order_reconciler import ReconciledOrders
 from starknet_py.net.client_models import Calls

@@ -3,11 +3,10 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
+from platforms.starknet.starknet_account import WAccount
 from instruments.instrument import Instrument, InstrumentAmount
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder
 from starknet_py.net.client_models import Calls
-
-from marketmaking.waccount import WAccount
 
 if TYPE_CHECKING:
     from state.state import State
@@ -128,4 +127,13 @@ class Market(ABC):
         '''
         Returns the total position for the market.
         '''
+        raise NotImplementedError
+
+    @abstractmethod
+    def seek_additional_liquidity(self, state: "State") -> list[Calls]:
+        """
+        Function used for getting additional liquidity that is locked somewhere.
+
+        eg. In case of Remus this produces a claim call.
+        """
         raise NotImplementedError
