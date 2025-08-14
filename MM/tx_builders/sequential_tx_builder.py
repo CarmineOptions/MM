@@ -2,10 +2,10 @@ import asyncio
 import logging
 from typing import final
 
+from platforms.starknet.starknet_account import WAccount
 from marketmaking.reconciling.order_reconciler import ReconciledOrders
 from markets.market import Market
 from marketmaking.order import BasicOrder, FutureOrder
-from marketmaking.waccount import WAccount
 from monitoring import metrics
 from .tx_builder import TxBuilder
 from starknet_py.net.client_models import Calls

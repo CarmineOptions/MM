@@ -1,6 +1,6 @@
 import asyncio
+from platforms.starknet.starknet_account import WAccount
 from marketmaking.order import AllOrders, OpenOrders, TerminalOrders
-from marketmaking.waccount import WAccount
 from markets.market import PositionInfo, Market
 
 

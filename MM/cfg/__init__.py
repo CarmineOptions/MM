@@ -1,13 +1,14 @@
 import tomli
 from .cfg_classes import (
-    AccountConfig,
     PriceSourceConfig,
     VenueConfig,
     OrderChainElementConfig,
     ReconcilerConfig,
     StrategyConfig,
-    TxBuilderConfig
+    PlatformConfig
 )
+
+from .starknet_platform_cfg import StarknetPlatformConfig
 
 
 class ConfigError(Exception):
@@ -21,9 +22,13 @@ def load_config(path: str) -> StrategyConfig:
     with open(path, "rb") as f:
         raw = tomli.load(f)
 
-    if "account" not in raw:
-        raise ConfigError("No `account` config found")
-    account = AccountConfig(**raw["account"])
+    if "platform" not in raw: 
+        raise ConfigError("No `platform` config found")
+
+    platform = PlatformConfig(
+        name = "starknet",
+        config = StarknetPlatformConfig(**raw['platform']['args'])
+    )
 
     if "price_source" not in raw:
         raise ConfigError("No `price_source` config found")
@@ -32,10 +37,6 @@ def load_config(path: str) -> StrategyConfig:
     if "market" not in raw:
         raise ConfigError("No `market` config found")
     venue = VenueConfig(**raw['market'])
-
-    if 'tx_builder' not in raw: 
-        raise ConfigError('No `tx_builder` config found')
-    tx_builder = TxBuilderConfig(**raw['tx_builder'])
 
     if "orderchain" not in raw:
         raise ConfigError("No `orderchain` config found")
@@ -46,11 +47,11 @@ def load_config(path: str) -> StrategyConfig:
     reconciler = ReconcilerConfig.from_dict(raw["reconciler"])
 
     cfg = StrategyConfig(
-        account=account, 
+        platform=platform,
         price_source=price, 
         market = venue,
         order_chain=orderchain, 
         reconciler=reconciler,
-        tx_builder=tx_builder
     )
+
     return cfg

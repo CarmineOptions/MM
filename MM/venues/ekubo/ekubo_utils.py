@@ -83,7 +83,7 @@ def _get_basic_orders(
     return basic_orders
 
 
-def _positions_to_basic_orders(api_orders: list[dict], onchain_orders: list[dict | BaseException], market_cfg: EkuboMarketConfig) -> list[BasicOrder]:
+def _positions_to_basic_orders(api_orders: list[dict], onchain_orders: list[dict | BaseException], market_cfg: EkuboMarketConfig) -> list[BasicOrder]: # type: ignore
     token_a_decimals = market_cfg.base_token.decimals
     token_b_decimals = market_cfg.quote_token.decimals
         

@@ -1,5 +1,5 @@
 
-from marketmaking.waccount import WAccount
+from platforms.starknet.starknet_account import WAccount
 from .market import Market
 from .ekubo_limit_order_market import EkuboLimitOrderMarket
 from .remus_market import RemusMarket

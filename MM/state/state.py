@@ -1,7 +1,8 @@
 import asyncio
 from decimal import Decimal
 import logging
-from marketmaking.waccount import WAccount
+
+from platforms.starknet.starknet_account import WAccount
 from oracles.data_sources.data_source import DataSource
 from state.account_state import AccountState
 from markets.market import Market

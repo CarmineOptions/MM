@@ -6,9 +6,9 @@ from typing import final, TYPE_CHECKING
 from starknet_py.contract import Contract
 from starknet_py.net.client_models import Calls
 
+from platforms.starknet.starknet_account import WAccount
 from instruments.instrument import InstrumentAmount
 from markets.market import PositionInfo
-from marketmaking.waccount import WAccount
 from venues.remus.remus import RemusDexClient
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder
 from .market import Market
@@ -88,6 +88,37 @@ class RemusMarket(Market):
     
     def get_withdraw_call(self, state: "State", amount: InstrumentAmount) -> Calls:
         return self._client.prep_claim_call(amount=amount)
+    
+
+    def seek_additional_liquidity(self, state: "State") -> list[Calls]:
+
+        logging.info("Claiming tokens for market_id: %s", self.market_cfg.market_id)
+
+        calls = []
+
+        for claimable_token in [state.account.position.withdrawable_base, state.account.position.withdrawable_quote]:
+            self._logger.info(
+                "Claimable amount is %s for token %s, account %s.",
+                claimable_token.amount_hr,
+                hex(claimable_token.instrument.address),
+                hex(self._account.address),
+            )
+
+            if claimable_token.amount_raw:
+                self._logger.info("Preparing claim call")
+
+                call = self.get_withdraw_call(state=state, amount=claimable_token)
+
+                calls.append(call)
+
+
+            self._logger.info(
+                "Claim prepared for account %s, market %s.",
+                hex(self._account.address),
+                self.market_cfg.market_id,
+            )
+        
+        return calls
 
     async def setup(self, account: WAccount) -> None:
 
