@@ -1,10 +1,10 @@
 import asyncio
 from decimal import Decimal
 import logging
-from typing import final, TYPE_CHECKING
+from typing import Iterable, final, TYPE_CHECKING
 
 from starknet_py.contract import Contract
-from starknet_py.net.client_models import Calls
+from starknet_py.net.client_models import Calls, Call
 
 from markets.market import PrologueOps, PrologueOp_SeekLiquidity
 from platforms.starknet.starknet_account import WAccount
@@ -95,7 +95,7 @@ class RemusMarket(Market):
 
         logging.info("Claiming tokens for market_id: %s", self.market_cfg.market_id)
 
-        calls = []
+        calls: list[Call] = []
 
         for claimable_token in [state.account.position.withdrawable_base, state.account.position.withdrawable_quote]:
             self._logger.info(
@@ -110,8 +110,12 @@ class RemusMarket(Market):
 
                 call = self.get_withdraw_call(state=state, amount=claimable_token)
 
-                calls.append(call)
+                if isinstance(call, Iterable):
+                    calls += list(call)
+                else:
+                    calls.append(call)
 
+            
 
             self._logger.info(
                 "Claim prepared for account %s, market %s.",
