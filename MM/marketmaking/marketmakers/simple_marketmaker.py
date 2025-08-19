@@ -1,11 +1,11 @@
+from decimal import Decimal
 import logging
 
 from monitoring import metrics
-from markets.market import Market
+from markets.market import Market, PrologueOps, PrologueOp_SeekLiquidity
 from marketmaking.orderchain.order_chain import OrderChain
 from marketmaking.reconciling.order_reconciler import OrderReconciler, ReconciledOrders
 from state.state import State
-from starknet_py.net.client_models import Calls
 
 MAX_UINT = 2**256 - 1
 
@@ -28,11 +28,10 @@ class SimpleMarketMaker:
         self.order_reconciler = order_reconciler
         self.order_chain = order_chain
 
-    def get_prologue(self, state: State) -> list[Calls]:
-        additional_liq = self.market.seek_additional_liquidity(state=state)
-        return additional_liq
+    def get_prologue(self, state: State) -> list[PrologueOps]:
+        return [PrologueOp_SeekLiquidity(Decimal("inf"))]
 
-    async def pulse(self, state: State) -> tuple[list[Calls], ReconciledOrders]:
+    async def pulse(self, state: State) -> tuple[list[PrologueOps], ReconciledOrders]:
 
         prologue = self.get_prologue(state=state)
         

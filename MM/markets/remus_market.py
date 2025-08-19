@@ -6,6 +6,7 @@ from typing import final, TYPE_CHECKING
 from starknet_py.contract import Contract
 from starknet_py.net.client_models import Calls
 
+from markets.market import PrologueOps, PrologueOp_SeekLiquidity
 from platforms.starknet.starknet_account import WAccount
 from instruments.instrument import InstrumentAmount
 from markets.market import PositionInfo
@@ -90,7 +91,7 @@ class RemusMarket(Market):
         return self._client.prep_claim_call(amount=amount)
     
 
-    def seek_additional_liquidity(self, state: "State") -> list[Calls]:
+    def seek_additional_liquidity(self, state: "State") -> Calls:
 
         logging.info("Claiming tokens for market_id: %s", self.market_cfg.market_id)
 
@@ -120,9 +121,9 @@ class RemusMarket(Market):
         
         return calls
 
-    async def setup(self, account: WAccount) -> None:
+    async def setup(self) -> None:
 
-        nonce = await account.get_nonce()
+        nonce = await self._account.get_nonce()
 
         # Approve base token
         await (
@@ -136,7 +137,7 @@ class RemusMarket(Market):
         nonce += 1
         self._logger.info(
             "Set unlimited approval for address: %s, base token: %s",
-            hex(account.address),
+            hex(self._account.address),
             hex(self._market_config.base_token.address),
         )
 
@@ -152,11 +153,11 @@ class RemusMarket(Market):
         nonce += 1
         self._logger.info(
             "Set unlimited approval for address: %s, quote token: %s",
-            hex(account.address),
+            hex(self._account.address),
             hex(self._market_config.quote_token.address),
         )
 
-        await account.set_latest_nonce(nonce)
+        await self._account.set_latest_nonce(nonce)
         self._logger.info("Setting unlimited approvals is done.")
 
     async def get_total_position(self) -> PositionInfo:
@@ -192,6 +193,21 @@ class RemusMarket(Market):
             in_orders_base=orders_base,
             in_orders_quote=orders_quote,
         )
+    
+    def prologue_ops_to_calls(self, state: "State", ops: list[PrologueOps]) -> list[Calls]:
+        calls = []
+
+        for op in ops: 
+            calls.append(
+                self._prologue_op_to_call(state, op)
+            )
+
+        return calls
+    
+    def _prologue_op_to_call(self, state: "State", op: PrologueOps) -> Calls:
+        match op:
+            case PrologueOp_SeekLiquidity(_):
+                return self.seek_additional_liquidity(state)
 
 
 def _get_base_quote_position_from_active_orders(

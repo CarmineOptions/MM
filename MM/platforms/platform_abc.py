@@ -1,7 +1,12 @@
-
+import typing
 from abc import ABC, abstractmethod
 
 from cfg.cfg_classes import StrategyConfig
+from marketmaking.reconciling.order_reconciler import ReconciledOrders
+
+if typing.TYPE_CHECKING:
+    from markets.market import PrologueOps
+    from state.state import State
 
 
 class PlatformABC(ABC):
@@ -13,4 +18,10 @@ class PlatformABC(ABC):
         '''
         raise NotImplementedError
 
-
+    @abstractmethod
+    async def initialize_trading(self) -> None:
+        raise NotImplementedError
+    
+    @abstractmethod
+    async def execute_operations(self, state: "State", prologue: list[PrologueOps], ops: ReconciledOrders) -> None:
+        raise NotImplementedError
