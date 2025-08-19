@@ -1,5 +1,7 @@
 from typing import final, TYPE_CHECKING
+import logging
 
+from starknet_py.net.client_errors import ClientError
 from markets.market import Market, PrologueOps
 from platforms.starknet.starknet_account import WAccount, get_wrapped_account
 from cfg.cfg_classes import StrategyConfig
@@ -53,6 +55,18 @@ class StarknetPlatform(PlatformABC):
 
     async def reset(self) -> None:
         await self._waccount.reset_latest_nonce()
+
+
+    async def error_handled(self, e: Exception) -> bool:
+
+        if isinstance(e, ClientError) and "Account nonce" in e.message:
+            logging.error("Account nonce error encountered. Reinitializing account")
+
+            await self.reset()
+
+            return True
+        
+        return False
 
 
     @property

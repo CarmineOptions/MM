@@ -12,7 +12,6 @@ import logging
 import sys
 import pprint
 
-from starknet_py.net.client_errors import ClientError
 
 from platforms.starknet.starknet_platform import StarknetPlatform
 from marketmaking.orderchain.order_chain import OrderChain
@@ -112,17 +111,11 @@ async def main() -> None:
 
             logging.info("Pulsed market maker with fair price: %s", state.fair_price)
         except Exception as e:
-            # Catching here and not as "except ClientError" because there can be many different ClientErrors
-            if isinstance(e, ClientError) and "Account nonce" in e.message:
-                logging.error("Account nonce error, trying to reinitialize account...")
 
-                await platform.reset()
+            if not await platform.error_handled(e):
+                logging.error("Unhandled error occurred: %s", str(e), exc_info=True)
 
-                logging.info("Reinitialized account.")
-
-            logging.error("Error error occurred: %s", str(e), exc_info=True)
             await asyncio.sleep(5)
-            # continue
 
         metrics.track_loop_time(time.time() - loop_start_time)
         logging.info("Sleeping for 10 seconds before next pulse...")

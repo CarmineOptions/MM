@@ -134,10 +134,10 @@ class EkuboCLMMMarket(Market):
             ),
         )
 
-    def seek_additional_liquidity(self, state: "State") -> list[Calls]:
+    def seek_additional_liquidity(self, state: "State") -> Calls:
         return []
 
-    def prologue_ops_to_calls(self, state: "State", ops: list[PrologueOps]) -> Calls:
+    def prologue_ops_to_calls(self, state: "State", ops: list[PrologueOps]) -> list[Calls]:
         calls = []
 
         for op in ops: 

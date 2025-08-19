@@ -25,3 +25,7 @@ class PlatformABC(ABC):
     @abstractmethod
     async def execute_operations(self, state: "State", prologue: list[PrologueOps], ops: ReconciledOrders) -> None:
         raise NotImplementedError
+    
+    @abstractmethod
+    async def error_handled(self, e: Exception) -> bool:
+        raise NotImplementedError
