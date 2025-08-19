@@ -12,6 +12,7 @@ dependencies = [
     "tomli>=2.2.1",
     "prometheus-client>=0.22.1",
     "httpx>=0.28.1",
+    "paradex-py",
 ]
 
 [dependency-groups]
@@ -31,3 +32,6 @@ python_version = "3.12"
 strict = true
 namespace_packages = true
 exclude = 'test|websocketconnector\.py|.*/legacy(/.*)?'
+
+[tool.uv.sources]
+paradex-py = { git = "https://github.com/Chepelau/paradex-py.git", branch = "update-starknet-py" }

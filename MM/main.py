@@ -108,7 +108,7 @@ async def main() -> None:
 
             prologue, reconciled_orders = await market_maker.pulse(state=state)
             
-            await platform.execute_operations(prologue=prologue, ops = reconciled_orders)
+            await platform.execute_operations(state = state, prologue=prologue, ops = reconciled_orders)
 
             logging.info("Pulsed market maker with fair price: %s", state.fair_price)
         except Exception as e:

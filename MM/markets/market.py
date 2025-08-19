@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from platforms.starknet.starknet_account import WAccount
 from instruments.instrument import Instrument, InstrumentAmount
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder
 from starknet_py.net.client_models import Calls
@@ -65,6 +64,14 @@ class MarketConfig:
     quote_token: Instrument
 
 
+@dataclass
+class PrologueOp_SeekLiquidity:
+    amount: Decimal
+
+#  Once there are more Ops, this wil become an Union
+PrologueOps = PrologueOp_SeekLiquidity 
+
+
 class Market(ABC):
     '''
     Abstract base class for a market in the market making strategy.
@@ -81,7 +88,7 @@ class Market(ABC):
         pass
 
     @abstractmethod
-    async def setup(self, wrapped_account: WAccount) -> None:
+    async def setup(self) -> None:
         '''
         Sets up trading on the market.
         This method is called to initialize the market with necessary configurations and account details.
@@ -130,10 +137,17 @@ class Market(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def seek_additional_liquidity(self, state: "State") -> list[Calls]:
+    def seek_additional_liquidity(self, state: "State") -> Calls:
         """
         Function used for getting additional liquidity that is locked somewhere.
 
         eg. In case of Remus this produces a claim call.
+        """
+        raise NotImplementedError
+    
+    @abstractmethod
+    def prologue_ops_to_calls(self, state: "State", ops: list[PrologueOps]) -> list[Calls]:
+        """
+        Function used for converting Prologue 
         """
         raise NotImplementedError

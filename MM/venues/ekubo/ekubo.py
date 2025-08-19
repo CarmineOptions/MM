@@ -1,13 +1,12 @@
 from dataclasses import dataclass
 import asyncio
-from decimal import Decimal
 import httpx
 from starknet_py.contract import Contract
 from starknet_py.net.account.account import Account
 from starknet_py.net.full_node_client import FullNodeClient
 from starknet_py.net.client_models import Calls, Call
 
-from venues.ekubo.ekubo_math import get_nearest_usable_tick, price_to_tick, tick_to_price
+from venues.ekubo.ekubo_math import get_nearest_usable_tick, price_to_tick
 from venues.ekubo.ekubo_utils import _get_basic_orders, _positions_to_basic_orders, get_order_key
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, TerminalOrders
 from venues.ekubo.ekubo_market_configs import EkuboMarketConfig

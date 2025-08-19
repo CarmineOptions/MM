@@ -1,15 +1,18 @@
-from typing import final
+from typing import final, TYPE_CHECKING
 
+from markets.market import Market, PrologueOps
 from platforms.starknet.starknet_account import WAccount, get_wrapped_account
 from cfg.cfg_classes import StrategyConfig
 from marketmaking.reconciling.order_reconciler import ReconciledOrders
 from markets import get_market
-from markets.market import Market
 from tx_builders.tx_builder import TxBuilder
 from tx_builders import get_tx_builder
 
-from starknet_py.net.client_models import Calls
 from ..platform_abc import PlatformABC
+
+if TYPE_CHECKING:
+    from state.state import State
+
 
 @final
 class StarknetPlatform(PlatformABC):
@@ -35,14 +38,17 @@ class StarknetPlatform(PlatformABC):
         )
 
     async def initialize_trading(self) -> None:
-        await self._market.setup(self._waccount)
+        await self._market.setup()
 
 
-    async def execute_operations(self, prologue: list[Calls], ops: ReconciledOrders) -> None:
+    async def execute_operations(self, state: "State", prologue: list[PrologueOps], ops: ReconciledOrders) -> None:
+        
+        prologue_calls = self.market.prologue_ops_to_calls(state, prologue)
+
         await self._tx_builder.build_and_execute_transactions(
             wrapped_account=self._waccount,
             reconciled_orders=ops,
-            prologue = prologue
+            prologue = prologue_calls
         )
 
     async def reset(self) -> None:

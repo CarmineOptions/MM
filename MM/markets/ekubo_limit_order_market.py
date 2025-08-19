@@ -8,7 +8,7 @@ from starknet_py.contract import Contract
 
 from platforms.starknet.starknet_account import WAccount
 from instruments.instrument import InstrumentAmount
-from markets.market import PositionInfo
+from markets.market import PositionInfo, PrologueOp_SeekLiquidity, PrologueOps
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, TerminalOrders
 from markets.market import Market
 from venues.ekubo.ekubo import EkuboClient
@@ -67,7 +67,7 @@ class EkuboLimitOrderMarket(Market):
     def market_cfg(self) -> EkuboMarketConfig:
         return self._market_config
 
-    async def setup(self, wrapped_account: WAccount) -> None:
+    async def setup(self) -> None:
         pass
 
     async def get_current_orders(self) -> AllOrders:
@@ -152,6 +152,22 @@ class EkuboLimitOrderMarket(Market):
                 amount_raw = quote_withdrawable * 10**self._market_config.quote_token.decimals
             ),
         )
+
+    def prologue_ops_to_calls(self, state: "State", ops: list[PrologueOps]) -> Calls:
+        calls = []
+
+        for op in ops: 
+            call = self._prologue_op_to_call(state, op)
+            if call: 
+                calls.append(call)
+
+        return calls
+    
+    def _prologue_op_to_call(self, state: "State", op: PrologueOps) -> Calls | None:
+        match op:
+            case PrologueOp_SeekLiquidity(_):
+                return None
+
 
 def _get_base_quote_withdrawable_from_terminal_orders(
     orders: TerminalOrders

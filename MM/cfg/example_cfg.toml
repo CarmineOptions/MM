@@ -11,7 +11,6 @@ keystore_path_env = "KEYSTORE_PATH"
 [platform.args.tx_builder]
 name = 'bundling_tx_builder'  # Transaction builder. For example "bundling_tx_builder" bundles transactions into a multicall.
 
-
 [market]
 venue = 'remus'
 market_id = 2  # market_id is an internal identifier of a market.
