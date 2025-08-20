@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 
 from platforms.starknet.starknet_account import WAccount
-from markets.market import Market
+from markets.market import StarknetMarketABC
 from marketmaking.reconciling.order_reconciler import ReconciledOrders
 from starknet_py.net.client_models import Calls
 
@@ -16,7 +16,7 @@ class TxBuilder(ABC):
     '''
 
     @abstractmethod
-    def __init__(self, market: Market) -> None:
+    def __init__(self, market: StarknetMarketABC) -> None:
         # TODO: Add max fees
         raise NotImplementedError
 

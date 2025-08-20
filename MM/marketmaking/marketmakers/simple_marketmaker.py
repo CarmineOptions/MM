@@ -2,7 +2,7 @@ from decimal import Decimal
 import logging
 
 from monitoring import metrics
-from markets.market import Market, PrologueOps, PrologueOp_SeekLiquidity
+from markets.market import PrologueOps, PrologueOp_SeekLiquidity
 from marketmaking.orderchain.order_chain import OrderChain
 from marketmaking.reconciling.order_reconciler import OrderReconciler, ReconciledOrders
 from state.state import State
@@ -17,14 +17,12 @@ class SimpleMarketMaker:
 
     def __init__(
         self,
-        market: Market,
         order_reconciler: OrderReconciler,
         order_chain: OrderChain,
     ):
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self._logger.info("Initializing MarketMaker")
 
-        self.market = market
         self.order_reconciler = order_reconciler
         self.order_chain = order_chain
 

@@ -12,7 +12,7 @@ from instruments.instrument import InstrumentAmount
 from markets.market import PositionInfo
 from venues.remus.remus import RemusDexClient
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder
-from .market import Market
+from markets.market import StarknetMarketABC
 from venues.remus.remus_market_configs import RemusMarketConfig, get_preloaded_remus_market_config
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 MAX_UINT = 2**256 - 1
 
 @final
-class RemusMarket(Market):
+class RemusMarket(StarknetMarketABC):
 
     def __init__(
         self, 

@@ -1,6 +1,4 @@
 
-
-
 import logging
 from typing import final
 
@@ -9,7 +7,7 @@ from starknet_py.net.client_models import Calls, Call
 
 from platforms.starknet.starknet_account import WAccount
 from marketmaking.reconciling.order_reconciler import ReconciledOrders
-from markets.market import Market
+from markets.market import StarknetMarketABC
 from monitoring import metrics
 from .tx_builder import TxBuilder
 
@@ -26,7 +24,7 @@ class BundlingTransactionBuilder(TxBuilder):
     '''
     def __init__(
         self,
-        market: Market,
+        market: StarknetMarketABC,
     ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self._logger.info("Initializing TransactionBuilder")

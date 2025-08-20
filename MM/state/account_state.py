@@ -1,15 +1,17 @@
 import asyncio
+
+from starknet_py.net.client_models import Calls
+from httpx import Request
+
 from platforms.starknet.starknet_account import WAccount
 from marketmaking.order import AllOrders, OpenOrders, TerminalOrders
-from markets.market import PositionInfo, Market
-
+from markets.market import PositionInfo, MarketABC
 
 class AccountState:
     """
     Class that holds info about current state of the trading account - orders, inventory etc.
     """
-
-    def __init__(self, market: Market, account: WAccount) -> None:
+    def __init__(self, market: MarketABC[Calls | Request], account: WAccount) -> None:
         self.market = market
         self.account = account
 
