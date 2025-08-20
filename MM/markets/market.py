@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
+from httpx import Request
+
 from instruments.instrument import Instrument, InstrumentAmount
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder
 from starknet_py.net.client_models import Calls
@@ -72,7 +74,7 @@ class PrologueOp_SeekLiquidity:
 PrologueOps = PrologueOp_SeekLiquidity 
 
 
-class Market(ABC):
+class MarketABC[T](ABC):
     '''
     Abstract base class for a market in the market making strategy.
     This class defines the interface for interacting with a market, including methods for
@@ -106,7 +108,7 @@ class Market(ABC):
         raise NotImplementedError
     
     @abstractmethod
-    def get_submit_order_call(self, order: FutureOrder) -> Calls:
+    def get_submit_order_call(self, order: FutureOrder) -> T:
         '''
         Returns the call to submit an order to the market. The call
         itself is then executed outside of the market class.
@@ -114,7 +116,7 @@ class Market(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_close_order_call(self, order: BasicOrder) -> Calls:
+    def get_close_order_call(self, order: BasicOrder) -> T:
         '''
         Returns the call to cancel an order. The call
         itself is then executed outside of the market class.
@@ -122,7 +124,7 @@ class Market(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_withdraw_call(self, state: "State", amount: InstrumentAmount) -> Calls:
+    def get_withdraw_call(self, state: "State", amount: InstrumentAmount) -> T:
         '''
         Returns the call to withdraw any pending/matched funds. The call
         itself is then executed outside of the market class.
@@ -137,7 +139,7 @@ class Market(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def seek_additional_liquidity(self, state: "State") -> Calls:
+    def seek_additional_liquidity(self, state: "State") -> T:
         """
         Function used for getting additional liquidity that is locked somewhere.
 
@@ -146,8 +148,15 @@ class Market(ABC):
         raise NotImplementedError
     
     @abstractmethod
-    def prologue_ops_to_calls(self, state: "State", ops: list[PrologueOps]) -> list[Calls]:
+    def prologue_ops_to_calls(self, state: "State", ops: list[PrologueOps]) -> list[T]:
         """
         Function used for converting Prologue 
         """
         raise NotImplementedError
+
+
+class StarknetMarketABC(MarketABC[Calls]):
+    pass
+
+class OffchainMarketABC(MarketABC[Request]):
+    pass

@@ -2,11 +2,11 @@ from typing import final, TYPE_CHECKING
 import logging
 
 from starknet_py.net.client_errors import ClientError
-from markets.market import Market, PrologueOps
+from markets.market import StarknetMarketABC, PrologueOps
 from platforms.starknet.starknet_account import WAccount, get_wrapped_account
 from cfg.cfg_classes import StrategyConfig
 from marketmaking.reconciling.order_reconciler import ReconciledOrders
-from markets import get_market
+from markets import get_starknet_market
 from tx_builders.tx_builder import TxBuilder
 from tx_builders import get_tx_builder
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 @final
 class StarknetPlatform(PlatformABC):
 
-    def __init__(self, w_account: WAccount, market: Market, tx_builder: TxBuilder): 
+    def __init__(self, w_account: WAccount, market: StarknetMarketABC, tx_builder: TxBuilder): 
         self._waccount = w_account
         self._market = market
         self._tx_builder = tx_builder
@@ -30,7 +30,7 @@ class StarknetPlatform(PlatformABC):
         market_cfg = cfg.market
         w_account = get_wrapped_account(platform_cfg.account)
 
-        market = await get_market(market_cfg.venue, account = w_account, market_id = market_cfg.market_id)
+        market = await get_starknet_market(market_cfg.venue, account = w_account, market_id = market_cfg.market_id)
         tx_builder = get_tx_builder(platform_cfg.tx_builder.name, market)
 
         return StarknetPlatform(
@@ -70,5 +70,5 @@ class StarknetPlatform(PlatformABC):
 
 
     @property
-    def market(self) -> Market:
+    def market(self) -> StarknetMarketABC:
         return self._market

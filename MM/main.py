@@ -72,15 +72,15 @@ async def main() -> None:
 
     data_source = get_data_source(
         cfg.price_source.price_source, cfg.price_source.base_asset, cfg.price_source.quote_asset
-    )
+    )   
+    # TODO: Remove type ignore
     state = State(
-        market=platform._market, 
+        market=platform._market, # type: ignore 
         account=platform._waccount, 
         fair_price_fetcher=data_source
     )
     
     market_maker = SimpleMarketMaker(
-        market=platform.market,
         order_reconciler=reconciler,
         order_chain=order_chain,
     )

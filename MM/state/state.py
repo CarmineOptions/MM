@@ -2,10 +2,13 @@ import asyncio
 from decimal import Decimal
 import logging
 
+from starknet_py.net.client_models import Calls
+from httpx import Request
+
 from platforms.starknet.starknet_account import WAccount
 from oracles.data_sources.data_source import DataSource
 from state.account_state import AccountState
-from markets.market import Market
+from markets.market import MarketABC
 
 
 class State:
@@ -14,7 +17,7 @@ class State:
     It contains the account state and the fair price fetcher.
     '''
     def __init__(
-        self, market: Market, account: WAccount, fair_price_fetcher: DataSource
+        self, market: MarketABC[Calls | Request], account: WAccount, fair_price_fetcher: DataSource
     ) -> None:
         self.account = AccountState(market=market, account=account)
 
