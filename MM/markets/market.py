@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from httpx import Request
+import httpx
 
 from instruments.instrument import Instrument, InstrumentAmount
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder
@@ -158,5 +158,5 @@ class MarketABC[T](ABC):
 class StarknetMarketABC(MarketABC[Calls]):
     pass
 
-class OffchainMarketABC(MarketABC[Request]):
+class OffchainMarketABC(MarketABC[httpx.Request]):
     pass

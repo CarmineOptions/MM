@@ -1,17 +1,37 @@
-# type: ignore
 
-import logging
-from decimal import Decimal
+from typing import TypedDict
 
 import httpx
+
 from paradex_py.paradex import Paradex
 from paradex_py.common.order import (
     Order as ParadexOrder,
-    OrderType as ParadexOrderType,
-    OrderSide as ParadexOrderSide
 )
 
-from marketmaking.order import BasicOrder, FutureOrder
+class ParadexResponseOrder(TypedDict):
+    id: str
+    account: str
+    market: str
+    side: str
+    type: str
+    size: str
+    remaining_size: str
+    price: str
+    status: str
+    created_at: int
+    last_updated_at: int
+    timestamp: int
+    cancel_reason: str
+    client_id: str
+    seq_no: int
+    instruction: str
+    avg_fill_price: str
+    stp: str
+    received_at: str
+    published_at: str
+    flags: list[str]
+    trigger_price: str
+
 
 class ParadexClient:
     def __init__(self, l1_address: str, l2_private_key: str):
@@ -21,141 +41,133 @@ class ParadexClient:
             l2_private_key=l2_private_key
         )
 
-    async def get_all_open_orders(self) -> list[BasicOrder]:
-        res =  await self._get_authorized('orders', params = None)
+        self._client = httpx.AsyncClient()
+
+    async def get_all_open_orders(self) -> list[ParadexResponseOrder]:
+        request =  self._get_authorized_request('orders', params = None)
+
+        res = await self._client.send(request)
         res.raise_for_status()
-        raw_orders: list[dict] = res.json()['results']
-        return [
-            _paradex_response_order_to_basic_order(i)
-            for i in raw_orders
-        ]
+        
+        raw_orders: list[ParadexResponseOrder] = res.json()['results']
+        return raw_orders
 
-    async def get_all_open_orders_for_market(self, market: str):
-        res = await self._get_authorized('orders', {'market': market})
+    async def get_all_open_orders_for_market(self, market: str) -> list[ParadexResponseOrder]:
+        request = self._get_authorized_request('orders', {'market': market})
+
+        res = await self._client.send(request)
         res.raise_for_status()
-        raw_orders: list[dict] = res.json()['results']
-        return [
-            _paradex_response_order_to_basic_order(i)
-            for i in raw_orders
-        ]
 
-    async def cancel_order(self, order: BasicOrder):
-        await self._delete_authorized(path = f'orders/{order.order_id}', params = None, payload = None)       
+        raw_orders: list[ParadexResponseOrder] = res.json()['results']
+        return raw_orders
 
-    async def cancel_all_orders(self):
-        await self._delete_authorized(path = 'orders', params = None, payload = None)
+    # Direct methods for sending/canceling orders
 
-    async def cancel_orders_batch(self, orders: list[BasicOrder]):
-        await self._delete_authorized(
+    async def cancel_order(self, id: str) -> httpx.Response:
+        request = self.get_cancel_order_request(id)
+        return await self._client.send(request)
+
+    async def cancel_all_orders(self) -> httpx.Response:
+        request = self.get_cancel_all_orders_request()
+        return await self._client.send(request)
+
+    async def cancel_orders_batch(self, ids: list[str]) -> httpx.Response:
+        request = self.get_cancel_orders_batch_request(ids)
+        return await self._client.send(request)   
+
+    async def submit_single_order(self, order: ParadexOrder) -> httpx.Response:
+        request = self.get_submit_single_order_request(order)
+        return await self._client.send(request)
+    
+    async def submit_orders_batch(self, orders: list[ParadexOrder]) -> httpx.Response:
+        request = self.get_submit_orders_batch_request(orders)
+        return await self._client.send(request)
+
+    # Methods that return a Request for sending/canceling orders
+    def get_cancel_order_request(self, id: str) -> httpx.Request:
+        return self._delete_authorized_request(path = f'orders/{id}', params = None, payload = None)       
+    
+    def get_cancel_all_orders_request(self) -> httpx.Request:
+        return self._delete_authorized_request(path = 'orders', params = None, payload = None)
+
+    def get_cancel_orders_batch_request(self, ids: list[str]) -> httpx.Request:
+        return self._delete_authorized_request(
             path = 'orders/batch',
             params = None,
             payload = {
-                'order_ids': [i.order_id for i in orders]
+                'order_ids': ids
             }
         )
 
-    async def _submit_single_order(self, order: FutureOrder):
+    def get_submit_single_order_request(self, order: ParadexOrder) -> httpx.Request:
 
-        px_order = _future_order_to_paradex_order(order)
-        
         if self.px.account is None:
             raise ValueError("No account to sign order with")
 
-        px_order.signature = self.px.account.sign_order(px_order)
-        order_payload = px_order.dump_to_dict()
+        order.signature = self.px.account.sign_order(order)
+        order_payload = order.dump_to_dict()
 
-        return await self._post_authorized(path="orders", payload=order_payload)
-    
-    async def _submit_orders_batch(self, orders: list[FutureOrder]):
+        request = self._post_authorized_request(path="orders", payload=order_payload)
+        return request
+
+    def get_submit_orders_batch_request(self, orders: list[ParadexOrder]) -> httpx.Request:
         if self.px.account is None:
             raise ValueError("No account to sign order with")
-
-        px_orders = [
-            _future_order_to_paradex_order(i)
-            for i in orders
-        ]
 
         order_payloads = []
-        for px_order in px_orders:
+        for px_order in orders:
             px_order.signature = self.px.account.sign_order(px_order)
             order_payload = px_order.dump_to_dict()
             order_payloads.append(order_payload)
 
-        return await self._post_authorized(path="orders/batch", payload=order_payloads)
+        request = self._post_authorized_request(path="orders/batch", payload=order_payloads)
+
+        return request
 
     # PRIVATE FUNCTIONS
 
-    async def _get_authorized(self, path: str, params: dict | None):
+    def _get_authorized_request(self, path: str, params: dict | None) -> httpx.Request:
         self.px.api_client._validate_auth()
-        return await self._get(path = path, params = params)
+        return self._get_request(path = path, params = params)
 
-    async def _get(self, path: str, params: dict | None):
+    def _get_request(self, path: str, params: dict | None) -> httpx.Request:
         url = f"{self.px.api_client.api_url}/{path}"
-
-        async with httpx.AsyncClient() as client:
-            res = await client.get(
-                url=url,
-                params = params,
-                headers = self.px.api_client.client.headers
-            )
-        
-        return res
+        request = self._client.build_request(
+            url = url,
+            method = "GET",
+            params = params,
+            headers = self.px.api_client.client.headers
+        )
+        return request
     
-    async def _delete_authorized(self, path: str, params: dict | None, payload: dict|None):
+    def _delete_authorized_request(self, path: str, params: dict | None, payload: dict|None) -> httpx.Request:
         self.px.api_client._validate_auth()
-        await self._delete(path=path, params=params, payload=payload)
+        return self._delete_request(path=path, params=params, payload=payload)
 
-    async def _delete(self, path: str, params: dict | None, payload: dict | None):
+    def _delete_request(self, path: str, params: dict | None, payload: dict | None) -> httpx.Request:
+        url = f"{self.px.api_client.api_url}/{path}"
+        request = self._client.build_request(
+            url = url,
+            method = 'DELETE',
+            params = params,
+            headers = self.px.api_client.client.headers,
+            json = payload
+        )
+        return request
+
+    def _post_authorized_request(self, path: str, payload: dict | list) -> httpx.Request:
+        self.px.api_client._validate_auth()
+        return self._post_request(path, payload)
+
+    def _post_request(self, path: str, payload: dict | list) -> httpx.Request:
         url = f"{self.px.api_client.api_url}/{path}"
 
-        async with httpx.AsyncClient() as client:
-            await client.request(
-                method = 'DELETE',
-                url = url,
-                params = params,
-                headers = self.px.api_client.client.headers,
-                json = payload
-            )
-
-    async def _post_authorized(self, path: str, payload: dict | list):
-        self.px.api_client._validate_auth()
-        return await self._post(path, payload)
-
-    async def _post(self, path: str, payload: dict | list):
-        url = f"{self.px.api_client.api_url}/{path}"
-        async with httpx.AsyncClient() as client:
-            return await client.request(
-                method="POST",
-                url=url,
-                json=payload,
-                headers=self.px.api_client.client.headers,
-            )
+        request = self._client.build_request(
+            method = 'POST',
+            url = url,
+            json = payload,
+            headers = self.px.api_client.client.headers
+        )
         
+        return request
 
-def _paradex_response_order_to_basic_order(o: dict[str, str]) -> BasicOrder:
-    logging.error("No market id!!!!")
-
-    side = 'Bid' if o['side'].lower() == 'buy' else 'Ask'
-
-    return BasicOrder(
-        price = Decimal(o['price']),
-        amount = Decimal(o['size']),
-        amount_remaining = Decimal(o['size_remaining']),
-        order_id = int(o['id']),
-        market_id = 0,
-        order_side = side,
-        entry_time = int(o['published_at']),
-        venue = 'Paradex'
-    )
-
-def _future_order_to_paradex_order(o: FutureOrder) -> ParadexOrder:
-    if 1 == 1:
-        raise NotImplementedError("Missing market-id <> paradex market mapping")
-    side = ParadexOrderSide.Buy if o.order_side.lower() == 'bid' else ParadexOrderSide.Sell
-    
-    return ParadexOrder(
-        market='...',
-        order_type= ParadexOrderType.Limit,
-        order_side=side,
-        size = o.amount
-    )
