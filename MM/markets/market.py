@@ -123,13 +123,13 @@ class MarketABC[T](ABC):
         '''
         raise NotImplementedError
 
-    @abstractmethod
-    def get_withdraw_call(self, state: "State", amount: InstrumentAmount) -> T:
-        '''
-        Returns the call to withdraw any pending/matched funds. The call
-        itself is then executed outside of the market class.
-        '''
-        raise NotImplementedError
+    # @abstractmethod
+    # def get_withdraw_call(self, state: "State", amount: InstrumentAmount) -> T:
+    #     '''
+    #     Returns the call to withdraw any pending/matched funds. The call
+    #     itself is then executed outside of the market class.
+    #     '''
+    #     raise NotImplementedError
 
     @abstractmethod
     async def get_total_position(self) -> PositionInfo:
@@ -138,14 +138,14 @@ class MarketABC[T](ABC):
         '''
         raise NotImplementedError
 
-    @abstractmethod
-    def seek_additional_liquidity(self, state: "State") -> T:
-        """
-        Function used for getting additional liquidity that is locked somewhere.
+    # @abstractmethod
+    # def seek_additional_liquidity(self, state: "State") -> T:
+    #     """
+    #     Function used for getting additional liquidity that is locked somewhere.
 
-        eg. In case of Remus this produces a claim call.
-        """
-        raise NotImplementedError
+    #     eg. In case of Remus this produces a claim call.
+    #     """
+    #     raise NotImplementedError
     
     @abstractmethod
     def prologue_ops_to_calls(self, state: "State", ops: list[PrologueOps]) -> list[T]:

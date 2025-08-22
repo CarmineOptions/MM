@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import asyncio
 from decimal import Decimal
 import logging

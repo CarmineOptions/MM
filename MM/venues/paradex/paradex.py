@@ -114,7 +114,7 @@ class ParadexClient:
         if self.px.account is None:
             raise ValueError("No account to sign order with")
 
-        order_payloads = []
+        order_payloads: list[dict[str, str]] = []
         for px_order in orders:
             px_order.signature = self.px.account.sign_order(px_order)
             order_payload = px_order.dump_to_dict()
@@ -126,11 +126,11 @@ class ParadexClient:
 
     # PRIVATE FUNCTIONS
 
-    def _get_authorized_request(self, path: str, params: dict | None) -> httpx.Request:
-        self.px.api_client._validate_auth()
+    def _get_authorized_request(self, path: str, params: dict[str, str] | None) -> httpx.Request:
+        self.px.api_client._validate_auth() # type: ignore[no-untyped-call]
         return self._get_request(path = path, params = params)
 
-    def _get_request(self, path: str, params: dict | None) -> httpx.Request:
+    def _get_request(self, path: str, params: dict[str, str] | None) -> httpx.Request:
         url = f"{self.px.api_client.api_url}/{path}"
         request = self._client.build_request(
             url = url,
@@ -140,11 +140,11 @@ class ParadexClient:
         )
         return request
     
-    def _delete_authorized_request(self, path: str, params: dict | None, payload: dict|None) -> httpx.Request:
-        self.px.api_client._validate_auth()
+    def _delete_authorized_request(self, path: str, params: dict[str, str] | None, payload: dict[str, str | list[str]] | None) -> httpx.Request:
+        self.px.api_client._validate_auth() # type: ignore[no-untyped-call]
         return self._delete_request(path=path, params=params, payload=payload)
 
-    def _delete_request(self, path: str, params: dict | None, payload: dict | None) -> httpx.Request:
+    def _delete_request(self, path: str, params: dict[str, str] | None, payload: dict[str, str | list[str]] | None) -> httpx.Request:
         url = f"{self.px.api_client.api_url}/{path}"
         request = self._client.build_request(
             url = url,
@@ -155,11 +155,11 @@ class ParadexClient:
         )
         return request
 
-    def _post_authorized_request(self, path: str, payload: dict | list) -> httpx.Request:
-        self.px.api_client._validate_auth()
+    def _post_authorized_request(self, path: str, payload: dict[str, str] | list[str] | list[dict[str, str]]) -> httpx.Request:
+        self.px.api_client._validate_auth() # type: ignore[no-untyped-call]
         return self._post_request(path, payload)
 
-    def _post_request(self, path: str, payload: dict | list) -> httpx.Request:
+    def _post_request(self, path: str, payload: dict[str, str] | list[str] | list[dict[str, str]]) -> httpx.Request:
         url = f"{self.px.api_client.api_url}/{path}"
 
         request = self._client.build_request(
