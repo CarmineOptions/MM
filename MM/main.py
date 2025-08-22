@@ -13,13 +13,13 @@ import sys
 import pprint
 
 
+from state.state_fetcher import PollingStateFetcher
 from platforms.starknet.starknet_platform import StarknetPlatform
 from marketmaking.orderchain.order_chain import OrderChain
 from marketmaking.reconciling import get_reconciler
 from oracles.data_sources import get_data_source
 from marketmaking.order import BasicOrder
 from marketmaking.marketmakers.simple_marketmaker import SimpleMarketMaker
-from state.state import State
 from cfg import load_config
 from args import parse_args
 from monitoring import metrics
@@ -74,9 +74,8 @@ async def main() -> None:
         cfg.price_source.price_source, cfg.price_source.base_asset, cfg.price_source.quote_asset
     )   
     # TODO: Remove type ignore
-    state = State(
+    state_fetcher = PollingStateFetcher(
         market=platform._market, # type: ignore 
-        account=platform._waccount, 
         fair_price_fetcher=data_source
     )
     
@@ -91,7 +90,7 @@ async def main() -> None:
         try:
             loop_start_time = time.time()
 
-            await state.update()
+            state = await state_fetcher.get_state()
 
             metrics.track_state_update_time(time.time() - loop_start_time)
 

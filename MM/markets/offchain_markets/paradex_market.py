@@ -10,7 +10,8 @@ from paradex_py.common.order import (
 )
 
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, TerminalOrders
-from markets.market import MarketConfig, OffchainMarketABC, PositionInfo, PrologueOp_SeekLiquidity, PrologueOps
+from markets.market import MarketConfig, OffchainMarketABC, PrologueOp_SeekLiquidity, PrologueOps
+from state.account_state import PositionInfo
 from state.state import State
 from venues.paradex.paradex import ParadexClient, ParadexResponseOrder
 

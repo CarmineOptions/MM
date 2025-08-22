@@ -8,8 +8,7 @@ from starknet_py.net.client_models import Calls, Call
 
 from markets.market import PrologueOps, PrologueOp_SeekLiquidity
 from platforms.starknet.starknet_account import WAccount
-from instruments.instrument import InstrumentAmount
-from markets.market import PositionInfo
+from state.account_state import PositionInfo
 from venues.remus.remus import RemusDexClient
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder
 from markets.market import StarknetMarketABC
@@ -87,8 +86,14 @@ class RemusMarket(StarknetMarketABC):
             order = order
         )
     
-    def get_withdraw_call(self, state: "State", amount: InstrumentAmount) -> Calls:
-        return self._client.prep_claim_call(amount=amount)
+    def get_withdraw_call(self, state: "State", amount: Decimal, is_base: bool) -> Calls:
+        if is_base:
+            token = self.market_cfg.base_token
+            amount_raw = int(amount * 10**token.decimals)
+        else:
+            token = self.market_cfg.quote_token
+            amount_raw = int(amount * 10**token.decimals)
+        return self._client.prep_claim_call(amount=amount_raw, token_address=hex(token.address))
     
 
     def seek_additional_liquidity(self, state: "State") -> Calls:
@@ -97,33 +102,41 @@ class RemusMarket(StarknetMarketABC):
 
         calls: list[Call] = []
 
-        for claimable_token in [state.account.position.withdrawable_base, state.account.position.withdrawable_quote]:
+        # Claim base token
+        base_amt = state.account.position.withdrawable_base
+        if base_amt:
             self._logger.info(
-                "Claimable amount is %s for token %s, account %s.",
-                claimable_token.amount_hr,
-                hex(claimable_token.instrument.address),
-                hex(self._account.address),
+                "Claimable base amount is %s for token %s, preparing claim call",
+                base_amt,
+                hex(self.market_cfg.base_token.address),
             )
-
-            if claimable_token.amount_raw:
-                self._logger.info("Preparing claim call")
-
-                call = self.get_withdraw_call(state=state, amount=claimable_token)
-
-                if isinstance(call, Iterable):
-                    calls += list(call)
-                else:
-                    calls.append(call)
-
-            
-
+            call = self.get_withdraw_call(state = state, amount = base_amt, is_base=True)
+            if isinstance(call, Iterable):
+                calls += list(call)
+            else:
+                calls.append(call)
+        else: 
+            self._logger.info("No claimable for base token %s", hex(self.market_cfg.base_token.address))
+        
+        # Claim quote token
+        quote_amt = state.account.position.withdrawable_quote
+        if quote_amt:
             self._logger.info(
-                "Claim prepared for account %s, market %s.",
-                hex(self._account.address),
-                self.market_cfg.market_id,
+                "Claimable quote amount is %s for token %s, preparing claim call",
+                quote_amt,
+                hex(self.market_cfg.quote_token.address),
             )
+            call = self.get_withdraw_call(state = state, amount = quote_amt, is_base=True)
+
+            if isinstance(call, Iterable):
+                calls += list(call)
+            else:
+                calls.append(call)
+        else: 
+            self._logger.info("No claimable for quote token %s", hex(self.market_cfg.base_token.address))
         
         return calls
+        
 
     async def setup(self) -> None:
 
@@ -187,13 +200,16 @@ class RemusMarket(StarknetMarketABC):
         # Remus has no terminal orders so we only account the active ones
         orders_base, orders_quote = _get_base_quote_position_from_active_orders(orders.active.all_orders)
 
+        claimable_base_hr = claimable_base / 10**self.market_cfg.base_token.decimals
+        claimable_quote_hr = claimable_quote / 10**self.market_cfg.quote_token.decimals
+
         return PositionInfo(
             balance_base=Decimal(balance_base[0])
                 / 10**self._market_config.base_token.decimals,
             balance_quote=Decimal(balance_quote[0])
                 / 10**self._market_config.quote_token.decimals,
-            withdrawable_base=claimable_base,
-            withdrawable_quote=claimable_quote,
+            withdrawable_base=claimable_base_hr,
+            withdrawable_quote=claimable_quote_hr,
             in_orders_base=orders_base,
             in_orders_quote=orders_quote,
         )

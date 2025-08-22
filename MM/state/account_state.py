@@ -1,66 +1,44 @@
-import asyncio
+from dataclasses import dataclass
+from decimal import Decimal
 
-from starknet_py.net.client_models import Calls
-from httpx import Request
 
-from platforms.starknet.starknet_account import WAccount
-from marketmaking.order import AllOrders, OpenOrders, TerminalOrders
-from markets.market import PositionInfo, MarketABC
+from marketmaking.order import AllOrders
 
+@dataclass
+class PositionInfo:
+    '''
+    Represents the position information for a market, including balances, withdrawable amounts, and amounts in orders.
+    This class provides properties to calculate the total base and quote amounts of position.
+    '''
+    balance_base: Decimal
+    balance_quote: Decimal
+
+    withdrawable_base: Decimal
+    withdrawable_quote: Decimal
+
+    in_orders_base: Decimal
+    in_orders_quote: Decimal
+
+    @property
+    def total_base(self) -> Decimal:
+        return self.balance_base + self.withdrawable_base + self.in_orders_base
+
+    @property
+    def total_quote(self) -> Decimal:
+        return self.balance_quote + self.withdrawable_quote + self.in_orders_quote
+
+    @staticmethod
+    def empty() -> "PositionInfo":
+        return PositionInfo(
+            balance_base=Decimal(0),
+            balance_quote=Decimal(0),
+            withdrawable_base=Decimal(0),
+            withdrawable_quote = Decimal(0),
+            in_orders_base=Decimal(0),
+            in_orders_quote=Decimal(0),
+        )
+
+@dataclass(frozen=True)
 class AccountState:
-    """
-    Class that holds info about current state of the trading account - orders, inventory etc.
-    """
-    def __init__(self, market: MarketABC[Calls | Request], account: WAccount) -> None:
-        self.market = market
-        self.account = account
-
-        self._position = PositionInfo.empty(
-            base_token=market.market_cfg.base_token,
-            quote_token=market.market_cfg.quote_token
-        )
-        self._orders: AllOrders = AllOrders(
-            active = OpenOrders(
-                bids = [],
-                asks = []
-            ),
-            terminal = TerminalOrders(
-                bids = [],
-                asks = []
-            )
-        )
-
-    @property
-    def orders(self) -> AllOrders:
-        '''
-        Returns all orders in the account, both active and terminal.
-        Terminal orders are orders that were filled, expired or just 
-        inactive in some way.
-        '''
-        return self._orders
-
-    @property
-    def position(self) -> PositionInfo:
-        """ Returns the current position of the account."""
-        return self._position
-
-    async def update(self) -> None:
-        '''
-        Updates the account state by fetching the current position and orders
-        from the market. 
-        '''
-        async with asyncio.TaskGroup() as tg:
-            # TODO: We're fetching position here which fetches orders for market,
-            #  but then we're doing it again below, we could just use the same orders
-            position_task = tg.create_task(
-                self.market.get_total_position()
-            )
-            orders_task = tg.create_task(
-                self.market.get_current_orders()
-            )
-
-        position = position_task.result()
-        orders = orders_task.result()
-
-        self._position = position
-        self._orders = orders
+    position: PositionInfo
+    orders: AllOrders
