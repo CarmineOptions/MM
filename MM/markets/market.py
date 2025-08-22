@@ -5,52 +5,13 @@ from typing import TYPE_CHECKING
 
 import httpx
 
-from instruments.instrument import Instrument, InstrumentAmount
+from state.account_state import PositionInfo
+from instruments.instrument import Instrument
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder
 from starknet_py.net.client_models import Calls
 
 if TYPE_CHECKING:
     from state.state import State
-
-@dataclass
-class PositionInfo:
-    '''
-    Represents the position information for a market, including balances, withdrawable amounts, and amounts in orders.
-    This class provides properties to calculate the total base and quote amounts of position.
-    '''
-    balance_base: Decimal
-    balance_quote: Decimal
-
-    withdrawable_base: InstrumentAmount
-    withdrawable_quote: InstrumentAmount
-
-    in_orders_base: Decimal
-    in_orders_quote: Decimal
-
-    @property
-    def total_base(self) -> Decimal:
-        return self.balance_base + self.withdrawable_base.amount_hr + self.in_orders_base
-
-    @property
-    def total_quote(self) -> Decimal:
-        return self.balance_quote + self.withdrawable_quote.amount_hr + self.in_orders_quote
-
-    @staticmethod
-    def empty(base_token: Instrument, quote_token: Instrument) -> "PositionInfo":
-        return PositionInfo(
-            balance_base=Decimal(0),
-            balance_quote=Decimal(0),
-            withdrawable_base=InstrumentAmount(
-                instrument = base_token, 
-                amount_raw=0
-            ),
-            withdrawable_quote=InstrumentAmount(
-                instrument=quote_token,
-                amount_raw=0
-            ),
-            in_orders_base=Decimal(0),
-            in_orders_quote=Decimal(0),
-        )
 
 @dataclass 
 class MarketConfig:
@@ -71,7 +32,7 @@ class PrologueOp_SeekLiquidity:
     amount: Decimal
 
 #  Once there are more Ops, this wil become an Union
-PrologueOps = PrologueOp_SeekLiquidity 
+PrologueOps = PrologueOp_SeekLiquidity
 
 
 class MarketABC[T](ABC):

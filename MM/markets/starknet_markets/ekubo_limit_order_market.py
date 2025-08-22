@@ -8,7 +8,8 @@ from starknet_py.contract import Contract
 
 from platforms.starknet.starknet_account import WAccount
 from instruments.instrument import InstrumentAmount
-from markets.market import PositionInfo, PrologueOp_SeekLiquidity, PrologueOps
+from state.account_state import PositionInfo
+from markets.market import PrologueOp_SeekLiquidity, PrologueOps
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, TerminalOrders
 from markets.market import StarknetMarketABC
 from venues.ekubo.ekubo import EkuboClient
@@ -94,9 +95,9 @@ class EkuboLimitOrderMarket(StarknetMarketABC):
         # No locked liquidity in ekubo
         return []
 
-    def get_withdraw_call(self, state: "State", amount: InstrumentAmount) -> list[Call]:
+    def get_withdraw_call(self, state: "State", bids: bool) -> list[Call]:
         # Withdrawing in ekubo is basically closing executed orders
-        if amount.instrument.address == self._base_token.address:
+        if bids:
             # We want to withdraw base token, so we need to close 
             # matched bid orders since those are the ones 
             # where we sold quote in exchange for base 
@@ -113,7 +114,6 @@ class EkuboLimitOrderMarket(StarknetMarketABC):
             )
             for o in to_close
         ]
-        # FIXME: this could be a lot of calls so we need to split it somehow
         return calls
 
     async def get_total_position(self) -> PositionInfo:
@@ -143,14 +143,8 @@ class EkuboLimitOrderMarket(StarknetMarketABC):
             balance_quote=balance_quote,
             in_orders_base=base_in_orders,
             in_orders_quote=quote_in_orders,
-            withdrawable_base=InstrumentAmount(
-                instrument = self._market_config.base_token,
-                amount_raw = base_withdrawable * 10**self._market_config.base_token.decimals
-            ),
-            withdrawable_quote=InstrumentAmount(
-                instrument = self._market_config.quote_token,
-                amount_raw = quote_withdrawable * 10**self._market_config.quote_token.decimals
-            ),
+            withdrawable_base=base_withdrawable,
+            withdrawable_quote=quote_withdrawable
         )
 
     def prologue_ops_to_calls(self, state: "State", ops: list[PrologueOps]) -> list[Calls]:
@@ -158,15 +152,16 @@ class EkuboLimitOrderMarket(StarknetMarketABC):
 
         for op in ops: 
             call = self._prologue_op_to_call(state, op)
-            if call: 
-                calls.append(call)
+            calls.append(call)
 
         return calls
     
-    def _prologue_op_to_call(self, state: "State", op: PrologueOps) -> Calls | None:
+    def _prologue_op_to_call(self, state: "State", op: PrologueOps) -> Calls:
         match op:
             case PrologueOp_SeekLiquidity(_):
-                return None
+                bids = self.get_withdraw_call(state, True)
+                asks = self.get_withdraw_call(state, False)
+                return bids + asks
 
 
 def _get_base_quote_withdrawable_from_terminal_orders(

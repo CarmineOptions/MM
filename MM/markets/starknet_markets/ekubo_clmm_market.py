@@ -10,7 +10,8 @@ from starknet_py.contract import Contract
 from state.state import State
 from platforms.starknet.starknet_account import WAccount
 from instruments.instrument import InstrumentAmount
-from markets.market import PositionInfo, PrologueOp_SeekLiquidity, PrologueOps
+from state.account_state import PositionInfo
+from markets.market import PrologueOp_SeekLiquidity, PrologueOps
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders
 from markets.market import StarknetMarketABC
 from venues.ekubo.ekubo import EkuboClient
@@ -124,14 +125,8 @@ class EkuboCLMMMarket(StarknetMarketABC):
             balance_quote=balance_quote,
             in_orders_base=base_in_orders,
             in_orders_quote=quote_in_orders,
-            withdrawable_base=InstrumentAmount(
-                instrument = self._market_config.base_token,
-                amount_raw = 0 
-            ),
-            withdrawable_quote=InstrumentAmount(
-                instrument = self._market_config.quote_token,
-                amount_raw = 0 
-            ),
+            withdrawable_base=Decimal(0),
+            withdrawable_quote=Decimal(0)
         )
 
     def seek_additional_liquidity(self, state: "State") -> Calls:

@@ -116,14 +116,11 @@ class RemusDexView:
             terminal = TerminalOrders(bids=[], asks=[])
         )
 
-    async def get_claimable(self, token: StarknetToken, user_address: int) -> InstrumentAmount:
+    async def get_claimable(self, token: StarknetToken, user_address: int) -> int:
         claimable = await self._contract.functions["get_claimable"].call(
             token_address=token.address, user_address=user_address
         )
-        return InstrumentAmount(
-            instrument=token,
-            amount_raw=int(claimable[0])
-        )
+        return int(claimable[0])
 
 
 class RemusDexClient:
@@ -146,12 +143,11 @@ class RemusDexClient:
         return RemusDexClient(contract=contract)
 
     def prep_claim_call(
-        self, amount: InstrumentAmount
+        self, token_address: str, amount: int
     ) -> PreparedFunctionInvokeV3:
-        # TODO: Add fees
         return self._contract.functions["claim"].prepare_invoke_v3(
-            token_address=amount.instrument.address,
-            amount=amount.amount_raw,
+            token_address=token_address,
+            amount=amount,
         )
 
     def prep_submit_maker_order_call(

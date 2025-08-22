@@ -32,6 +32,30 @@ class ParadexResponseOrder(TypedDict):
     flags: list[str]
     trigger_price: str
 
+class ParadexResponsePosition(TypedDict):
+    id: str
+    account: str
+    market: str
+    status: str
+    side: str
+    size: str
+    average_entry_price: str
+    average_entry_price_usd: str
+    average_exit_price: str
+    unrealized_pnl: str
+    unrealized_funding_pnl: str
+    cost: str
+    cost_usd: str
+    cached_funding_index: str
+    last_updated_at: int
+    created_at: int
+    last_fill_id: str
+    seq_no: int
+    liquidation_price: str
+    leverage: str
+    realized_positional_pnl: str
+    realized_positional_funding_pnl: str
+
 
 class ParadexClient:
     def __init__(self, l1_address: str, l2_private_key: str):
@@ -60,6 +84,22 @@ class ParadexClient:
 
         raw_orders: list[ParadexResponseOrder] = res.json()['results']
         return raw_orders
+    
+    async def get_all_positions(self) -> list[ParadexResponsePosition]:
+        request = self._get_authorized_request(path = 'positions', params = {})
+
+        res = await self._client.send(request)
+        res.raise_for_status()
+
+        positions: list[ParadexResponsePosition] = res.json()['results']
+        return positions
+
+    async def get_positions_for_market(self, market: str) -> list[ParadexResponsePosition]:
+        positions = await self.get_all_positions()
+        return [
+            p for p in positions
+            if p['market'].lower() == market.lower()
+        ]
 
     # Direct methods for sending/canceling orders
 
@@ -170,4 +210,5 @@ class ParadexClient:
         )
         
         return request
+
 
