@@ -39,6 +39,7 @@ class FixedParamsElement(OrderChainElement):
         optimal_ask_price = state.fair_price * (1 + self._target_relative_distance)
         optimal_ask_size = self._order_size / optimal_ask_price
 
+        # TODO: Remove hardcoded "Remus" venue and starknet platform
         new_orders.asks.append(
             FutureOrder(
                 order_side="ask",

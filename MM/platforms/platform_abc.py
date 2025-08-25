@@ -12,7 +12,7 @@ if typing.TYPE_CHECKING:
 class PlatformABC(ABC):
     @staticmethod
     @abstractmethod
-    async def from_config(cfg: StrategyConfig) -> "PlatformABC":
+    async def from_config(cfg: "StrategyConfig") -> "PlatformABC":
         '''
         Create a Platform instance from config
         '''
@@ -23,7 +23,7 @@ class PlatformABC(ABC):
         raise NotImplementedError
     
     @abstractmethod
-    async def execute_operations(self, state: "State", prologue: "list[PrologueOps]", ops: ReconciledOrders) -> None:
+    async def execute_operations(self, state: "State", prologue: "list[PrologueOps]", ops: "ReconciledOrders") -> None:
         raise NotImplementedError
     
     @abstractmethod

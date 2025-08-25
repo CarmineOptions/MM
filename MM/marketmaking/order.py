@@ -66,8 +66,8 @@ class OpenOrders:
         Doesn't check if they are all from the same market/venue...
         """
 
-        bids = []
-        asks = []
+        bids: list[BasicOrder] = []
+        asks: list[BasicOrder] = []
 
         for o in orders:
             if o.order_side.lower() == "bid":
@@ -105,8 +105,8 @@ class TerminalOrders:
         Doesn't check if they are all from the same market/venue...
         """
 
-        bids = []
-        asks = []
+        bids: list[BasicOrder] = []
+        asks: list[BasicOrder] = []
 
         for o in orders:
             if o.order_side.lower() == "bid":

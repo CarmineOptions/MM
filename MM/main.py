@@ -87,8 +87,8 @@ async def main() -> None:
     await platform.initialize_trading()
 
     while True:
+        loop_start_time = time.time()
         try:
-            loop_start_time = time.time()
 
             state = await state_fetcher.get_state()
 
@@ -108,7 +108,6 @@ async def main() -> None:
             
             await platform.execute_operations(state = state, prologue=prologue, ops = reconciled_orders)
 
-            logging.info("Pulsed market maker with fair price: %s", state.fair_price)
         except Exception as e:
 
             if not await platform.error_handled(e):

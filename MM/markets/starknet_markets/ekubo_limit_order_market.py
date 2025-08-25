@@ -7,7 +7,6 @@ from starknet_py.net.client_models import Calls, Call
 from starknet_py.contract import Contract
 
 from platforms.starknet.starknet_account import WAccount
-from instruments.instrument import InstrumentAmount
 from state.account_state import PositionInfo
 from markets.market import PrologueOp_SeekLiquidity, PrologueOps
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, TerminalOrders
@@ -135,8 +134,8 @@ class EkuboLimitOrderMarket(StarknetMarketABC):
 
         base_in_orders, quote_in_orders = _get_base_quote_position_from_active_orders(orders.active)
 
-        balance_base = Decimal(_balance_base[0]) / 10**self._market_config.base_token.decimals
-        balance_quote = Decimal(_balance_quote[0]) / 10**self._market_config.quote_token.decimals
+        balance_base: Decimal = Decimal(_balance_base[0]) / 10**self._market_config.base_token.decimals
+        balance_quote: Decimal = Decimal(_balance_quote[0]) / 10**self._market_config.quote_token.decimals
 
         return PositionInfo(
             balance_base = balance_base,
