@@ -12,7 +12,6 @@ from venues.remus.remus_market_configs import (
 )
 from marketmaking.order import AllOrders, BasicOrder, FutureOrder, OpenOrders, TerminalOrders
 from instruments.starknet import StarknetToken
-from instruments.instrument import InstrumentAmount
 
 REMUS_ADDRESS = "0x067e7555f9ff00f5c4e9b353ad1f400e2274964ea0942483fae97363fd5d7958"
 REMUS_IDENTIFIER = "REMUS"
@@ -143,7 +142,7 @@ class RemusDexClient:
         return RemusDexClient(contract=contract)
 
     def prep_claim_call(
-        self, token_address: str, amount: int
+        self, token_address: int, amount: int
     ) -> PreparedFunctionInvokeV3:
         return self._contract.functions["claim"].prepare_invoke_v3(
             token_address=token_address,

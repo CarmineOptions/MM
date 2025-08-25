@@ -93,7 +93,7 @@ class RemusMarket(StarknetMarketABC):
         else:
             token = self.market_cfg.quote_token
             amount_raw = int(amount * 10**token.decimals)
-        return self._client.prep_claim_call(amount=amount_raw, token_address=hex(token.address))
+        return self._client.prep_claim_call(amount=amount_raw, token_address=token.address)
     
 
     def seek_additional_liquidity(self, state: "State") -> Calls:
@@ -126,7 +126,7 @@ class RemusMarket(StarknetMarketABC):
                 quote_amt,
                 hex(self.market_cfg.quote_token.address),
             )
-            call = self.get_withdraw_call(state = state, amount = quote_amt, is_base=True)
+            call = self.get_withdraw_call(state = state, amount = quote_amt, is_base=False)
 
             if isinstance(call, Iterable):
                 calls += list(call)
@@ -135,6 +135,7 @@ class RemusMarket(StarknetMarketABC):
         else: 
             self._logger.info("No claimable for quote token %s", hex(self.market_cfg.base_token.address))
         
+
         return calls
         
 
@@ -200,8 +201,8 @@ class RemusMarket(StarknetMarketABC):
         # Remus has no terminal orders so we only account the active ones
         orders_base, orders_quote = _get_base_quote_position_from_active_orders(orders.active.all_orders)
 
-        claimable_base_hr = claimable_base / 10**self.market_cfg.base_token.decimals
-        claimable_quote_hr = claimable_quote / 10**self.market_cfg.quote_token.decimals
+        claimable_base_hr: Decimal = Decimal(claimable_base) / 10**self.market_cfg.base_token.decimals
+        claimable_quote_hr: Decimal = Decimal(claimable_quote) / 10**self.market_cfg.quote_token.decimals
 
         return PositionInfo(
             balance_base=Decimal(balance_base[0])
@@ -215,7 +216,7 @@ class RemusMarket(StarknetMarketABC):
         )
     
     def prologue_ops_to_calls(self, state: "State", ops: list[PrologueOps]) -> list[Calls]:
-        calls = []
+        calls: list[Calls] = []
 
         for op in ops: 
             calls.append(

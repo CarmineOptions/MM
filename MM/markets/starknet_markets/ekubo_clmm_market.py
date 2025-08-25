@@ -115,8 +115,8 @@ class EkuboCLMMMarket(StarknetMarketABC):
         )
 
 
-        balance_base = Decimal(_balance_base[0]) / 10**self._market_config.base_token.decimals
-        balance_quote = Decimal(_balance_quote[0]) / 10**self._market_config.quote_token.decimals
+        balance_base: Decimal = Decimal(_balance_base[0]) / 10**self._market_config.base_token.decimals
+        balance_quote: Decimal = Decimal(_balance_quote[0]) / 10**self._market_config.quote_token.decimals
 
         base_in_orders, quote_in_orders = _get_base_quote_from_orders(orders.active)
 
